@@ -176,9 +176,9 @@ export default function Home() {
 
               <div ref={featureCardsRef} className="mt-12">
                 <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-                  <div className="feature-card p-6 rounded-xl bg-gradient-to-br from-card/90 to-primary/10 shadow-xl flex flex-col h-full border border-primary/20 hover:border-primary/40 transition-all duration-300">
-                    <div className="w-12 h-12 rounded-lg bg-primary/30 flex items-center justify-center mb-4 shadow-md">
-                      <Upload className="h-6 w-6 text-primary" />
+                  <div className="feature-card p-6 rounded-xl bg-black/50 shadow-xl flex flex-col h-full border-2 border-primary/30 hover:border-primary/60 transition-all duration-300">
+                    <div className="w-12 h-12 rounded-lg bg-primary/40 flex items-center justify-center mb-4 shadow-md">
+                      <Upload className="h-6 w-6 text-white" />
                     </div>
                     <h3 className="text-xl font-bold text-white">Simple Video Upload</h3>
                     <p className="mt-3 text-gray-200 text-base flex-grow">
@@ -186,9 +186,9 @@ export default function Home() {
                     </p>
                   </div>
 
-                  <div className="feature-card p-6 rounded-xl bg-gradient-to-br from-card/90 to-primary/10 shadow-xl flex flex-col h-full border border-primary/20 hover:border-primary/40 transition-all duration-300">
-                    <div className="w-12 h-12 rounded-lg bg-primary/30 flex items-center justify-center mb-4 shadow-md">
-                      <Clock className="h-6 w-6 text-primary" />
+                  <div className="feature-card p-6 rounded-xl bg-black/50 shadow-xl flex flex-col h-full border-2 border-primary/30 hover:border-primary/60 transition-all duration-300">
+                    <div className="w-12 h-12 rounded-lg bg-primary/40 flex items-center justify-center mb-4 shadow-md">
+                      <Clock className="h-6 w-6 text-white" />
                     </div>
                     <h3 className="text-xl font-bold text-white">Timestamped Feedback</h3>
                     <p className="mt-3 text-gray-200 text-base flex-grow">
@@ -196,9 +196,9 @@ export default function Home() {
                     </p>
                   </div>
 
-                  <div className="feature-card p-6 rounded-xl bg-gradient-to-br from-card/90 to-primary/10 shadow-xl flex flex-col h-full border border-primary/20 hover:border-primary/40 transition-all duration-300">
-                    <div className="w-12 h-12 rounded-lg bg-primary/30 flex items-center justify-center mb-4 shadow-md">
-                      <Lock className="h-6 w-6 text-primary" />
+                  <div className="feature-card p-6 rounded-xl bg-black/50 shadow-xl flex flex-col h-full border-2 border-primary/30 hover:border-primary/60 transition-all duration-300">
+                    <div className="w-12 h-12 rounded-lg bg-primary/40 flex items-center justify-center mb-4 shadow-md">
+                      <Lock className="h-6 w-6 text-white" />
                     </div>
                     <h3 className="text-xl font-bold text-white">Private & Secure</h3>
                     <p className="mt-3 text-gray-200 text-base flex-grow">
@@ -206,9 +206,9 @@ export default function Home() {
                     </p>
                   </div>
 
-                  <div className="feature-card p-6 rounded-xl bg-gradient-to-br from-card/90 to-primary/10 shadow-xl flex flex-col h-full border border-primary/20 hover:border-primary/40 transition-all duration-300">
-                    <div className="w-12 h-12 rounded-lg bg-primary/30 flex items-center justify-center mb-4 shadow-md">
-                      <Music className="h-6 w-6 text-primary" />
+                  <div className="feature-card p-6 rounded-xl bg-black/50 shadow-xl flex flex-col h-full border-2 border-primary/30 hover:border-primary/60 transition-all duration-300">
+                    <div className="w-12 h-12 rounded-lg bg-primary/40 flex items-center justify-center mb-4 shadow-md">
+                      <Music className="h-6 w-6 text-white" />
                     </div>
                     <h3 className="text-xl font-bold text-white">Music Focus</h3>
                     <p className="mt-3 text-gray-200 text-base flex-grow">
@@ -216,9 +216,9 @@ export default function Home() {
                     </p>
                   </div>
 
-                  <div className="feature-card p-6 rounded-xl bg-gradient-to-br from-card/90 to-primary/10 shadow-xl flex flex-col h-full border border-primary/20 hover:border-primary/40 transition-all duration-300">
-                    <div className="w-12 h-12 rounded-lg bg-primary/30 flex items-center justify-center mb-4 shadow-md">
-                      <Headphones className="h-6 w-6 text-primary" />
+                  <div className="feature-card p-6 rounded-xl bg-black/50 shadow-xl flex flex-col h-full border-2 border-primary/30 hover:border-primary/60 transition-all duration-300">
+                    <div className="w-12 h-12 rounded-lg bg-primary/40 flex items-center justify-center mb-4 shadow-md">
+                      <Headphones className="h-6 w-6 text-white" />
                     </div>
                     <h3 className="text-xl font-bold text-white">Audio Comments</h3>
                     <p className="mt-3 text-gray-200 text-base flex-grow">
@@ -226,9 +226,9 @@ export default function Home() {
                     </p>
                   </div>
 
-                  <div className="feature-card p-6 rounded-xl bg-gradient-to-br from-card/90 to-primary/10 shadow-xl flex flex-col h-full border border-primary/20 hover:border-primary/40 transition-all duration-300">
-                    <div className="w-12 h-12 rounded-lg bg-primary/30 flex items-center justify-center mb-4 shadow-md">
-                      <Users className="h-6 w-6 text-primary" />
+                  <div className="feature-card p-6 rounded-xl bg-black/50 shadow-xl flex flex-col h-full border-2 border-primary/30 hover:border-primary/60 transition-all duration-300">
+                    <div className="w-12 h-12 rounded-lg bg-primary/40 flex items-center justify-center mb-4 shadow-md">
+                      <Users className="h-6 w-6 text-white" />
                     </div>
                     <h3 className="text-xl font-bold text-white">Collaborative Learning</h3>
                     <p className="mt-3 text-gray-200 text-base flex-grow">
