@@ -146,10 +146,9 @@ export default function Home() {
           </div>
         </div>
 
-        {/* Features & How It Works Combined Section */}
-        <div className="py-16 sm:py-20 bg-gradient-to-b from-card/50 to-background/80">
+        {/* Features Section */}
+        <div className="py-16 bg-card/30">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            {/* Features Section */}
             <div ref={featuresRef}>
               <div className="text-center features-heading">
                 <h2 className="text-base text-primary font-semibold tracking-wide uppercase">Features</h2>
@@ -162,8 +161,8 @@ export default function Home() {
               </div>
 
               <div ref={featureCardsRef} className="mt-12">
-                <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
-                  <div className="feature-card card p-6 rounded-xl bg-opacity-80 shadow-xl flex flex-col h-full">
+                <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                  <div className="feature-card p-6 rounded-xl bg-card shadow-xl flex flex-col h-full border border-primary/10">
                     <div className="w-12 h-12 rounded-lg bg-primary/20 flex items-center justify-center mb-4">
                       <Upload className="h-6 w-6 text-primary" />
                     </div>
@@ -173,7 +172,7 @@ export default function Home() {
                     </p>
                   </div>
 
-                  <div className="feature-card card p-6 rounded-xl bg-opacity-80 shadow-xl flex flex-col h-full">
+                  <div className="feature-card p-6 rounded-xl bg-card shadow-xl flex flex-col h-full border border-primary/10">
                     <div className="w-12 h-12 rounded-lg bg-primary/20 flex items-center justify-center mb-4">
                       <Clock className="h-6 w-6 text-primary" />
                     </div>
@@ -183,7 +182,7 @@ export default function Home() {
                     </p>
                   </div>
 
-                  <div className="feature-card card p-6 rounded-xl bg-opacity-80 shadow-xl flex flex-col h-full">
+                  <div className="feature-card p-6 rounded-xl bg-card shadow-xl flex flex-col h-full border border-primary/10">
                     <div className="w-12 h-12 rounded-lg bg-primary/20 flex items-center justify-center mb-4">
                       <Lock className="h-6 w-6 text-primary" />
                     </div>
@@ -193,7 +192,7 @@ export default function Home() {
                     </p>
                   </div>
 
-                  <div className="feature-card card p-6 rounded-xl bg-opacity-80 shadow-xl flex flex-col h-full">
+                  <div className="feature-card p-6 rounded-xl bg-card shadow-xl flex flex-col h-full border border-primary/10">
                     <div className="w-12 h-12 rounded-lg bg-primary/20 flex items-center justify-center mb-4">
                       <Music className="h-6 w-6 text-primary" />
                     </div>
@@ -203,7 +202,7 @@ export default function Home() {
                     </p>
                   </div>
 
-                  <div className="feature-card card p-6 rounded-xl bg-opacity-80 shadow-xl flex flex-col h-full">
+                  <div className="feature-card p-6 rounded-xl bg-card shadow-xl flex flex-col h-full border border-primary/10">
                     <div className="w-12 h-12 rounded-lg bg-primary/20 flex items-center justify-center mb-4">
                       <Headphones className="h-6 w-6 text-primary" />
                     </div>
@@ -213,7 +212,7 @@ export default function Home() {
                     </p>
                   </div>
 
-                  <div className="feature-card card p-6 rounded-xl bg-opacity-80 shadow-xl flex flex-col h-full">
+                  <div className="feature-card p-6 rounded-xl bg-card shadow-xl flex flex-col h-full border border-primary/10">
                     <div className="w-12 h-12 rounded-lg bg-primary/20 flex items-center justify-center mb-4">
                       <Users className="h-6 w-6 text-primary" />
                     </div>
@@ -227,12 +226,12 @@ export default function Home() {
             </div>
             
             {/* Divider with How It Works Title */}
-            <div className="relative mt-20 mb-12">
+            <div className="relative mt-12 mb-8">
               <div className="absolute inset-0 flex items-center">
                 <div className="w-full border-t border-primary/10"></div>
               </div>
               <div className="relative flex justify-center text-center">
-                <div className="bg-background/20 backdrop-blur-sm px-8 py-4">
+                <div className="bg-card/80 backdrop-blur-sm px-8 py-4 rounded-lg">
                   <h2 className="text-base text-primary font-semibold tracking-wide uppercase">How it works</h2>
                   <p className="mt-2 text-3xl leading-8 font-extrabold tracking-tight text-white sm:text-4xl">
                     Improve faster with focused feedback
