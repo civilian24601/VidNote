@@ -64,28 +64,30 @@
     content: "";
     position: absolute;
     top: 0;
-    left: -100%;
+    left: 0;
     width: 100%;
     height: 100%;
-    background: linear-gradient(
-      90deg,
-      transparent,
-      rgba(255, 255, 255, 0.05),
-      transparent
+    background: radial-gradient(
+      circle at 50% 50%, 
+      rgba(5, 193, 193, 0.08) 0%, 
+      transparent 70%
     );
-    animation: shine 3s infinite;
+    animation: pulse 10s infinite ease-in-out;
     z-index: 1;
   }
   
-  @keyframes shine {
+  @keyframes pulse {
     0% {
-      left: -100%;
+      opacity: 0.3;
+      transform: scale(0.9);
     }
-    20% {
-      left: 100%;
+    50% {
+      opacity: 0.6;
+      transform: scale(1.05);
     }
     100% {
-      left: 100%;
+      opacity: 0.3;
+      transform: scale(0.9);
     }
   }
 
