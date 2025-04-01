@@ -1,0 +1,84 @@
+You are a software architect and execution agent working inside Replit.
+
+Your task is to bootstrap a complete developer blueprint for the following project idea. This will guide all future development phases — no code should be written until the full `/docs/*.md` folder is complete and aligned.
+
+---
+
+## IDEA
+
+**Name:** VidNote
+
+**One-liner:** A web tool that allows music students to upload performance videos and receive timestamped feedback from teachers or peers.
+
+**Core Use Case:**  
+- Students upload a video of their practice  
+- Teachers leave time-coded text (or audio) comments  
+- Student sees synced comment thread tied to playback  
+- Playback UI supports "jump to comment" navigation  
+- All feedback is private to the student and their reviewers
+
+This tool is lightweight, async, and optimized for mobile, music coaching, and time-based review.
+
+---
+
+## BUILD & UX REQUIREMENTS
+
+- **Frontend:** React + TailwindCSS + shadcn/ui  
+- **Video Player:** Plyr.js or equivalent (customizable `video` element welcome)  
+- **Backend:** TypeScript + Express (or FastAPI if Python chosen)  
+- **DB:** Supabase (PostgreSQL, Auth, Storage)  
+- **Storage:** Videos and comments must be securely stored; comments tied to timestamp, user, and video ID  
+- **Routing:** Standard auth routes (`/login`, `/signup`), dashboard (`/videos`), view mode (`/watch/:id`), comment mode  
+- **Mobile-First:** UI must collapse cleanly below 768px. Playback and feedback must be usable on mobile.  
+- **Motion & Polish:** Smooth animations, comment fade-ins, floating cards, toast notifications, button hover states  
+- **UI Style:** Notion-meets-Loom. Modern, clean, white-space-driven. Light mode only for now.  
+- **Auth:** Supabase Auth (email/password or magic link). Only video owner or invited reviewers can view content.  
+- **Tech Discipline:** Shared `/types` folder for all types. Commit standards from `GitWorkflow.md`. CI-ready.
+
+---
+
+## FOLDER STRUCTURE
+
+- `/frontend` — UI code  
+- `/backend` — API logic  
+- `/types` — Shared TypeScript interfaces  
+- `/docs` — Blueprint documents (see below)  
+- `/scripts` — Utility scripts if needed  
+- `.env` — Environment file  
+- `README.md` — Will be generated last  
+- `.gitignore`, `.replit`, `.github/` — Standard project controls
+
+---
+
+## BLUEPRINT DOCS TO GENERATE
+
+Generate all the following files in `/docs`, using the exact structure and language from the Blueprint system:
+
+1. `SoftwareBlueprintIntake.md` — fill based on this prompt  
+2. `PRD.md` — define core roles (student, teacher), flows, permissions  
+3. `AppFlow.md` — screen-by-screen, action-by-action walkthrough  
+4. `BackendStructure.md` — DB tables, relationships, storage, auth logic  
+5. `TechStack.md` — lock all tech down (frameworks, APIs, storage, linting, hosting)  
+6. `FrontendGuidelines.md` — typography, spacing, color, animations, component rules  
+7. `ImplementationPlan.md` — 7-phase build roadmap, git-linked per phase  
+8. `TestPlan.md` — unit, integration, E2E, a11y, coverage targets  
+9. `GitWorkflow.md` — branch, commit, PR rules  
+10. `README.md` — include summary, folder usage, build/deploy guide
+
+Each doc must start with:  
+`_Last updated: YYYY-MM-DD HH:mm EST — v1.0_`
+
+Do not skip any document. These will serve as the foundation for all code generation that follows.
+
+---
+
+## FINAL INSTRUCTIONS
+
+- Once docs are generated, **pause.**  
+- Do not begin coding until blueprints are reviewed.  
+- Ensure `/docs` is fully populated and versioned.  
+- Confirm Replit compatibility (single workspace OK, or split frontend/backend folders inside same project).
+
+You are building this app in a Replit workspace, with maximum clarity and agent-developer alignment.
+
+Begin.
