@@ -41,7 +41,7 @@ type UploadValues = z.infer<typeof uploadSchema>;
 export default function Videos() {
   const [_, navigate] = useLocation();
   const { isAuthenticated, user } = useAuth();
-  const { data: videos, isLoading } = useVideos();
+  const { data: videos, isLoading, refetch } = useVideos();
   const { mutateAsync: uploadVideo, isPending: isUploading } = useUploadVideo();
   const { toast } = useToast();
   const [uploadDialogOpen, setUploadDialogOpen] = useState(false);
@@ -94,6 +94,9 @@ export default function Videos() {
       });
       
       await uploadVideo(formData);
+      
+      // Manually refetch videos to ensure latest uploads appear
+      await refetch();
       
       toast({
         title: "Video uploaded successfully",

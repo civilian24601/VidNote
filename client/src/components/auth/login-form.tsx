@@ -40,12 +40,18 @@ export function LoginForm() {
   const onSubmit = async (values: LoginValues) => {
     setIsLoading(true);
     try {
-      await login(values.email, values.password);
+      const user = await login(values.email, values.password);
       toast({
         title: "Login successful",
         description: "You have been successfully logged in.",
       });
-      navigate("/videos");
+      
+      // Redirect based on user role
+      if (user.role === 'teacher') {
+        navigate("/dashboard");
+      } else {
+        navigate("/videos");
+      }
     } catch (error) {
       toast({
         title: "Login failed",

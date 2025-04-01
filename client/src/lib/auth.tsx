@@ -137,12 +137,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           userData = MOCK_STUDENT;
         }
         
-        // Store minimal user data in localStorage for API authentication
-        localStorage.setItem("user", JSON.stringify({
-          id: userData.id,
-          role: userData.role,
-          email: userData.email
-        }));
+        // Store complete user data in localStorage for persistence across refreshes
+        localStorage.setItem("user", JSON.stringify(userData));
         
         setUser(userData);
         return userData;
@@ -158,12 +154,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (data.user) {
           const userData = mapSupabaseAuthToUser(data.user);
           
-          // Store minimal user data in localStorage for API authentication
-          localStorage.setItem("user", JSON.stringify({
-            id: userData.id,
-            role: userData.role,
-            email: userData.email
-          }));
+          // Store complete user data in localStorage for persistence across refreshes
+          localStorage.setItem("user", JSON.stringify(userData));
           
           setUser(userData);
           return userData;
@@ -196,12 +188,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           createdAt: new Date()
         };
         
-        // Store minimal user data in localStorage for API authentication
-        localStorage.setItem("user", JSON.stringify({
-          id: newUser.id,
-          role: newUser.role,
-          email: newUser.email
-        }));
+        // Store complete user data in localStorage for persistence across refreshes
+        localStorage.setItem("user", JSON.stringify(newUser));
         
         setUser(newUser);
         return newUser;
@@ -227,12 +215,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (data.user) {
           const newUser = mapSupabaseAuthToUser(data.user, userData);
           
-          // Store minimal user data in localStorage for API authentication
-          localStorage.setItem("user", JSON.stringify({
-            id: newUser.id,
-            role: newUser.role,
-            email: newUser.email
-          }));
+          // Store complete user data in localStorage for persistence across refreshes
+          localStorage.setItem("user", JSON.stringify(newUser));
           
           setUser(newUser);
           return newUser;

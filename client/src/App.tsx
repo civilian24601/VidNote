@@ -1,4 +1,4 @@
-import { Switch, Route } from "wouter";
+import { Switch, Route, useLocation } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
@@ -9,27 +9,67 @@ import Watch from "./pages/watch";
 import Shared from "./pages/shared";
 import Login from "./pages/login";
 import Register from "./pages/register";
-import { AuthProvider } from "./lib/auth";
+import { AuthProvider, useAuth } from "./lib/auth";
 import Dashboard from "./pages/dashboard";
 import Profile from "./pages/profile";
 import Students from "./pages/students";
 import StudentDetail from "./pages/student-detail";
 import Analytics from "./pages/analytics";
+import { useEffect } from "react";
+
+// Protected route component that redirects to login if not authenticated
+function ProtectedRoute({ component: Component, ...rest }: { component: React.ComponentType<any>, path?: string }) {
+  const { isAuthenticated, loading } = useAuth();
+  const [, navigate] = useLocation();
+  
+  useEffect(() => {
+    if (!loading && !isAuthenticated) {
+      navigate("/login");
+    }
+  }, [isAuthenticated, loading, navigate]);
+
+  // If still loading or authenticated, render the component
+  return loading ? null : isAuthenticated ? <Component {...rest} /> : null;
+}
+
+// Teacher-only route that checks if the user is a teacher
+function TeacherRoute({ component: Component, ...rest }: { component: React.ComponentType<any>, path?: string }) {
+  const { isAuthenticated, loading, user } = useAuth();
+  const [, navigate] = useLocation();
+  
+  useEffect(() => {
+    if (!loading) {
+      if (!isAuthenticated) {
+        navigate("/login");
+      } else if (user?.role !== "teacher") {
+        navigate("/videos"); // Redirect non-teachers to videos
+      }
+    }
+  }, [isAuthenticated, loading, navigate, user]);
+
+  // If still loading or is a teacher, render the component
+  return loading ? null : (isAuthenticated && user?.role === "teacher") ? <Component {...rest} /> : null;
+}
 
 function Router() {
   return (
     <Switch>
       <Route path="/" component={Home} />
-      <Route path="/videos" component={Videos} />
-      <Route path="/watch/:id" component={Watch} />
-      <Route path="/shared" component={Shared} />
       <Route path="/login" component={Login} />
       <Route path="/register" component={Register} />
-      <Route path="/dashboard" component={Dashboard} />
-      <Route path="/profile" component={Profile} />
-      <Route path="/students" component={Students} />
-      <Route path="/students/:id" component={StudentDetail} />
-      <Route path="/analytics" component={Analytics} />
+      
+      {/* Protected routes */}
+      <Route path="/videos" component={(props) => <ProtectedRoute component={Videos} {...props} />} />
+      <Route path="/watch/:id" component={(props) => <ProtectedRoute component={Watch} {...props} />} />
+      <Route path="/shared" component={(props) => <ProtectedRoute component={Shared} {...props} />} />
+      <Route path="/profile" component={(props) => <ProtectedRoute component={Profile} {...props} />} />
+      
+      {/* Teacher-only routes */}
+      <Route path="/dashboard" component={(props) => <TeacherRoute component={Dashboard} {...props} />} />
+      <Route path="/students" component={(props) => <TeacherRoute component={Students} {...props} />} />
+      <Route path="/students/:id" component={(props) => <TeacherRoute component={StudentDetail} {...props} />} />
+      <Route path="/analytics" component={(props) => <TeacherRoute component={Analytics} {...props} />} />
+      
       <Route component={NotFound} />
     </Switch>
   );
