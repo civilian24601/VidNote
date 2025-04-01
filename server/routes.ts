@@ -1,8 +1,18 @@
-import express, { type Express, Request, Response } from "express";
+import express, { type Express, Response } from "express";
+import { Request } from "express";
 import { createServer, type Server } from "http";
 import { WebSocketServer, WebSocket } from 'ws';
 import { storage } from "./storage";
-import { insertUserSchema, insertVideoSchema, insertCommentSchema, insertVideoSharingSchema } from "@shared/schema";
+import { insertUserSchema, insertVideoSchema, insertCommentSchema, insertVideoSharingSchema, User } from "@shared/schema";
+
+// Extend Express Request type with our user property
+declare global {
+  namespace Express {
+    interface Request {
+      user?: User;
+    }
+  }
+}
 import { ZodError } from "zod";
 import multer from "multer";
 import path from "path";
@@ -29,14 +39,17 @@ const supabase = mockSupabase;
 // Configure multer for file uploads
 const upload = multer({
   storage: multer.memoryStorage(),
-  limits: { fileSize: 100 * 1024 * 1024 }, // 100MB limit
+  limits: { 
+    fileSize: 500 * 1024 * 1024, // 500MB limit
+    fieldSize: 25 * 1024 * 1024 // 25MB limit for text fields
+  },
 });
 
 export async function registerRoutes(app: Express): Promise<Server> {
   const router = express.Router();
   
   // Error handling middleware
-  const handleError = (err: any, res: Response) => {
+  const handleError = (err: any, res: express.Response) => {
     console.error(err);
     if (err instanceof ZodError) {
       return res.status(400).json({ 
@@ -48,7 +61,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   };
 
   // Authentication Middleware
-  const requireAuth = async (req: Request, res: Response, next: Function) => {
+  const requireAuth = async (req: express.Request, res: express.Response, next: express.NextFunction) => {
     const userId = req.headers.authorization;
     if (!userId) {
       return res.status(401).json({ message: "Unauthorized" });
@@ -64,9 +77,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   };
 
   // Authorization Middleware for video access
-  const canAccessVideo = async (req: Request, res: Response, next: Function) => {
+  const canAccessVideo = async (req: express.Request, res: express.Response, next: express.NextFunction) => {
     const videoId = parseInt(req.params.id);
-    const userId = (req.user as any).id;
+    const userId = req.user!.id;
     
     const canAccess = await storage.canUserAccessVideo(videoId, userId);
     if (!canAccess) {
@@ -77,7 +90,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   };
 
   // User Routes
-  router.post("/users/register", async (req, res) => {
+  router.post("/users/register", async (req: express.Request, res: express.Response) => {
     try {
       const userData = insertUserSchema.parse(req.body);
       
@@ -103,7 +116,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  router.post("/users/login", async (req, res) => {
+  router.post("/users/login", async (req: express.Request, res: express.Response) => {
     try {
       const { email, password } = req.body;
       
@@ -125,9 +138,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Video Routes
-  router.get("/videos", requireAuth, async (req, res) => {
+  router.get("/videos", requireAuth, async (req: express.Request, res: express.Response) => {
     try {
-      const userId = (req.user as any).id;
+      const userId = req.user!.id;
       const videos = await storage.getVideosByUser(userId);
       res.json(videos);
     } catch (err) {
@@ -137,7 +150,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   router.get("/videos/shared", requireAuth, async (req, res) => {
     try {
-      const userId = (req.user as any).id;
+      const userId = req.user!.id;
       const videos = await storage.getSharedVideosForUser(userId);
       res.json(videos);
     } catch (err) {
@@ -162,7 +175,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   router.post("/videos", requireAuth, upload.single("video"), async (req, res) => {
     try {
-      const userId = (req.user as any).id;
+      const userId = req.user!.id;
       
       if (!req.file) {
         return res.status(400).json({ message: "No video file uploaded" });
@@ -210,7 +223,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   router.put("/videos/:id", requireAuth, async (req, res) => {
     try {
       const videoId = parseInt(req.params.id);
-      const userId = (req.user as any).id;
+      const userId = req.user!.id;
       
       const video = await storage.getVideo(videoId);
       if (!video) {
@@ -231,7 +244,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   router.delete("/videos/:id", requireAuth, async (req, res) => {
     try {
       const videoId = parseInt(req.params.id);
-      const userId = (req.user as any).id;
+      const userId = req.user!.id;
       
       const video = await storage.getVideo(videoId);
       if (!video) {
@@ -256,7 +269,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const comments = await storage.getCommentsByVideo(videoId);
       
       // Get all user IDs from comments
-      const userIds = [...new Set(comments.map(comment => comment.userId))];
+      const userIds = Array.from(new Set(comments.map(comment => comment.userId)));
       
       // Get all users with those IDs
       const users = await Promise.all(
@@ -287,7 +300,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   router.post("/videos/:id/comments", requireAuth, canAccessVideo, async (req, res) => {
     try {
       const videoId = parseInt(req.params.id);
-      const userId = (req.user as any).id;
+      const userId = req.user!.id;
       
       const commentData = {
         videoId,
@@ -320,7 +333,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   router.put("/comments/:id", requireAuth, async (req, res) => {
     try {
       const commentId = parseInt(req.params.id);
-      const userId = (req.user as any).id;
+      const userId = req.user!.id;
       
       const comment = await storage.getComment(commentId);
       if (!comment) {
@@ -341,7 +354,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   router.delete("/comments/:id", requireAuth, async (req, res) => {
     try {
       const commentId = parseInt(req.params.id);
-      const userId = (req.user as any).id;
+      const userId = req.user!.id;
       
       const comment = await storage.getComment(commentId);
       if (!comment) {
@@ -363,7 +376,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   router.post("/videos/:id/share", requireAuth, async (req, res) => {
     try {
       const videoId = parseInt(req.params.id);
-      const userId = (req.user as any).id;
+      const userId = req.user!.id;
       
       // Check if video exists and user is the owner
       const video = await storage.getVideo(videoId);
@@ -401,7 +414,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   router.delete("/videos/:id/share/:userId", requireAuth, async (req, res) => {
     try {
       const videoId = parseInt(req.params.id);
-      const currentUserId = (req.user as any).id;
+      const currentUserId = req.user!.id;
       const targetUserId = parseInt(req.params.userId);
       
       // Check if video exists and user is the owner
@@ -425,7 +438,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   router.get("/videos/:id/sharing", requireAuth, async (req, res) => {
     try {
       const videoId = parseInt(req.params.id);
-      const userId = (req.user as any).id;
+      const userId = req.user!.id;
       
       // Check if video exists and user is the owner
       const video = await storage.getVideo(videoId);

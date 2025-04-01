@@ -10,7 +10,18 @@ import {
 
 export default function Home() {
   const [_, navigate] = useLocation();
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user, loading } = useAuth();
+  
+  // Redirect authenticated users to appropriate page
+  useEffect(() => {
+    if (!loading && isAuthenticated) {
+      if (user?.role === 'teacher') {
+        navigate('/dashboard');
+      } else {
+        navigate('/videos');
+      }
+    }
+  }, [isAuthenticated, user, loading, navigate]);
   
   // Embla carousel setup
   const [emblaRef, emblaApi] = useEmblaCarousel({ loop: true, align: 'start' });
@@ -32,12 +43,7 @@ export default function Home() {
     emblaApi.on('select', onSelect);
   }, [emblaApi, onSelect]);
   
-  // Redirect authenticated users
-  useEffect(() => {
-    if (isAuthenticated) {
-      navigate("/videos");
-    }
-  }, [isAuthenticated, navigate]);
+  // This duplicate redirect was removed - the first one handles all cases
 
   return (
     <div className="min-h-screen flex flex-col bg-background">

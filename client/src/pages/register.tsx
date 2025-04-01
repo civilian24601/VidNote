@@ -1,11 +1,26 @@
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import { Navbar } from "@/components/layout/navbar";
 import { RegisterForm } from "@/components/auth/register-form";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { motion } from "framer-motion";
 import { UserPlus } from "lucide-react";
+import { useAuth } from "@/lib/auth";
+import { useEffect } from "react";
 
 export default function Register() {
+  const { isAuthenticated, user, loading } = useAuth();
+  const [_, navigate] = useLocation();
+  
+  // Redirect authenticated users to appropriate page
+  useEffect(() => {
+    if (!loading && isAuthenticated) {
+      if (user?.role === 'teacher') {
+        navigate('/dashboard');
+      } else {
+        navigate('/videos');
+      }
+    }
+  }, [isAuthenticated, user, loading, navigate]);
   // Animation variants
   const containerVariants = {
     hidden: { opacity: 0 },

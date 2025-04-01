@@ -129,10 +129,7 @@ export default function Videos() {
     }
   };
 
-  if (!isAuthenticated) {
-    navigate("/login");
-    return null;
-  }
+  // Don't do anything here, redirection is handled by the ProtectedRoute wrapper
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;

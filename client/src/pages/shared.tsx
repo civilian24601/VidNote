@@ -12,10 +12,7 @@ export default function Shared() {
   const { isAuthenticated } = useAuth();
   const { data: videos, isLoading } = useSharedVideos();
 
-  if (!isAuthenticated) {
-    navigate("/login");
-    return null;
-  }
+  // Don't do anything here, redirection is handled by the ProtectedRoute wrapper
 
   return (
     <div className="min-h-screen bg-background flex flex-col pb-16 sm:pb-0">
