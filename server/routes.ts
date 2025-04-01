@@ -309,18 +309,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Authentication Middleware
   const requireAuth = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+    console.log("Authentication headers:", req.headers.authorization);
     const userId = req.headers.authorization;
+    
     if (!userId) {
-      return res.status(401).json({ message: "Unauthorized" });
+      console.log("Auth failed: No userId provided in authorization header");
+      return res.status(401).json({ message: "Unauthorized - No user ID provided" });
     }
     
-    const user = await storage.getUser(parseInt(userId));
-    if (!user) {
-      return res.status(401).json({ message: "User not found" });
+    try {
+      const parsedUserId = parseInt(userId);
+      if (isNaN(parsedUserId)) {
+        console.log("Auth failed: Invalid user ID format:", userId);
+        return res.status(400).json({ message: "Invalid user ID format" });
+      }
+      
+      console.log("Looking up user with ID:", parsedUserId);
+      const user = await storage.getUser(parsedUserId);
+      
+      if (!user) {
+        console.log("Auth failed: User not found with ID:", parsedUserId);
+        return res.status(401).json({ message: "User not found" });
+      }
+      
+      console.log("User authenticated successfully:", user.id, user.username);
+      req.user = user;
+      next();
+    } catch (error) {
+      console.error("Authentication error:", error);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      return res.status(500).json({ message: "Authentication error", details: errorMessage });
     }
-    
-    req.user = user;
-    next();
   };
 
   // Authorization Middleware for video access
@@ -794,6 +813,50 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Detailed Supabase connection test
+  router.get("/test-supabase", async (req, res) => {
+    try {
+      const result: any = {
+        supabaseClientInitialized: !!supabase,
+        supabaseAdminInitialized: !!supabaseAdmin,
+        supabaseUrl: supabaseUrl ? `${supabaseUrl.substring(0, 10)}...` : "Missing",
+        supabaseKeys: {
+          anonKey: supabaseAnonKey ? "Present (hidden)" : "Missing",
+          serviceKey: supabaseServiceKey ? "Present (hidden)" : "Missing"
+        },
+        environment: process.env.NODE_ENV || 'unknown',
+        timestamp: new Date().toISOString()
+      };
+      
+      // Additional diagnostics
+      if (supabaseAdmin) {
+        try {
+          // Test supabase admin client with a simple query
+          const testResult = await supabaseAdmin.storage.listBuckets();
+          result.adminBucketListResult = testResult.error ? 
+            { error: testResult.error.message } : 
+            { success: true, bucketCount: testResult.data?.length || 0 };
+        } catch (diagError: any) {
+          result.adminDiagnosticError = diagError instanceof Error ? diagError.message : 'Unknown diagnostic error';
+          console.error("Admin diagnostic failed:", diagError);
+        }
+      }
+      
+      res.json({
+        success: true,
+        message: "Supabase configuration check",
+        ...result
+      });
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      console.error("Supabase test error:", error);
+      res.status(500).json({ 
+        success: false, 
+        message: `Error testing Supabase: ${errorMessage}` 
+      });
+    }
+  });
+  
   // Test endpoint to check if buckets exist
   router.get("/test-buckets", async (req, res) => {
     try {

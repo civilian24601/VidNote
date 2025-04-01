@@ -16,6 +16,7 @@ import Students from "./pages/students";
 import StudentDetail from "./pages/student-detail";
 import Analytics from "./pages/analytics";
 import TestSupabase from "./pages/test-supabase";
+import TestSupabaseAPI from "./pages/test-supabase-api";
 import WebSocketDemo from "./pages/websocket-demo";
 import { useEffect } from "react";
 
@@ -80,6 +81,7 @@ function Router() {
       
       {/* Test routes */}
       <Route path="/test-supabase" component={TestSupabase} />
+      <Route path="/test-supabase-api" component={TestSupabaseAPI} />
       <Route path="/websocket-demo" component={WebSocketDemo} />
       
       <Route component={NotFound} />

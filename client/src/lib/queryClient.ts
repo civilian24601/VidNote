@@ -1,8 +1,8 @@
 import { QueryClient, QueryFunction } from "@tanstack/react-query";
-import { MOCK_VIDEOS, MOCK_COMMENTS, MOCK_SHARINGS, MOCK_USERS } from "./mockData";
 import { Video, Comment, VideoSharing } from "@shared/schema";
+import { getAuthHeader } from "./api";
 
-// This file is temporarily modified for UI development without Supabase
+// Real API implementation with Supabase backend
 
 async function throwIfResNotOk(res: Response) {
   if (!res.ok) {
@@ -11,191 +11,93 @@ async function throwIfResNotOk(res: Response) {
   }
 }
 
-// Interfaces for mock responses
-interface MockSuccessResponse {
+// Response interfaces for types
+interface ApiSuccessResponse {
   success: boolean;
 }
-
-type MockResponse<T> = T | MockSuccessResponse;
 
 export async function apiRequest(
   method: string,
   url: string,
   data?: unknown | undefined,
 ): Promise<Response> {
-  // For UI development, create mock responses
-  console.log(`Mock API request: ${method} ${url}`, data);
+  console.log(`API request: ${method} ${url}`, data ? 'with data' : '');
   
-  // Simulate network delay
-  await new Promise(resolve => setTimeout(resolve, 500));
+  const headers = getAuthHeader();
+  headers.append('Content-Type', 'application/json');
   
-  // Create mock response based on the request
-  let responseData: any = { success: true };
-  let status = 200;
+  const options: RequestInit = {
+    method,
+    headers
+  };
   
-  // Handle different API endpoints
-  if (url.startsWith("/api/users")) {
-    if (url.includes("login") || url.includes("register")) {
-      // Auth is handled by auth.ts
-      responseData = { id: 1, username: "student_demo", success: true };
-    }
-  } 
-  else if (url.startsWith("/api/videos")) {
-    // Video endpoints
-    if (method === "GET") {
-      if (Array.isArray(MOCK_VIDEOS)) {
-        responseData = [...MOCK_VIDEOS];
-      } else {
-        responseData = { success: true, videos: [] };
-      }
-    } 
-    else if (method === "POST") {
-      const mockVideo: Partial<Video> = { 
-        ...data as object, 
-        id: MOCK_VIDEOS.length + 1, 
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        videoStatus: "ready",
-        viewCount: 0
-      };
-      responseData = { ...mockVideo, success: true };
-    }
-    else if (method === "PUT" || method === "PATCH") {
-      const id = parseInt(url.split("/").pop() || "0");
-      const foundVideo = MOCK_VIDEOS.find(v => v.id === id);
-      if (foundVideo) {
-        responseData = { 
-          ...foundVideo, 
-          ...data as object,
-          updatedAt: new Date(),
-          success: true
-        };
-      } else {
-        responseData = { success: false, error: "Video not found" };
-        status = 404;
-      }
-    }
-    else if (method === "DELETE") {
-      responseData = { success: true };
-    }
-  }
-  else if (url.includes("/comments")) {
-    // Comment endpoints
-    if (method === "GET") {
-      const videoId = parseInt(url.split("/")[3]);
-      const comments = MOCK_COMMENTS.filter(c => c.videoId === videoId);
-      responseData = [...comments];
-    }
-    else if (method === "POST") {
-      const mockComment: Partial<Comment> = {
-        ...data as object,
-        id: MOCK_COMMENTS.length + 1,
-        createdAt: new Date(),
-        updatedAt: new Date()
-      };
-      responseData = { ...mockComment, success: true };
-    }
-    else if (method === "PUT" || method === "DELETE") {
-      responseData = { success: true };
-    }
+  if (data && method !== 'GET' && method !== 'HEAD') {
+    options.body = JSON.stringify(data);
   }
   
-  return new Response(JSON.stringify(responseData), {
-    status,
-    headers: { "Content-Type": "application/json" }
-  });
+  try {
+    const response = await fetch(url, options);
+    
+    // Log response status for debugging
+    console.log(`API response: ${method} ${url} - ${response.status}`);
+    
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error(`API error: ${method} ${url} - ${response.status}`, errorText);
+    }
+    
+    return response;
+  } catch (error) {
+    console.error(`API request failed: ${method} ${url}`, error);
+    throw error;
+  }
 }
 
 type UnauthorizedBehavior = "returnNull" | "throw";
 
-export const getQueryFn: <T>(options: {
+export function getQueryFn<T>(options: {
   on401: UnauthorizedBehavior;
-}) => QueryFunction<T> =
-  ({ on401: unauthorizedBehavior }) =>
-  async ({ queryKey }) => {
+}): QueryFunction<T> {
+  const { on401: unauthorizedBehavior } = options;
+  
+  return async ({ queryKey }) => {
     const path = queryKey[0] as string;
-    console.log(`Mock query fetch: ${path}`);
+    console.log(`API fetch: ${path}`);
     
-    // Simulate network delay
-    await new Promise(resolve => setTimeout(resolve, 300));
-    
-    // Provide mock data based on the path
-    let responseData: any;
-    
-    if (path === "/api/videos") {
-      responseData = [...MOCK_VIDEOS];
-    }
-    else if (path === "/api/videos/shared") {
-      // Filter videos that are shared
-      const sharedVideoIds = MOCK_SHARINGS.map(s => s.videoId);
-      responseData = MOCK_VIDEOS.filter(v => sharedVideoIds.includes(v.id));
-    }
-    else if (path.match(/\/api\/videos\/\d+$/)) {
-      const videoId = parseInt(path.split("/").pop() || "0");
-      responseData = MOCK_VIDEOS.find(v => v.id === videoId);
+    try {
+      const headers = getAuthHeader();
+      console.log('Using auth headers:', headers.has('Authorization') ? 'Auth header present' : 'No auth header');
       
-      if (!responseData) {
-        throw new Error("Video not found");
+      const response = await fetch(path, { headers });
+      
+      if (response.status === 401) {
+        console.error('Unauthorized request (401):', path);
+        
+        if (unauthorizedBehavior === "returnNull") {
+          return null as any;
+        } else {
+          throw new Error(`Unauthorized: ${path}`);
+        }
       }
-    }
-    else if (path.match(/\/api\/videos\/\d+\/comments$/)) {
-      const videoId = parseInt(path.split("/")[3]);
-      // Enrich comments with user data (excluding password)
-      const commentsWithUsers = MOCK_COMMENTS
-        .filter(c => c.videoId === videoId)
-        .map(comment => {
-          const user = MOCK_USERS.find((u: any) => u.id === comment.userId);
-          if (!user) return comment; // Shouldn't happen with valid data
-          
-          // Clone the user without password for security
-          const { password, ...userWithoutPassword } = user;
-          
-          return {
-            ...comment,
-            user: userWithoutPassword
-          };
-        });
-      responseData = commentsWithUsers;
-    }
-    else if (path.match(/\/api\/videos\/\d+\/sharing$/)) {
-      const videoId = parseInt(path.split("/")[3]);
-      // Enrich sharing data with user information
-      const sharingWithUsers = MOCK_SHARINGS
-        .filter(s => s.videoId === videoId)
-        .map(sharing => {
-          const user = MOCK_USERS.find((u: any) => u.id === sharing.userId);
-          if (!user) return sharing; // Shouldn't happen with valid data
-          
-          // Clone the user without password for security
-          const { password, ...userWithoutPassword } = user;
-          
-          return {
-            ...sharing,
-            user: userWithoutPassword
-          };
-        });
-      responseData = sharingWithUsers;
-    }
-    else if (path === "/api/auth/me") {
-      // This would normally check the session
-      if (unauthorizedBehavior === "returnNull") {
-        return null as any;
-      } else {
-        throw new Error("Unauthorized");
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`API Error (${response.status}): ${errorText || response.statusText}`);
       }
+      
+      const responseData = await response.json();
+      return responseData as T;
+    } catch (error) {
+      console.error(`API request failed for ${path}:`, error);
+      throw error;
     }
-    else {
-      console.warn(`No mock data available for path: ${path}`);
-      responseData = null;
-    }
-    
-    return responseData as any;
   };
+}
 
 export const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      queryFn: getQueryFn({ on401: "throw" }),
+      queryFn: getQueryFn<any>({ on401: "throw" }),
       refetchInterval: false,
       refetchOnWindowFocus: false,
       staleTime: Infinity,
