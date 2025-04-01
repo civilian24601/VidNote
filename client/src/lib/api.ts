@@ -114,7 +114,7 @@ export const useDeleteComment = () => {
 
 // Video Sharing
 export const useVideoSharing = (videoId: string | number) => {
-  return useQuery({
+  return useQuery<any[]>({
     queryKey: [`/api/videos/${videoId}/sharing`],
     enabled: !!videoId,
   });

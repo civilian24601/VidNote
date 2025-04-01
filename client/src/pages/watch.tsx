@@ -52,10 +52,12 @@ export default function Watch({ params }: { params: { id: string } }) {
   const [shareDialogOpen, setShareDialogOpen] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
 
-  const sharingUsers = sharingData?.map((sharing: any) => ({
-    ...sharing,
-    user: sharing.user
-  })) || [];
+  const sharingUsers = Array.isArray(sharingData) 
+    ? sharingData.map((sharing: any) => ({
+        ...sharing,
+        user: sharing.user
+      })) 
+    : [];
 
   const form = useForm<ShareValues>({
     resolver: zodResolver(shareSchema),
@@ -114,7 +116,7 @@ export default function Watch({ params }: { params: { id: string } }) {
 
   if (isLoadingVideo) {
     return (
-      <div className="min-h-screen bg-gray-50 flex flex-col">
+      <div className="min-h-screen bg-background flex flex-col">
         <Navbar />
         <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <Skeleton className="h-[400px] w-full rounded-xl mb-6" />
@@ -133,14 +135,19 @@ export default function Watch({ params }: { params: { id: string } }) {
 
   if (!video) {
     return (
-      <div className="min-h-screen bg-gray-50 flex flex-col">
+      <div className="min-h-screen bg-background flex flex-col">
         <Navbar />
         <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <div className="text-center py-12">
-            <h2 className="text-xl font-semibold text-gray-900">Video not found</h2>
-            <p className="mt-2 text-gray-500">The video you're looking for doesn't exist or you don't have permission to view it.</p>
+          <div className="text-center py-16 px-4 glassmorphism rounded-lg max-w-lg mx-auto animated-bg">
+            <div className="w-20 h-20 rounded-full bg-primary/20 flex items-center justify-center mx-auto mb-6">
+              <i className="ri-error-warning-line text-4xl text-primary"></i>
+            </div>
+            <h3 className="text-2xl font-bold text-white mb-3">Video not found</h3>
+            <p className="text-lg text-gray-300 mb-8">
+              The video you're looking for doesn't exist or you don't have permission to view it.
+            </p>
             <Button 
-              className="mt-6"
+              className="btn-gradient"
               onClick={() => navigate("/videos")}
             >
               Back to videos
@@ -152,7 +159,7 @@ export default function Watch({ params }: { params: { id: string } }) {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col pb-16 sm:pb-0">
+    <div className="min-h-screen bg-background flex flex-col pb-16 sm:pb-0">
       <Navbar />
       
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
@@ -174,9 +181,9 @@ export default function Watch({ params }: { params: { id: string } }) {
         />
 
         <Dialog open={shareDialogOpen} onOpenChange={setShareDialogOpen}>
-          <DialogContent className="sm:max-w-md">
+          <DialogContent className="sm:max-w-md bg-gray-900 border-gray-800">
             <DialogHeader>
-              <DialogTitle>Share video</DialogTitle>
+              <DialogTitle className="text-gradient text-xl">Share video</DialogTitle>
             </DialogHeader>
             <Form {...form}>
               <form onSubmit={form.handleSubmit(handleShareVideo)} className="space-y-4">
@@ -185,20 +192,20 @@ export default function Watch({ params }: { params: { id: string } }) {
                   name="email"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Email address</FormLabel>
+                      <FormLabel className="text-white">Email address</FormLabel>
                       <FormControl>
-                        <Input placeholder="Enter email address" {...field} />
+                        <Input placeholder="Enter email address" className="bg-gray-800/50 border-gray-600 text-white" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
-                <div className="flex justify-end space-x-2">
-                  <Button type="button" variant="outline" onClick={() => setShareDialogOpen(false)}>
+                <div className="flex justify-end space-x-3 mt-2">
+                  <Button type="button" variant="outline" className="border-gray-600 text-white hover:bg-gray-800/50" onClick={() => setShareDialogOpen(false)}>
                     Cancel
                   </Button>
-                  <Button type="submit" disabled={isSharing}>
-                    {isSharing ? "Sharing..." : "Share"}
+                  <Button type="submit" className="btn-gradient" disabled={isSharing}>
+                    {isSharing ? "Sharing..." : "Share Video"}
                   </Button>
                 </div>
               </form>
@@ -240,54 +247,54 @@ export default function Watch({ params }: { params: { id: string } }) {
             />
             
             {/* Feedback Summary Card */}
-            <div className="mt-6 bg-white rounded-xl shadow-sm overflow-hidden">
-              <div className="p-4 border-b">
-                <h2 className="font-semibold text-gray-900">Feedback Summary</h2>
+            <div className="mt-6 card glassmorphism rounded-xl overflow-hidden border-primary/10">
+              <div className="p-4 border-b border-gray-800">
+                <h2 className="font-semibold text-gradient">Feedback Summary</h2>
               </div>
               <div className="p-4">
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium">Technical Accuracy</span>
-                    <div className="w-24 bg-gray-200 rounded-full h-2">
-                      <div className="bg-accent-500 h-2 rounded-full" style={{ width: "75%" }}></div>
+                    <span className="text-sm font-medium text-white">Technical Accuracy</span>
+                    <div className="w-24 bg-gray-700 rounded-full h-2">
+                      <div className="bg-primary h-2 rounded-full" style={{ width: "75%" }}></div>
                     </div>
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium">Interpretation</span>
-                    <div className="w-24 bg-gray-200 rounded-full h-2">
-                      <div className="bg-accent-500 h-2 rounded-full" style={{ width: "85%" }}></div>
+                    <span className="text-sm font-medium text-white">Interpretation</span>
+                    <div className="w-24 bg-gray-700 rounded-full h-2">
+                      <div className="bg-primary h-2 rounded-full" style={{ width: "85%" }}></div>
                     </div>
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium">Dynamics</span>
-                    <div className="w-24 bg-gray-200 rounded-full h-2">
-                      <div className="bg-accent-500 h-2 rounded-full" style={{ width: "70%" }}></div>
+                    <span className="text-sm font-medium text-white">Dynamics</span>
+                    <div className="w-24 bg-gray-700 rounded-full h-2">
+                      <div className="bg-primary h-2 rounded-full" style={{ width: "70%" }}></div>
                     </div>
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium">Tempo</span>
-                    <div className="w-24 bg-gray-200 rounded-full h-2">
-                      <div className="bg-accent-500 h-2 rounded-full" style={{ width: "60%" }}></div>
+                    <span className="text-sm font-medium text-white">Tempo</span>
+                    <div className="w-24 bg-gray-700 rounded-full h-2">
+                      <div className="bg-primary h-2 rounded-full" style={{ width: "60%" }}></div>
                     </div>
                   </div>
                 </div>
                 
-                <div className="mt-4 pt-3 border-t">
-                  <h3 className="text-sm font-medium text-gray-500 mb-2">Key Areas to Improve</h3>
-                  <ul className="text-sm text-gray-800 space-y-1">
+                <div className="mt-4 pt-3 border-t border-gray-800">
+                  <h3 className="text-sm font-medium text-gray-400 mb-2">Key Areas to Improve</h3>
+                  <ul className="text-sm text-gray-300 space-y-1">
                     <li className="flex items-start">
-                      <i className="ri-focus-3-line text-error mr-1.5 mt-0.5"></i>
+                      <i className="ri-focus-3-line text-primary mr-1.5 mt-0.5"></i>
                       <span>Consistent pedaling through chord changes</span>
                     </li>
                     <li className="flex items-start">
-                      <i className="ri-focus-3-line text-error mr-1.5 mt-0.5"></i>
+                      <i className="ri-focus-3-line text-primary mr-1.5 mt-0.5"></i>
                       <span>Left hand position and wrist height</span>
                     </li>
                   </ul>
                 </div>
                 
                 <div className="mt-4">
-                  <Button className="w-full inline-flex justify-center items-center">
+                  <Button className="btn-gradient w-full inline-flex justify-center items-center">
                     <i className="ri-sticky-note-line mr-1.5"></i>
                     Generate Practice Notes
                   </Button>

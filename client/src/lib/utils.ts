@@ -26,7 +26,7 @@ export function getInitials(name: string): string {
 }
 
 // Format date to readable string
-export function formatDate(date: Date | string): string {
+export function formatDate(date: Date | string | null): string {
   if (!date) return "";
   
   const d = typeof date === "string" ? new Date(date) : date;
@@ -39,7 +39,7 @@ export function formatDate(date: Date | string): string {
 }
 
 // Format date to date and time
-export function formatDateTime(date: Date | string): string {
+export function formatDateTime(date: Date | string | null): string {
   if (!date) return "";
   
   const d = typeof date === "string" ? new Date(date) : date;

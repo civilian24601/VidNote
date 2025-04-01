@@ -100,7 +100,7 @@ export default function Videos() {
     <div className="min-h-screen bg-background flex flex-col pb-16 sm:pb-0">
       <Navbar />
       
-      <main className="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <main className="flex-grow max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="flex justify-between items-center mb-8">
           <h1 className="text-3xl font-bold text-white">My Videos</h1>
           <Dialog open={uploadDialogOpen} onOpenChange={setUploadDialogOpen}>
@@ -110,9 +110,9 @@ export default function Videos() {
                 Upload Video
               </Button>
             </DialogTrigger>
-            <DialogContent className="sm:max-w-md bg-card/90 backdrop-blur-md border-primary/20">
+            <DialogContent className="glassmorphism text-white border-gray-700">
               <DialogHeader>
-                <DialogTitle className="text-center text-xl text-gradient">Upload new video</DialogTitle>
+                <DialogTitle className="text-gradient text-xl">Upload new video</DialogTitle>
               </DialogHeader>
               <Form {...form}>
                 <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
@@ -121,9 +121,9 @@ export default function Videos() {
                     name="title"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Title</FormLabel>
+                        <FormLabel className="text-white">Title</FormLabel>
                         <FormControl>
-                          <Input placeholder="Enter video title" {...field} />
+                          <Input placeholder="Enter video title" className="bg-gray-800/50 border-gray-600 text-white" {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -134,10 +134,11 @@ export default function Videos() {
                     name="description"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Description (optional)</FormLabel>
+                        <FormLabel className="text-white">Description (optional)</FormLabel>
                         <FormControl>
                           <Textarea 
                             placeholder="Describe what you're working on"
+                            className="bg-gray-800/50 border-gray-600 text-white"
                             {...field}
                           />
                         </FormControl>
@@ -150,21 +151,21 @@ export default function Videos() {
                     name="video"
                     render={({ field: { value, ...field } }) => (
                       <FormItem>
-                        <FormLabel>Video file</FormLabel>
+                        <FormLabel className="text-white">Video file</FormLabel>
                         <FormControl>
-                          <div className="grid place-items-center p-4 border-2 border-dashed border-gray-300 rounded-lg">
+                          <div className="grid place-items-center p-6 border-2 border-dashed border-gray-600 rounded-lg bg-gray-800/30">
                             {selectedFile ? (
                               <div className="text-center">
-                                <i className="ri-file-video-line text-3xl text-primary-500"></i>
-                                <p className="mt-2 text-sm font-medium text-gray-900">{selectedFile.name}</p>
-                                <p className="text-xs text-gray-500">
+                                <i className="ri-file-video-line text-4xl text-primary"></i>
+                                <p className="mt-2 text-sm font-medium text-white">{selectedFile.name}</p>
+                                <p className="text-xs text-gray-300">
                                   {(selectedFile.size / (1024 * 1024)).toFixed(2)} MB
                                 </p>
                                 <Button 
                                   type="button" 
                                   variant="outline" 
                                   size="sm"
-                                  className="mt-2"
+                                  className="mt-3 border-gray-600 text-white hover:bg-gray-800/50"
                                   onClick={() => {
                                     setSelectedFile(null);
                                     form.setValue("video", undefined as any);
@@ -175,8 +176,8 @@ export default function Videos() {
                               </div>
                             ) : (
                               <>
-                                <i className="ri-upload-cloud-2-line text-3xl text-gray-400"></i>
-                                <p className="mt-2 text-sm text-gray-500">Click to select a video file</p>
+                                <i className="ri-upload-cloud-2-line text-4xl text-primary/80"></i>
+                                <p className="mt-3 text-sm text-gray-300">Click to select a video file</p>
                                 <input
                                   type="file"
                                   className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
@@ -191,11 +192,11 @@ export default function Videos() {
                       </FormItem>
                     )}
                   />
-                  <div className="flex justify-end space-x-2">
-                    <Button type="button" variant="outline" onClick={() => setUploadDialogOpen(false)}>
+                  <div className="flex justify-end space-x-3 mt-2">
+                    <Button type="button" variant="outline" className="border-gray-600 text-white hover:bg-gray-800/50" onClick={() => setUploadDialogOpen(false)}>
                       Cancel
                     </Button>
-                    <Button type="submit" disabled={isUploading}>
+                    <Button type="submit" className="btn-gradient" disabled={isUploading}>
                       {isUploading ? "Uploading..." : "Upload Video"}
                     </Button>
                   </div>
@@ -206,11 +207,11 @@ export default function Videos() {
         </div>
 
         {isLoading ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {[1, 2, 3].map((i) => (
-              <Card key={i} className="overflow-hidden">
-                <Skeleton className="h-40" />
-                <CardContent className="p-4">
+              <Card key={i} className="card overflow-hidden border-primary/10">
+                <Skeleton className="h-48" />
+                <CardContent className="p-5">
                   <Skeleton className="h-6 w-3/4 mb-2" />
                   <Skeleton className="h-4 w-1/2" />
                 </CardContent>
