@@ -48,12 +48,26 @@ export function Navbar() {
         <div className="flex justify-between h-16">
           <div className="flex">
             <div className="flex-shrink-0 flex items-center">
-              <Link href="/" className="flex items-center space-x-2 cursor-pointer">
-                <div className="w-8 h-8 rounded-md bg-primary/80 flex items-center justify-center">
-                  <i className="ri-movie-2-line text-white text-lg"></i>
-                </div>
-                <span className="font-bold text-xl text-gradient">VidNote</span>
-              </Link>
+              {user ? (
+                // For authenticated users, link to role-specific dashboard
+                <Link 
+                  href={user.role === 'teacher' ? "/dashboard" : "/videos"} 
+                  className="flex items-center space-x-2 cursor-pointer"
+                >
+                  <div className="w-8 h-8 rounded-md bg-primary/80 flex items-center justify-center">
+                    <i className="ri-movie-2-line text-white text-lg"></i>
+                  </div>
+                  <span className="font-bold text-xl text-gradient">VidNote</span>
+                </Link>
+              ) : (
+                // For unauthenticated users, link to home
+                <Link href="/" className="flex items-center space-x-2 cursor-pointer">
+                  <div className="w-8 h-8 rounded-md bg-primary/80 flex items-center justify-center">
+                    <i className="ri-movie-2-line text-white text-lg"></i>
+                  </div>
+                  <span className="font-bold text-xl text-gradient">VidNote</span>
+                </Link>
+              )}
             </div>
             <div className="hidden sm:ml-6 sm:flex sm:space-x-8">
               {user?.role === "student" ? (

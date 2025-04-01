@@ -17,8 +17,12 @@ export default function Home() {
     if (!loading && isAuthenticated) {
       if (user?.role === 'teacher') {
         navigate('/dashboard');
-      } else {
+      } else if (user?.role === 'student') {
         navigate('/videos');
+      } else {
+        // Default for other roles or if role is undefined
+        console.log('User authenticated but has unknown role:', user?.role);
+        navigate('/profile');
       }
     }
   }, [isAuthenticated, user, loading, navigate]);

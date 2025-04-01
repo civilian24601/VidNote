@@ -42,10 +42,14 @@ function TeacherRoute({ component: Component, ...rest }: { component: React.Comp
       if (!isAuthenticated) {
         navigate("/login");
       } else if (user?.role !== "teacher") {
-        navigate("/videos"); // Redirect non-teachers to videos
+        // Use history to handle back button properly when redirecting
+        console.log("Non-teacher attempted to access teacher route", rest);
+        // Instead of redirecting to /videos which causes navigation issues,
+        // redirect to the appropriate role-based page
+        navigate(user?.role === "student" ? "/videos" : "/");
       }
     }
-  }, [isAuthenticated, loading, navigate, user]);
+  }, [isAuthenticated, loading, navigate, user, rest]);
 
   // If still loading or is a teacher, render the component
   return loading ? null : (isAuthenticated && user?.role === "teacher") ? <Component {...rest} /> : null;
