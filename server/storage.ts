@@ -133,7 +133,7 @@ export class MemStorage implements IStorage {
                    (Array.isArray(insertUser.instruments) ? 
                      insertUser.instruments : 
                      typeof insertUser.instruments === 'object' ? 
-                       Object.values(insertUser.instruments).map(v => String(v)) : 
+                       Array.from(Object.values(insertUser.instruments)).map(v => String(v)) : 
                        null) : 
                    null,
       experienceLevel: insertUser.experienceLevel || null,
@@ -157,7 +157,7 @@ export class MemStorage implements IStorage {
         instruments: Array.isArray(userData.instruments) ? 
           userData.instruments : 
           typeof userData.instruments === 'object' ? 
-            Object.values(userData.instruments).map(v => String(v)) : 
+            Array.from(Object.values(userData.instruments)).map(v => String(v)) : 
             null
       };
     }

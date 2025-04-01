@@ -137,8 +137,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           userData = MOCK_STUDENT;
         }
         
+        // Store minimal user data in localStorage for API authentication
+        localStorage.setItem("user", JSON.stringify({
+          id: userData.id,
+          role: userData.role,
+          email: userData.email
+        }));
+        
         setUser(userData);
-        localStorage.setItem("user", JSON.stringify(userData));
         return userData;
       } else {
         // Use Supabase Auth
@@ -151,6 +157,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         
         if (data.user) {
           const userData = mapSupabaseAuthToUser(data.user);
+          
+          // Store minimal user data in localStorage for API authentication
+          localStorage.setItem("user", JSON.stringify({
+            id: userData.id,
+            role: userData.role,
+            email: userData.email
+          }));
+          
           setUser(userData);
           return userData;
         } else {
@@ -182,8 +196,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           createdAt: new Date()
         };
         
+        // Store minimal user data in localStorage for API authentication
+        localStorage.setItem("user", JSON.stringify({
+          id: newUser.id,
+          role: newUser.role,
+          email: newUser.email
+        }));
+        
         setUser(newUser);
-        localStorage.setItem("user", JSON.stringify(newUser));
         return newUser;
       } else {
         // Use Supabase Auth
@@ -206,6 +226,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         
         if (data.user) {
           const newUser = mapSupabaseAuthToUser(data.user, userData);
+          
+          // Store minimal user data in localStorage for API authentication
+          localStorage.setItem("user", JSON.stringify({
+            id: newUser.id,
+            role: newUser.role,
+            email: newUser.email
+          }));
+          
           setUser(newUser);
           return newUser;
         } else {
