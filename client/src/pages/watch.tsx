@@ -119,7 +119,17 @@ export default function Watch({ params }: { params: { id: string } }) {
     } else if (videoError) {
       setVideoStatus("error");
     } else if (video) {
-      // Check if video exists but URL might not be valid yet (processing)
+      // First check the videoStatus from the server
+      console.log(`Video status from server: ${video.videoStatus}`);
+      
+      if (video.videoStatus === "ready") {
+        setVideoStatus("ready");
+        setIsVideoReady(true);
+        return;
+      }
+      
+      // Continue with existing checks only if server status isn't explicitly "ready"
+      // Check if video exists but URL might not be valid yet
       if (!video.url || video.url.includes('undefined') || video.url.trim() === '') {
         setVideoStatus("processing");
       } else {
