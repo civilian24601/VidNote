@@ -60,24 +60,69 @@ export function Navbar() {
               </Link>
             </div>
             <div className="hidden sm:ml-6 sm:flex sm:space-x-8">
-              <Link href="/videos">
-                <a className={`inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium ${
-                  location === "/videos" 
-                    ? "border-primary text-white" 
-                    : "border-transparent text-gray-200 hover:text-white hover:border-white/30"
-                }`}>
-                  Videos
-                </a>
-              </Link>
-              <Link href="/shared">
-                <a className={`inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium ${
-                  location === "/shared" 
-                    ? "border-primary text-white" 
-                    : "border-transparent text-gray-200 hover:text-white hover:border-white/30"
-                }`}>
-                  Shared with me
-                </a>
-              </Link>
+              {user?.role === "student" ? (
+                // Student navigation options
+                <>
+                  <Link href="/videos">
+                    <a className={`inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium ${
+                      location === "/videos" 
+                        ? "border-primary text-white" 
+                        : "border-transparent text-gray-200 hover:text-white hover:border-white/30"
+                    }`}>
+                      <i className="ri-video-line mr-1.5"></i>My Videos
+                    </a>
+                  </Link>
+                  <Link href="/shared">
+                    <a className={`inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium ${
+                      location === "/shared" 
+                        ? "border-primary text-white" 
+                        : "border-transparent text-gray-200 hover:text-white hover:border-white/30"
+                    }`}>
+                      <i className="ri-feedback-line mr-1.5"></i>Shared with me
+                    </a>
+                  </Link>
+                  <Link href="/dashboard">
+                    <a className={`inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium ${
+                      location === "/dashboard" 
+                        ? "border-primary text-white" 
+                        : "border-transparent text-gray-200 hover:text-white hover:border-white/30"
+                    }`}>
+                      <i className="ri-dashboard-line mr-1.5"></i>Dashboard
+                    </a>
+                  </Link>
+                </>
+              ) : (
+                // Teacher navigation options
+                <>
+                  <Link href="/students">
+                    <a className={`inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium ${
+                      location === "/students" 
+                        ? "border-primary text-white" 
+                        : "border-transparent text-gray-200 hover:text-white hover:border-white/30"
+                    }`}>
+                      <i className="ri-user-line mr-1.5"></i>Students
+                    </a>
+                  </Link>
+                  <Link href="/shared">
+                    <a className={`inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium ${
+                      location === "/shared" 
+                        ? "border-primary text-white" 
+                        : "border-transparent text-gray-200 hover:text-white hover:border-white/30"
+                    }`}>
+                      <i className="ri-video-line mr-1.5"></i>Pending Reviews
+                    </a>
+                  </Link>
+                  <Link href="/dashboard">
+                    <a className={`inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium ${
+                      location === "/dashboard" 
+                        ? "border-primary text-white" 
+                        : "border-transparent text-gray-200 hover:text-white hover:border-white/30"
+                    }`}>
+                      <i className="ri-dashboard-line mr-1.5"></i>Dashboard
+                    </a>
+                  </Link>
+                </>
+              )}
             </div>
           </div>
           <div className="flex items-center">
