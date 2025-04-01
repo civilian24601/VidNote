@@ -2,7 +2,9 @@ import {
   users, User, InsertUser,
   videos, Video, InsertVideo,
   comments, Comment, InsertComment,
-  videoSharing, VideoSharing, InsertVideoSharing
+  videoSharing, VideoSharing, InsertVideoSharing,
+  studentTeacherRelationships, StudentTeacherRelationship, InsertStudentTeacherRelationship,
+  notifications, Notification, InsertNotification
 } from "@shared/schema";
 
 export interface IStorage {
@@ -11,6 +13,9 @@ export interface IStorage {
   getUserByUsername(username: string): Promise<User | undefined>;
   getUserByEmail(email: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
+  updateUser(id: number, user: Partial<InsertUser>): Promise<User | undefined>;
+  verifyUser(id: number): Promise<boolean>;
+  updateLastLogin(id: number): Promise<boolean>;
   
   // Video operations
   getVideo(id: number): Promise<Video | undefined>;
@@ -19,19 +24,37 @@ export interface IStorage {
   createVideo(video: InsertVideo): Promise<Video>;
   updateVideo(id: number, video: Partial<InsertVideo>): Promise<Video | undefined>;
   deleteVideo(id: number): Promise<boolean>;
+  incrementVideoViews(id: number): Promise<boolean>;
+  updateVideoStatus(id: number, status: string): Promise<boolean>;
   
   // Comment operations
   getComment(id: number): Promise<Comment | undefined>;
   getCommentsByVideo(videoId: number): Promise<Comment[]>;
+  getRepliesByComment(commentId: number): Promise<Comment[]>;
   createComment(comment: InsertComment): Promise<Comment>;
-  updateComment(id: number, content: string): Promise<Comment | undefined>;
+  updateComment(id: number, content: string, category?: string): Promise<Comment | undefined>;
   deleteComment(id: number): Promise<boolean>;
   
   // Video sharing operations
   shareVideo(sharing: InsertVideoSharing): Promise<VideoSharing>;
   getVideoSharingsByVideo(videoId: number): Promise<VideoSharing[]>;
+  getVideoSharingsByUser(userId: number): Promise<VideoSharing[]>;
   unshareVideo(videoId: number, userId: number): Promise<boolean>;
   canUserAccessVideo(videoId: number, userId: number): Promise<boolean>;
+  
+  // Student-Teacher relationship operations
+  createRelationship(relationship: InsertStudentTeacherRelationship): Promise<StudentTeacherRelationship>;
+  getRelationshipById(id: number): Promise<StudentTeacherRelationship | undefined>;
+  getRelationshipsByStudent(studentId: number): Promise<StudentTeacherRelationship[]>;
+  getRelationshipsByTeacher(teacherId: number): Promise<StudentTeacherRelationship[]>;
+  updateRelationshipStatus(id: number, status: string): Promise<boolean>;
+  deleteRelationship(id: number): Promise<boolean>;
+  
+  // Notification operations
+  createNotification(notification: InsertNotification): Promise<Notification>;
+  getNotificationsByUser(userId: number): Promise<Notification[]>;
+  markNotificationAsRead(id: number): Promise<boolean>;
+  markAllNotificationsAsRead(userId: number): Promise<boolean>;
 }
 
 export class MemStorage implements IStorage {
@@ -39,22 +62,30 @@ export class MemStorage implements IStorage {
   private videos: Map<number, Video>;
   private comments: Map<number, Comment>;
   private videoSharings: Map<number, VideoSharing>;
+  private relationships: Map<number, StudentTeacherRelationship>;
+  private notifications: Map<number, Notification>;
   
   private userIdCounter: number;
   private videoIdCounter: number;
   private commentIdCounter: number;
   private videoSharingIdCounter: number;
+  private relationshipIdCounter: number;
+  private notificationIdCounter: number;
   
   constructor() {
     this.users = new Map();
     this.videos = new Map();
     this.comments = new Map();
     this.videoSharings = new Map();
+    this.relationships = new Map();
+    this.notifications = new Map();
     
     this.userIdCounter = 1;
     this.videoIdCounter = 1;
     this.commentIdCounter = 1;
     this.videoSharingIdCounter = 1;
+    this.relationshipIdCounter = 1;
+    this.notificationIdCounter = 1;
   }
   
   // User operations
@@ -77,9 +108,48 @@ export class MemStorage implements IStorage {
   async createUser(insertUser: InsertUser): Promise<User> {
     const id = this.userIdCounter++;
     const now = new Date();
-    const user: User = { ...insertUser, id, createdAt: now };
+    const user: User = { 
+      ...insertUser, 
+      id, 
+      createdAt: now,
+      verified: false,
+      active: true,
+      lastLogin: null,
+      instruments: insertUser.instruments || null,
+      experienceLevel: insertUser.experienceLevel || null,
+      bio: insertUser.bio || null
+    };
     this.users.set(id, user);
     return user;
+  }
+  
+  async updateUser(id: number, userData: Partial<InsertUser>): Promise<User | undefined> {
+    const existingUser = this.users.get(id);
+    if (!existingUser) {
+      return undefined;
+    }
+    
+    const updatedUser = { ...existingUser, ...userData };
+    this.users.set(id, updatedUser);
+    return updatedUser;
+  }
+  
+  async verifyUser(id: number): Promise<boolean> {
+    const user = this.users.get(id);
+    if (!user) return false;
+    
+    user.verified = true;
+    this.users.set(id, user);
+    return true;
+  }
+  
+  async updateLastLogin(id: number): Promise<boolean> {
+    const user = this.users.get(id);
+    if (!user) return false;
+    
+    user.lastLogin = new Date();
+    this.users.set(id, user);
+    return true;
   }
   
   // Video operations
@@ -108,7 +178,17 @@ export class MemStorage implements IStorage {
   async createVideo(insertVideo: InsertVideo): Promise<Video> {
     const id = this.videoIdCounter++;
     const now = new Date();
-    const video: Video = { ...insertVideo, id, createdAt: now };
+    const video: Video = { 
+      ...insertVideo, 
+      id, 
+      createdAt: now,
+      updatedAt: now,
+      videoStatus: "processing",
+      viewCount: 0,
+      pieceName: insertVideo.pieceName || null,
+      composer: insertVideo.composer || null,
+      practiceGoals: insertVideo.practiceGoals || null
+    };
     this.videos.set(id, video);
     return video;
   }
@@ -119,7 +199,11 @@ export class MemStorage implements IStorage {
       return undefined;
     }
     
-    const updatedVideo = { ...existingVideo, ...video };
+    const updatedVideo = { 
+      ...existingVideo, 
+      ...video,
+      updatedAt: new Date()
+    };
     this.videos.set(id, updatedVideo);
     return updatedVideo;
   }
@@ -142,6 +226,24 @@ export class MemStorage implements IStorage {
     return this.videos.delete(id);
   }
   
+  async incrementVideoViews(id: number): Promise<boolean> {
+    const video = this.videos.get(id);
+    if (!video) return false;
+    
+    video.viewCount = (video.viewCount || 0) + 1;
+    this.videos.set(id, video);
+    return true;
+  }
+  
+  async updateVideoStatus(id: number, status: string): Promise<boolean> {
+    const video = this.videos.get(id);
+    if (!video) return false;
+    
+    video.videoStatus = status;
+    this.videos.set(id, video);
+    return true;
+  }
+  
   // Comment operations
   async getComment(id: number): Promise<Comment | undefined> {
     return this.comments.get(id);
@@ -153,26 +255,51 @@ export class MemStorage implements IStorage {
     );
   }
   
+  async getRepliesByComment(commentId: number): Promise<Comment[]> {
+    return Array.from(this.comments.values()).filter(
+      (comment) => comment.parentCommentId === commentId
+    );
+  }
+  
   async createComment(insertComment: InsertComment): Promise<Comment> {
     const id = this.commentIdCounter++;
     const now = new Date();
-    const comment: Comment = { ...insertComment, id, createdAt: now };
+    const comment: Comment = { 
+      ...insertComment, 
+      id, 
+      createdAt: now,
+      updatedAt: now,
+      category: insertComment.category || null,
+      parentCommentId: insertComment.parentCommentId || null
+    };
     this.comments.set(id, comment);
     return comment;
   }
   
-  async updateComment(id: number, content: string): Promise<Comment | undefined> {
+  async updateComment(id: number, content: string, category?: string): Promise<Comment | undefined> {
     const existingComment = this.comments.get(id);
     if (!existingComment) {
       return undefined;
     }
     
-    const updatedComment = { ...existingComment, content };
+    const updatedComment = { 
+      ...existingComment, 
+      content,
+      category: category !== undefined ? category : existingComment.category,
+      updatedAt: new Date()
+    };
     this.comments.set(id, updatedComment);
     return updatedComment;
   }
   
   async deleteComment(id: number): Promise<boolean> {
+    // Also delete any replies to this comment
+    Array.from(this.comments.values()).forEach(comment => {
+      if (comment.parentCommentId === id) {
+        this.comments.delete(comment.id);
+      }
+    });
+    
     return this.comments.delete(id);
   }
   
@@ -188,6 +315,12 @@ export class MemStorage implements IStorage {
   async getVideoSharingsByVideo(videoId: number): Promise<VideoSharing[]> {
     return Array.from(this.videoSharings.values()).filter(
       (sharing) => sharing.videoId === videoId
+    );
+  }
+  
+  async getVideoSharingsByUser(userId: number): Promise<VideoSharing[]> {
+    return Array.from(this.videoSharings.values()).filter(
+      (sharing) => sharing.userId === userId
     );
   }
   
@@ -219,6 +352,97 @@ export class MemStorage implements IStorage {
     );
     
     return !!sharing;
+  }
+  
+  // Student-Teacher relationship operations
+  async createRelationship(insertRelationship: InsertStudentTeacherRelationship): Promise<StudentTeacherRelationship> {
+    const id = this.relationshipIdCounter++;
+    const now = new Date();
+    
+    const relationship: StudentTeacherRelationship = {
+      ...insertRelationship,
+      id,
+      createdAt: now,
+      updatedAt: now,
+      status: insertRelationship.status || "pending"
+    };
+    
+    this.relationships.set(id, relationship);
+    return relationship;
+  }
+  
+  async getRelationshipById(id: number): Promise<StudentTeacherRelationship | undefined> {
+    return this.relationships.get(id);
+  }
+  
+  async getRelationshipsByStudent(studentId: number): Promise<StudentTeacherRelationship[]> {
+    return Array.from(this.relationships.values()).filter(
+      rel => rel.studentId === studentId
+    );
+  }
+  
+  async getRelationshipsByTeacher(teacherId: number): Promise<StudentTeacherRelationship[]> {
+    return Array.from(this.relationships.values()).filter(
+      rel => rel.teacherId === teacherId
+    );
+  }
+  
+  async updateRelationshipStatus(id: number, status: string): Promise<boolean> {
+    const relationship = this.relationships.get(id);
+    if (!relationship) return false;
+    
+    relationship.status = status;
+    relationship.updatedAt = new Date();
+    this.relationships.set(id, relationship);
+    return true;
+  }
+  
+  async deleteRelationship(id: number): Promise<boolean> {
+    return this.relationships.delete(id);
+  }
+  
+  // Notification operations
+  async createNotification(insertNotification: InsertNotification): Promise<Notification> {
+    const id = this.notificationIdCounter++;
+    const now = new Date();
+    
+    const notification: Notification = {
+      ...insertNotification,
+      id,
+      createdAt: now,
+      isRead: false,
+      relatedId: insertNotification.relatedId || null
+    };
+    
+    this.notifications.set(id, notification);
+    return notification;
+  }
+  
+  async getNotificationsByUser(userId: number): Promise<Notification[]> {
+    return Array.from(this.notifications.values())
+      .filter(notif => notif.userId === userId)
+      .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime()); // Sort newest first
+  }
+  
+  async markNotificationAsRead(id: number): Promise<boolean> {
+    const notification = this.notifications.get(id);
+    if (!notification) return false;
+    
+    notification.isRead = true;
+    this.notifications.set(id, notification);
+    return true;
+  }
+  
+  async markAllNotificationsAsRead(userId: number): Promise<boolean> {
+    const userNotifications = Array.from(this.notifications.values())
+      .filter(notif => notif.userId === userId);
+    
+    for (const notification of userNotifications) {
+      notification.isRead = true;
+      this.notifications.set(notification.id, notification);
+    }
+    
+    return true;
   }
 }
 

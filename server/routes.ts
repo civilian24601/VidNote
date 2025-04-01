@@ -6,12 +6,24 @@ import { ZodError } from "zod";
 import multer from "multer";
 import path from "path";
 import fs from "fs";
-import { createClient } from "@supabase/supabase-js";
 
-// Set up Supabase client
-const supabaseUrl = process.env.SUPABASE_URL || "";
-const supabaseKey = process.env.SUPABASE_ANON_KEY || "";
-const supabase = createClient(supabaseUrl, supabaseKey);
+// Mock Supabase client for development
+const mockSupabase = {
+  storage: {
+    from: (bucket: string) => ({
+      upload: async (path: string, buffer: Buffer, options: any) => ({
+        data: { path },
+        error: null
+      }),
+      getPublicUrl: (path: string) => ({
+        data: { publicUrl: `https://example.com/${path}` }
+      })
+    })
+  }
+};
+
+// Use mock Supabase for development
+const supabase = mockSupabase;
 
 // Configure multer for file uploads
 const upload = multer({
