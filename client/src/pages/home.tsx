@@ -1,20 +1,12 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import { useLocation } from "wouter";
 import { useAuth } from "@/lib/auth";
-import { Button } from "@/components/ui/button";
 import { Navbar } from "@/components/layout/navbar";
-import { gsap } from "gsap";
-import { ScrollTrigger } from "gsap/ScrollTrigger";
 import useEmblaCarousel from 'embla-carousel-react';
 import { 
-  Music, Upload, Clock, Lock, Headphones, Users, 
-  MessageSquare, Award, TrendingUp, ArrowRight, Sparkles,
-  Lightbulb, GraduationCap, Share2, Layers, Mic, Star,
+  Music, Upload, Clock, Lock, Headphones, Users, Star,
   ChevronLeft, ChevronRight
 } from "lucide-react";
-
-// Register the ScrollTrigger plugin
-gsap.registerPlugin(ScrollTrigger);
 
 export default function Home() {
   const [_, navigate] = useLocation();
@@ -40,107 +32,39 @@ export default function Home() {
     emblaApi.on('select', onSelect);
   }, [emblaApi, onSelect]);
   
-  // Refs for animations
-  const heroRef = useRef<HTMLDivElement>(null);
-  const featuresRef = useRef<HTMLDivElement>(null);
-  const featureCardsRef = useRef<HTMLDivElement>(null);
-  
   // Redirect authenticated users
   useEffect(() => {
     if (isAuthenticated) {
       navigate("/videos");
     }
   }, [isAuthenticated, navigate]);
-  
-  // Hero animations
-  useEffect(() => {
-    if (heroRef.current) {
-      const tl = gsap.timeline();
-      
-      tl.from(".hero-title span:first-child", {
-        y: 50,
-        opacity: 0,
-        duration: 0.8,
-        ease: "power3.out"
-      })
-      .from(".hero-title span:last-child", {
-        y: 50,
-        opacity: 0,
-        duration: 0.8,
-        ease: "power3.out"
-      }, "-=0.6")
-      .from(".hero-text", {
-        y: 30,
-        opacity: 0,
-        duration: 0.8,
-        ease: "power3.out"
-      }, "-=0.6")
-      .from(".hero-buttons", {
-        y: 30,
-        opacity: 0,
-        duration: 0.8,
-        ease: "power3.out"
-      }, "-=0.6");
-    }
-  }, []);
-  
-  // Feature section animations
-  useEffect(() => {
-    if (featuresRef.current) {
-      gsap.from(".features-heading", {
-        scrollTrigger: {
-          trigger: ".features-heading",
-          start: "top 80%"
-        },
-        y: 50,
-        opacity: 0,
-        duration: 0.8,
-        stagger: 0.2,
-        ease: "power3.out"
-      });
-    }
-    
-    if (featureCardsRef.current) {
-      gsap.from(".feature-card", {
-        scrollTrigger: {
-          trigger: ".feature-card",
-          start: "top 80%"
-        },
-        y: 50,
-        opacity: 0,
-        duration: 0.6,
-        stagger: 0.2,
-        ease: "power3.out"
-      });
-    }
-  }, []);
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
       <Navbar />
       <main>
         {/* Hero Section */}
-        <div className="relative overflow-hidden animated-bg">
-          <div ref={heroRef} className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="relative overflow-hidden">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="pt-16 pb-16 md:pt-20 md:pb-20 lg:pt-24 lg:pb-28">
               <div className="md:max-w-2xl lg:max-w-3xl xl:max-w-4xl">
-                <h1 className="hero-title text-4xl font-extrabold tracking-tight sm:text-5xl md:text-6xl">
+                <h1 className="text-4xl font-extrabold tracking-tight sm:text-5xl md:text-6xl">
                   <span className="block text-white">Better feedback for</span>
                   <span className="block text-gradient">music practice</span>
                 </h1>
-                <p className="hero-text mt-6 text-xl text-gray-300 max-w-3xl">
+                <p className="mt-6 text-xl text-gray-300 max-w-3xl">
                   VidNote helps music students get timestamped feedback on their practice
                   videos from teachers and peers. Upload a video, share it, and receive
                   detailed comments aligned to specific moments in your performance.
                 </p>
-                <div className="hero-buttons mt-8 flex flex-wrap gap-4">
+                <div className="mt-8 flex flex-wrap gap-4">
                   <a 
                     href="/register"
                     onClick={(e) => {
                       e.preventDefault();
                       navigate("/register");
                     }}
-                    className="btn-gradient inline-flex items-center justify-center px-8 py-3 text-lg font-bold rounded-md cursor-pointer"
+                    className="inline-flex items-center justify-center px-8 py-3 text-lg font-bold rounded-md cursor-pointer bg-primary text-white hover:bg-primary/90 transition-colors"
                   >
                     Get Started
                   </a>
@@ -150,7 +74,7 @@ export default function Home() {
                       e.preventDefault();
                       navigate("/login");
                     }}
-                    className="inline-flex items-center justify-center px-8 py-3 text-lg font-medium text-white border border-primary/30 backdrop-blur-sm bg-white/5 rounded-md hover:bg-primary/10 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary cursor-pointer transition-all duration-300"
+                    className="inline-flex items-center justify-center px-8 py-3 text-lg font-medium text-white border border-primary/30 bg-black/50 rounded-md hover:bg-primary/10 cursor-pointer transition-colors"
                   >
                     Log In
                   </a>
@@ -163,8 +87,8 @@ export default function Home() {
         {/* Features Section */}
         <div className="py-16 bg-card/30">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div ref={featuresRef}>
-              <div className="text-center features-heading">
+            <div>
+              <div className="text-center">
                 <h2 className="text-base text-primary font-semibold tracking-wide uppercase">Features</h2>
                 <p className="mt-2 text-3xl leading-8 font-extrabold tracking-tight text-white sm:text-4xl">
                   Perfect for music education
@@ -174,9 +98,9 @@ export default function Home() {
                 </p>
               </div>
 
-              <div ref={featureCardsRef} className="mt-12">
+              <div className="mt-12">
                 <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-                  <div className="feature-card p-6 rounded-xl bg-black/50 shadow-xl flex flex-col h-full border-2 border-primary/30 hover:border-primary/60 transition-all duration-300">
+                  <div className="p-6 rounded-xl bg-black shadow-xl flex flex-col h-full border-2 border-primary/30 hover:border-primary/60 transition-all duration-300">
                     <div className="w-12 h-12 rounded-lg bg-primary/40 flex items-center justify-center mb-4 shadow-md">
                       <Upload className="h-6 w-6 text-white" />
                     </div>
@@ -186,7 +110,7 @@ export default function Home() {
                     </p>
                   </div>
 
-                  <div className="feature-card p-6 rounded-xl bg-black/50 shadow-xl flex flex-col h-full border-2 border-primary/30 hover:border-primary/60 transition-all duration-300">
+                  <div className="p-6 rounded-xl bg-black shadow-xl flex flex-col h-full border-2 border-primary/30 hover:border-primary/60 transition-all duration-300">
                     <div className="w-12 h-12 rounded-lg bg-primary/40 flex items-center justify-center mb-4 shadow-md">
                       <Clock className="h-6 w-6 text-white" />
                     </div>
@@ -196,7 +120,7 @@ export default function Home() {
                     </p>
                   </div>
 
-                  <div className="feature-card p-6 rounded-xl bg-black/50 shadow-xl flex flex-col h-full border-2 border-primary/30 hover:border-primary/60 transition-all duration-300">
+                  <div className="p-6 rounded-xl bg-black shadow-xl flex flex-col h-full border-2 border-primary/30 hover:border-primary/60 transition-all duration-300">
                     <div className="w-12 h-12 rounded-lg bg-primary/40 flex items-center justify-center mb-4 shadow-md">
                       <Lock className="h-6 w-6 text-white" />
                     </div>
@@ -206,7 +130,7 @@ export default function Home() {
                     </p>
                   </div>
 
-                  <div className="feature-card p-6 rounded-xl bg-black/50 shadow-xl flex flex-col h-full border-2 border-primary/30 hover:border-primary/60 transition-all duration-300">
+                  <div className="p-6 rounded-xl bg-black shadow-xl flex flex-col h-full border-2 border-primary/30 hover:border-primary/60 transition-all duration-300">
                     <div className="w-12 h-12 rounded-lg bg-primary/40 flex items-center justify-center mb-4 shadow-md">
                       <Music className="h-6 w-6 text-white" />
                     </div>
@@ -216,7 +140,7 @@ export default function Home() {
                     </p>
                   </div>
 
-                  <div className="feature-card p-6 rounded-xl bg-black/50 shadow-xl flex flex-col h-full border-2 border-primary/30 hover:border-primary/60 transition-all duration-300">
+                  <div className="p-6 rounded-xl bg-black shadow-xl flex flex-col h-full border-2 border-primary/30 hover:border-primary/60 transition-all duration-300">
                     <div className="w-12 h-12 rounded-lg bg-primary/40 flex items-center justify-center mb-4 shadow-md">
                       <Headphones className="h-6 w-6 text-white" />
                     </div>
@@ -226,7 +150,7 @@ export default function Home() {
                     </p>
                   </div>
 
-                  <div className="feature-card p-6 rounded-xl bg-black/50 shadow-xl flex flex-col h-full border-2 border-primary/30 hover:border-primary/60 transition-all duration-300">
+                  <div className="p-6 rounded-xl bg-black shadow-xl flex flex-col h-full border-2 border-primary/30 hover:border-primary/60 transition-all duration-300">
                     <div className="w-12 h-12 rounded-lg bg-primary/40 flex items-center justify-center mb-4 shadow-md">
                       <Users className="h-6 w-6 text-white" />
                     </div>
@@ -245,7 +169,7 @@ export default function Home() {
                 <div className="w-full border-t border-primary/10"></div>
               </div>
               <div className="relative flex justify-center text-center">
-                <div className="bg-card/80 backdrop-blur-sm px-8 py-4 rounded-lg">
+                <div className="bg-black px-8 py-4 rounded-lg">
                   <h2 className="text-base text-primary font-semibold tracking-wide uppercase">How it works</h2>
                   <p className="mt-2 text-3xl leading-8 font-extrabold tracking-tight text-white sm:text-4xl">
                     Improve faster with focused feedback
@@ -259,11 +183,11 @@ export default function Home() {
             
             {/* How It Works Content */}
             <div className="grid grid-cols-1 gap-x-8 gap-y-12 lg:grid-cols-3 mt-12">
-              <div className="relative bg-card/40 p-6 rounded-xl shadow-lg flex flex-col">
+              <div className="relative bg-black p-6 rounded-xl shadow-lg flex flex-col">
                 <div className="absolute -top-6 -left-6 w-12 h-12 rounded-full bg-primary flex items-center justify-center text-white font-bold text-lg shadow-lg">
                   1
                 </div>
-                <div className="h-48 sm:h-56 w-full overflow-hidden rounded-lg mb-6 glassmorphism p-1">
+                <div className="h-48 sm:h-56 w-full overflow-hidden rounded-lg mb-6 p-1 border border-primary/20">
                   <div className="w-full h-full rounded-md overflow-hidden">
                     <img 
                       src="https://images.unsplash.com/photo-1511379938547-c1f69419868d?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=600&q=80" 
@@ -278,11 +202,11 @@ export default function Home() {
                 </p>
               </div>
 
-              <div className="relative bg-card/40 p-6 rounded-xl shadow-lg flex flex-col">
+              <div className="relative bg-black p-6 rounded-xl shadow-lg flex flex-col">
                 <div className="absolute -top-6 -left-6 w-12 h-12 rounded-full bg-primary flex items-center justify-center text-white font-bold text-lg shadow-lg">
                   2
                 </div>
-                <div className="h-48 sm:h-56 w-full overflow-hidden rounded-lg mb-6 glassmorphism p-1">
+                <div className="h-48 sm:h-56 w-full overflow-hidden rounded-lg mb-6 p-1 border border-primary/20">
                   <div className="w-full h-full rounded-md overflow-hidden">
                     <img 
                       src="https://images.unsplash.com/photo-1522071820081-009f0129c71c?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=600&q=80" 
@@ -297,11 +221,11 @@ export default function Home() {
                 </p>
               </div>
 
-              <div className="relative bg-card/40 p-6 rounded-xl shadow-lg flex flex-col">
+              <div className="relative bg-black p-6 rounded-xl shadow-lg flex flex-col">
                 <div className="absolute -top-6 -left-6 w-12 h-12 rounded-full bg-primary flex items-center justify-center text-white font-bold text-lg shadow-lg">
                   3
                 </div>
-                <div className="h-48 sm:h-56 w-full overflow-hidden rounded-lg mb-6 glassmorphism p-1">
+                <div className="h-48 sm:h-56 w-full overflow-hidden rounded-lg mb-6 p-1 border border-primary/20">
                   <div className="w-full h-full rounded-md overflow-hidden">
                     <img 
                       src="https://images.unsplash.com/photo-1513682121497-80211f36a7d3?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=600&q=80" 
@@ -359,10 +283,10 @@ export default function Home() {
                 <div className="flex py-6">
                   {/* Testimonial Card 1 */}
                   <div className="flex-[0_0_90%] sm:flex-[0_0_45%] md:flex-[0_0_30%] mx-3">
-                    <div className="card p-6 rounded-xl glassmorphism hover:shadow-xl transition-all duration-300 flex flex-col h-full">
+                    <div className="p-6 rounded-xl bg-black border border-primary/20 hover:shadow-xl transition-all duration-300 flex flex-col h-full">
                       <div className="flex items-center mb-4">
                         <div className="w-12 h-12 rounded-full bg-primary/30 flex items-center justify-center">
-                          <Music className="h-6 w-6 text-primary" />
+                          <Music className="h-6 w-6 text-white" />
                         </div>
                         <div className="ml-3">
                           <h4 className="text-white font-bold text-lg">Sarah Johnson</h4>
@@ -382,10 +306,10 @@ export default function Home() {
 
                   {/* Testimonial Card 2 */}
                   <div className="flex-[0_0_90%] sm:flex-[0_0_45%] md:flex-[0_0_30%] mx-3">
-                    <div className="card p-6 rounded-xl glassmorphism hover:shadow-xl transition-all duration-300 flex flex-col h-full">
+                    <div className="p-6 rounded-xl bg-black border border-primary/20 hover:shadow-xl transition-all duration-300 flex flex-col h-full">
                       <div className="flex items-center mb-4">
                         <div className="w-12 h-12 rounded-full bg-primary/30 flex items-center justify-center">
-                          <Music className="h-6 w-6 text-primary" />
+                          <Music className="h-6 w-6 text-white" />
                         </div>
                         <div className="ml-3">
                           <h4 className="text-white font-bold text-lg">Michael Chen</h4>
@@ -405,10 +329,10 @@ export default function Home() {
 
                   {/* Testimonial Card 3 */}
                   <div className="flex-[0_0_90%] sm:flex-[0_0_45%] md:flex-[0_0_30%] mx-3">
-                    <div className="card p-6 rounded-xl glassmorphism hover:shadow-xl transition-all duration-300 flex flex-col h-full">
+                    <div className="p-6 rounded-xl bg-black border border-primary/20 hover:shadow-xl transition-all duration-300 flex flex-col h-full">
                       <div className="flex items-center mb-4">
                         <div className="w-12 h-12 rounded-full bg-primary/30 flex items-center justify-center">
-                          <Music className="h-6 w-6 text-primary" />
+                          <Music className="h-6 w-6 text-white" />
                         </div>
                         <div className="ml-3">
                           <h4 className="text-white font-bold text-lg">Emma Martinez</h4>
@@ -425,97 +349,59 @@ export default function Home() {
                       </div>
                     </div>
                   </div>
-
-                  {/* Testimonial Card 4 */}
-                  <div className="flex-[0_0_90%] sm:flex-[0_0_45%] md:flex-[0_0_30%] mx-3">
-                    <div className="card p-6 rounded-xl glassmorphism hover:shadow-xl transition-all duration-300 flex flex-col h-full">
-                      <div className="flex items-center mb-4">
-                        <div className="w-12 h-12 rounded-full bg-primary/30 flex items-center justify-center">
-                          <Music className="h-6 w-6 text-primary" />
-                        </div>
-                        <div className="ml-3">
-                          <h4 className="text-white font-bold text-lg">James Wilson</h4>
-                          <p className="text-gray-400 text-sm">Drum Teacher</p>
-                        </div>
-                      </div>
-                      <p className="text-gray-300 italic flex-grow text-base">
-                        "VidNote has changed how I teach percussion. Being able to annotate videos at precise moments helps students understand exactly when their timing is off or when they need to adjust their technique."
-                      </p>
-                      <div className="mt-4 flex text-primary gap-1">
-                        {[1, 2, 3, 4, 5].map((star) => (
-                          <Star key={star} className="h-5 w-5 fill-current" />
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Testimonial Card 5 */}
-                  <div className="flex-[0_0_90%] sm:flex-[0_0_45%] md:flex-[0_0_30%] mx-3">
-                    <div className="card p-6 rounded-xl glassmorphism hover:shadow-xl transition-all duration-300 flex flex-col h-full">
-                      <div className="flex items-center mb-4">
-                        <div className="w-12 h-12 rounded-full bg-primary/30 flex items-center justify-center">
-                          <Music className="h-6 w-6 text-primary" />
-                        </div>
-                        <div className="ml-3">
-                          <h4 className="text-white font-bold text-lg">Olivia Taylor</h4>
-                          <p className="text-gray-400 text-sm">Cello Student</p>
-                        </div>
-                      </div>
-                      <p className="text-gray-300 italic flex-grow text-base">
-                        "The ability to receive feedback from multiple teachers has been transformative. Each focuses on different aspects of my bowing technique, which has helped me improve much faster than with just one teacher."
-                      </p>
-                      <div className="mt-4 flex text-primary gap-1">
-                        {[1, 2, 3, 4, 5].map((star) => (
-                          <Star key={star} className="h-5 w-5 fill-current" />
-                        ))}
-                      </div>
-                    </div>
-                  </div>
                 </div>
               </div>
             </div>
           </div>
         </div>
 
-        {/* CTA Section */}
-        <div className="py-16 px-4 sm:px-6 lg:px-8 bg-gradient-to-b from-background/80 to-background">
-          <div className="max-w-5xl mx-auto text-center">
-            <div className="inline-block p-2 rounded-full bg-primary/20 mb-6">
-              <div className="w-16 h-16 rounded-full bg-primary/30 flex items-center justify-center">
-                <Sparkles className="h-8 w-8 text-primary" />
+        {/* CTA */}
+        <div className="bg-gradient-to-r from-primary/20 to-blue-500/20">
+          <div className="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:py-16 lg:px-8 lg:flex lg:items-center lg:justify-between">
+            <h2 className="text-3xl font-extrabold tracking-tight text-white sm:text-4xl">
+              <span className="block">Ready to improve your musical skills?</span>
+              <span className="block text-primary mt-1">Start using VidNote today.</span>
+            </h2>
+            <div className="mt-8 flex lg:mt-0 lg:flex-shrink-0">
+              <div className="inline-flex rounded-md shadow">
+                <a
+                  href="/register"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    navigate("/register");
+                  }}
+                  className="inline-flex items-center justify-center px-5 py-3 border border-transparent text-base font-medium rounded-md text-white bg-primary hover:bg-primary/90 cursor-pointer"
+                >
+                  Get started
+                </a>
+              </div>
+              <div className="ml-3 inline-flex rounded-md shadow">
+                <a
+                  href="/login"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    navigate("/login");
+                  }}
+                  className="inline-flex items-center justify-center px-5 py-3 border border-transparent text-base font-medium rounded-md text-primary bg-white hover:bg-gray-50 cursor-pointer"
+                >
+                  Log in
+                </a>
               </div>
             </div>
-            <h2 className="text-3xl md:text-4xl font-extrabold mb-4 text-white">
-              Ready to accelerate your musical progress?
-            </h2>
-            <p className="text-lg text-gray-300 max-w-3xl mx-auto mb-8">
-              Join thousands of musicians who are improving faster with personalized, timestamped feedback from their teachers.
-            </p>
-            <div className="flex flex-col sm:flex-row justify-center gap-4">
-              <Button className="btn-gradient text-lg" size="lg" onClick={() => navigate("/register")}>
-                Start Free Trial <ArrowRight className="ml-2 h-5 w-5" />
-              </Button>
-              <Button className="glassmorphism text-lg border-primary/40" variant="outline" size="lg" onClick={() => navigate("/login")}>
-                Login to Your Account
-              </Button>
-            </div>
           </div>
         </div>
+        
+        {/* Footer */}
+        <footer className="bg-card/50">
+          <div className="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
+            <div className="text-center">
+              <p className="text-base text-gray-400">
+                &copy; {new Date().getFullYear()} VidNote. All rights reserved.
+              </p>
+            </div>
+          </div>
+        </footer>
       </main>
-
-      <footer className="py-10 px-4 sm:px-6 lg:px-8 bg-background/70 backdrop-blur-sm border-t border-primary/10">
-        <div className="max-w-7xl mx-auto flex flex-col items-center">
-          <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center">
-              <Music className="h-5 w-5 text-primary" />
-            </div>
-            <span className="font-bold text-xl text-gradient">VidNote</span>
-          </div>
-          <p className="mt-4 text-sm text-gray-400">
-            © {new Date().getFullYear()} VidNote. All rights reserved.
-          </p>
-        </div>
-      </footer>
     </div>
   );
 }
