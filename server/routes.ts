@@ -189,10 +189,24 @@ async function ensureStorageBucketsExist() {
   }
 
   try {
-    // Define required buckets with their settings
+    // Define required buckets with their settings and security recommendations
     const requiredBuckets = [
-      { name: 'videos', isPublic: true },
-      { name: 'thumbnails', isPublic: true }
+      { 
+        name: 'videos', 
+        description: 'Stores user-uploaded video files',
+        securityNotes: 'Configure RLS to allow:' +
+          '\n- Public READ access (so videos can be viewed without authentication)' +
+          '\n- Authenticated WRITE access only for the file owner' +
+          '\n- RESTRICT UPDATE/DELETE to file owners and admins'
+      },
+      { 
+        name: 'thumbnails', 
+        description: 'Stores video thumbnail images',
+        securityNotes: 'Configure RLS to allow:' +
+          '\n- Public READ access (so thumbnails can be viewed without authentication)' +
+          '\n- Authenticated WRITE access only for the file owner' +
+          '\n- RESTRICT UPDATE/DELETE to file owners and admins'
+      }
     ];
 
     console.log("Checking Supabase storage buckets...");
@@ -203,7 +217,7 @@ async function ensureStorageBucketsExist() {
     if (listError) {
       if (listError.message?.includes('permission')) {
         console.warn("Storage permission issue: Your Supabase user doesn't have permission to list buckets. " +
-          "Please create the 'videos' and 'thumbnails' buckets manually in the Supabase dashboard with public access enabled.");
+          "Please create the 'videos' and 'thumbnails' buckets manually in the Supabase dashboard.");
       } else {
         console.error("Failed to list storage buckets:", listError);
       }
@@ -213,44 +227,48 @@ async function ensureStorageBucketsExist() {
     const existingBucketNames = new Set(buckets?.map(b => b.name) || []);
     console.log("Existing buckets:", Array.from(existingBucketNames).join(', ') || 'none');
     
-    // Create missing buckets
-    for (const bucket of requiredBuckets) {
-      if (!existingBucketNames.has(bucket.name)) {
-        console.log(`Missing required bucket: ${bucket.name}`);
-        
-        try {
-          console.log(`Attempting to create bucket: ${bucket.name}`);
-          const { data, error } = await supabase.storage.createBucket(bucket.name, {
-            public: bucket.isPublic
-          });
-          
-          if (error) {
-            if (error.message?.includes('row-level security policy')) {
-              console.warn(
-                `RLS policy prevented bucket creation. ` +
-                `Please manually create the '${bucket.name}' bucket in your Supabase dashboard with public access enabled.` +
-                `\nThis is a common requirement when using Supabase, as bucket creation often requires admin privileges.`
-              );
-            } else {
-              console.error(`Failed to create bucket ${bucket.name}:`, error);
-            }
-          } else {
-            console.log(`Successfully created bucket: ${bucket.name}`);
-          }
-        } catch (bucketCreateError) {
-          console.error(`Exception creating bucket ${bucket.name}:`, bucketCreateError);
-        }
-      } else {
-        console.log(`Bucket already exists: ${bucket.name}`);
-      }
-    }
+    // Check for missing buckets
+    const missingBuckets = requiredBuckets.filter(bucket => !existingBucketNames.has(bucket.name));
     
-    // Return special instruction for manual bucket creation
-    if (!existingBucketNames.has('videos') || !existingBucketNames.has('thumbnails')) {
-      console.warn("\n⚠️ IMPORTANT: You need to manually create storage buckets in Supabase!");
-      console.warn("Please go to your Supabase dashboard, navigate to Storage, and create");
-      console.warn("two buckets named 'videos' and 'thumbnails' with public access enabled.");
-      console.warn("After creating the buckets, restart this application.\n");
+    if (missingBuckets.length > 0) {
+      console.warn("\n⚠️ IMPORTANT: Required Supabase storage buckets are missing!");
+      console.warn("Please go to your Supabase dashboard and set up the following buckets:");
+      
+      for (const bucket of missingBuckets) {
+        console.warn(`\n1. Bucket name: '${bucket.name}'`);
+        console.warn(`   Purpose: ${bucket.description}`);
+        console.warn(`   Security setup: ${bucket.securityNotes}`);
+      }
+      
+      console.warn("\nRecommended RLS policy for secure access:");
+      console.warn(`
+CREATE POLICY "Public Access" 
+ON storage.objects FOR SELECT 
+USING (bucket_id IN ('videos', 'thumbnails'));
+
+CREATE POLICY "Authenticated users can upload files"
+ON storage.objects FOR INSERT 
+TO authenticated
+USING (bucket_id IN ('videos', 'thumbnails'));
+
+CREATE POLICY "Users can update own files"
+ON storage.objects FOR UPDATE
+TO authenticated
+USING (bucket_id IN ('videos', 'thumbnails') 
+       AND (storage.foldername(name))[1] = auth.uid()::text)
+WITH CHECK (bucket_id IN ('videos', 'thumbnails') 
+           AND (storage.foldername(name))[1] = auth.uid()::text);
+
+CREATE POLICY "Users can delete own files"
+ON storage.objects FOR DELETE
+TO authenticated
+USING (bucket_id IN ('videos', 'thumbnails') 
+       AND (storage.foldername(name))[1] = auth.uid()::text);
+`);
+      
+      console.warn("\nAfter creating the buckets and applying security policies, restart this application.");
+    } else {
+      console.log("All required storage buckets exist.");
     }
   } catch (error) {
     console.error("Error while checking storage buckets:", error);
@@ -402,12 +420,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log(`Processing video upload: ${req.file.originalname}, size: ${(req.file.size / (1024 * 1024)).toFixed(2)}MB`);
       
       let videoUrl: string;
-      let isLocalFile = false;
+      
+      // Check for required Supabase buckets before uploading
+      if (!supabaseUrl || !supabaseKey) {
+        return res.status(500).json({ 
+          message: "Supabase storage not configured. Please check your environment variables (SUPABASE_URL and SUPABASE_ANON_KEY)." 
+        });
+      }
       
       try {
+        // Validate file size
+        const MAX_FILE_SIZE = 100 * 1024 * 1024; // 100MB
+        if (req.file.size > MAX_FILE_SIZE) {
+          return res.status(413).json({ 
+            message: `File size exceeds the maximum allowed limit of 100MB. Current size: ${(req.file.size / (1024 * 1024)).toFixed(1)}MB`
+          });
+        }
+        
         // Upload to Supabase Storage
         const fileExt = path.extname(req.file.originalname);
         const fileName = `${userId}-${Date.now()}${fileExt}`;
+        
+        console.log(`Uploading video to Supabase: ${fileName}`);
         
         const { data, error } = await supabase.storage
           .from("videos")
@@ -416,7 +450,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
           });
         
         if (error) {
-          throw new Error(error.message);
+          console.error("Supabase storage upload error:", error);
+          
+          if (error.message.includes('Bucket not found')) {
+            return res.status(500).json({ 
+              message: "Storage bucket 'videos' not found. Please create the required storage buckets in your Supabase dashboard." 
+            });
+          } else if (error.message.includes('JWT')) {
+            return res.status(500).json({ 
+              message: "Authentication error with Supabase storage. Please check your API keys." 
+            });
+          } else if (error.message.includes('permission')) {
+            return res.status(500).json({ 
+              message: "Permission denied when uploading to Supabase. Please check your storage bucket permissions." 
+            });
+          } else {
+            return res.status(500).json({ 
+              message: `Upload failed: ${error.message}. Please check your Supabase storage configuration.` 
+            });
+          }
         }
         
         // Get public URL
@@ -429,26 +481,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       catch (uploadError) {
         console.error("Supabase storage upload error:", uploadError);
-        
-        // Fall back to storing the file locally for development
-        isLocalFile = true;
-        const uploadsDir = './uploads';
-        
-        // Create uploads directory if it doesn't exist
-        if (!fs.existsSync(uploadsDir)) {
-          fs.mkdirSync(uploadsDir, { recursive: true });
-        }
-        
-        const fileExt = path.extname(req.file.originalname);
-        const fileName = `${userId}-${Date.now()}${fileExt}`;
-        const filePath = path.join(uploadsDir, fileName);
-        
-        // Write file to disk
-        fs.writeFileSync(filePath, req.file.buffer);
-        
-        // Use a local URL
-        videoUrl = `/uploads/${fileName}`;
-        console.log(`Fallback to local storage: ${filePath}`);
+        return res.status(500).json({ 
+          message: `Failed to upload video: ${uploadError.message || "Unknown error"}. Please ensure Supabase storage is properly configured.` 
+        });
       }
       
       // Create video record
@@ -469,8 +504,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       res.status(201).json({
         ...video,
-        message: "Video uploaded successfully",
-        storedLocally: isLocalFile
+        message: "Video uploaded successfully to Supabase storage"
       });
     } catch (err) {
       console.error("Video upload error:", err);
