@@ -1,11 +1,21 @@
-import express, { type Express, Response } from "express";
-import { Request } from "express";
+import express, { type Express, Response, NextFunction, Request } from "express";
 import { createServer, type Server } from "http";
 import { WebSocketServer, WebSocket } from 'ws';
 import { storage } from "./storage";
-import { insertUserSchema, insertVideoSchema, insertCommentSchema, insertVideoSharingSchema, User } from "@shared/schema";
+import { insertUserSchema, insertVideoSchema, insertCommentSchema, insertVideoSharingSchema } from "@shared/schema";
 
-// Extend Express Request type with our user property
+// Import centralized types
+import { 
+  AuthenticatedRequest,
+  WebSocketMessage,
+  JoinRoomMessage,
+  NewCommentMessage,
+  TypingIndicatorMessage,
+  User,
+  CommentWithUser
+} from "@shared/types";
+
+// This is needed to declare the user property on Express Request
 declare global {
   namespace Express {
     interface Request {
@@ -61,7 +71,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   };
 
   // Authentication Middleware
-  const requireAuth = async (req: express.Request, res: express.Response, next: express.NextFunction) => {
+  const requireAuth = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
     const userId = req.headers.authorization;
     if (!userId) {
       return res.status(401).json({ message: "Unauthorized" });
@@ -77,7 +87,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   };
 
   // Authorization Middleware for video access
-  const canAccessVideo = async (req: express.Request, res: express.Response, next: express.NextFunction) => {
+  const canAccessVideo = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
     const videoId = parseInt(req.params.id);
     const userId = req.user!.id;
     
@@ -138,7 +148,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Video Routes
-  router.get("/videos", requireAuth, async (req: express.Request, res: express.Response) => {
+  router.get("/videos", requireAuth, async (req: AuthenticatedRequest, res: Response) => {
     try {
       const userId = req.user!.id;
       const videos = await storage.getVideosByUser(userId);
@@ -148,7 +158,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  router.get("/videos/shared", requireAuth, async (req, res) => {
+  router.get("/videos/shared", requireAuth, async (req: AuthenticatedRequest, res: Response) => {
     try {
       const userId = req.user!.id;
       const videos = await storage.getSharedVideosForUser(userId);
@@ -158,7 +168,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  router.get("/videos/:id", requireAuth, canAccessVideo, async (req, res) => {
+  router.get("/videos/:id", requireAuth, canAccessVideo, async (req: AuthenticatedRequest, res: Response) => {
     try {
       const videoId = parseInt(req.params.id);
       const video = await storage.getVideo(videoId);
@@ -173,7 +183,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  router.post("/videos", requireAuth, upload.single("video"), async (req, res) => {
+  router.post("/videos", requireAuth, upload.single("video"), async (req: AuthenticatedRequest, res: Response) => {
     try {
       const userId = req.user!.id;
       
@@ -263,7 +273,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Comment Routes
-  router.get("/videos/:id/comments", requireAuth, canAccessVideo, async (req, res) => {
+  router.get("/videos/:id/comments", requireAuth, canAccessVideo, async (req: AuthenticatedRequest, res: Response) => {
     try {
       const videoId = parseInt(req.params.id);
       const comments = await storage.getCommentsByVideo(videoId);
@@ -297,7 +307,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  router.post("/videos/:id/comments", requireAuth, canAccessVideo, async (req, res) => {
+  router.post("/videos/:id/comments", requireAuth, canAccessVideo, async (req: AuthenticatedRequest, res: Response) => {
     try {
       const videoId = parseInt(req.params.id);
       const userId = req.user!.id;
@@ -507,14 +517,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         
         // Handle joining a video room
         if (data.type === 'join') {
-          const videoId = parseInt(data.videoId);
+          const joinMessage = data as JoinRoomMessage;
+          const videoId = parseInt(joinMessage.videoId.toString());
           if (!videoId) return;
           
           // Add the client to the video room
           const client = clients.get(clientId);
           if (client) {
             client.videoRooms.add(videoId);
-            client.userId = data.userId;
+            client.userId = joinMessage.userId;
             
             console.log(`Client ${clientId} joined video room ${videoId}`);
             
@@ -528,7 +539,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         
         // Handle new comments
         if (data.type === 'new_comment') {
-          const { videoId, comment } = data;
+          const { videoId, comment } = data as NewCommentMessage;
           if (!videoId || !comment) return;
           
           // Broadcast to all clients in the same video room
@@ -541,7 +552,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
               client.ws.send(JSON.stringify({
                 type: 'new_comment',
                 videoId: videoId,
-                comment: comment
+                comment: comment as CommentWithUser
               }));
             }
           });
@@ -549,7 +560,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         
         // Handle typing indicators
         if (data.type === 'typing') {
-          const { videoId, userId, isTyping } = data;
+          const { videoId, userId, isTyping } = data as TypingIndicatorMessage;
           if (!videoId) return;
           
           // Broadcast typing status to all clients in the same video room
