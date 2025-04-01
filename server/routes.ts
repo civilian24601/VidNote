@@ -32,9 +32,9 @@ import { createClient } from '@supabase/supabase-js';
 
 // Initialize Supabase client with environment variables
 // Access client-side env variables through import.meta.env
-// Use the proper SUPABASE environment variables first, then fall back to VITE_ prefixed ones
-let supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL || import.meta.env?.VITE_SUPABASE_URL || '';
-const supabaseKey = process.env.SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY || import.meta.env?.VITE_SUPABASE_ANON_KEY || '';
+// Use only the SUPABASE environment variables (not VITE prefixed ones)
+let supabaseUrl = process.env.SUPABASE_URL || '';
+const supabaseKey = process.env.SUPABASE_ANON_KEY || '';
 
 // Debugging - log the URL (without revealing the actual values)
 // Securely print the first few characters and domain part without showing the full URL
@@ -81,6 +81,18 @@ interface SupabaseClient {
         data: { publicUrl: string };
       };
     };
+    getBucket: (name: string) => Promise<{
+      data: { name: string } | null;
+      error: any | null;
+    }>;
+    createBucket: (name: string, options?: { public: boolean }) => Promise<{
+      data: { name: string } | null;
+      error: any | null;
+    }>;
+    listBuckets: () => Promise<{
+      data: Array<{ name: string, id: string, public: boolean }> | null;
+      error: any | null;
+    }>;
   };
 }
 
@@ -108,6 +120,21 @@ try {
           getPublicUrl: (path: string) => ({
             data: { publicUrl: `https://example.com/${bucket}/${path}` }
           })
+        }),
+        getBucket: async (name: string) => ({
+          data: { name },
+          error: null
+        }),
+        createBucket: async (name: string, options?: { public: boolean }) => ({
+          data: { name },
+          error: null
+        }),
+        listBuckets: async () => ({
+          data: [
+            { name: 'videos', id: '1', public: true },
+            { name: 'thumbnails', id: '2', public: true }
+          ],
+          error: null
         })
       }
     };
@@ -125,6 +152,21 @@ try {
         getPublicUrl: (path: string) => ({
           data: { publicUrl: `https://example.com/${bucket}/${path}` }
         })
+      }),
+      getBucket: async (name: string) => ({
+        data: { name },
+        error: null
+      }),
+      createBucket: async (name: string, options?: { public: boolean }) => ({
+        data: { name },
+        error: null
+      }),
+      listBuckets: async () => ({
+        data: [
+          { name: 'videos', id: '1', public: true },
+          { name: 'thumbnails', id: '2', public: true }
+        ],
+        error: null
       })
     }
   };
@@ -139,8 +181,87 @@ const upload = multer({
   },
 });
 
+// Helper function to ensure required storage buckets exist
+async function ensureStorageBucketsExist() {
+  if (!supabaseUrl || !supabaseKey) {
+    console.log("Missing Supabase credentials, skipping bucket setup check");
+    return;
+  }
+
+  try {
+    // Define required buckets with their settings
+    const requiredBuckets = [
+      { name: 'videos', isPublic: true },
+      { name: 'thumbnails', isPublic: true }
+    ];
+
+    console.log("Checking Supabase storage buckets...");
+    
+    // List existing buckets
+    const { data: buckets, error: listError } = await supabase.storage.listBuckets();
+    
+    if (listError) {
+      if (listError.message?.includes('permission')) {
+        console.warn("Storage permission issue: Your Supabase user doesn't have permission to list buckets. " +
+          "Please create the 'videos' and 'thumbnails' buckets manually in the Supabase dashboard with public access enabled.");
+      } else {
+        console.error("Failed to list storage buckets:", listError);
+      }
+      return;
+    }
+    
+    const existingBucketNames = new Set(buckets?.map(b => b.name) || []);
+    console.log("Existing buckets:", Array.from(existingBucketNames).join(', ') || 'none');
+    
+    // Create missing buckets
+    for (const bucket of requiredBuckets) {
+      if (!existingBucketNames.has(bucket.name)) {
+        console.log(`Missing required bucket: ${bucket.name}`);
+        
+        try {
+          console.log(`Attempting to create bucket: ${bucket.name}`);
+          const { data, error } = await supabase.storage.createBucket(bucket.name, {
+            public: bucket.isPublic
+          });
+          
+          if (error) {
+            if (error.message?.includes('row-level security policy')) {
+              console.warn(
+                `RLS policy prevented bucket creation. ` +
+                `Please manually create the '${bucket.name}' bucket in your Supabase dashboard with public access enabled.` +
+                `\nThis is a common requirement when using Supabase, as bucket creation often requires admin privileges.`
+              );
+            } else {
+              console.error(`Failed to create bucket ${bucket.name}:`, error);
+            }
+          } else {
+            console.log(`Successfully created bucket: ${bucket.name}`);
+          }
+        } catch (bucketCreateError) {
+          console.error(`Exception creating bucket ${bucket.name}:`, bucketCreateError);
+        }
+      } else {
+        console.log(`Bucket already exists: ${bucket.name}`);
+      }
+    }
+    
+    // Return special instruction for manual bucket creation
+    if (!existingBucketNames.has('videos') || !existingBucketNames.has('thumbnails')) {
+      console.warn("\n⚠️ IMPORTANT: You need to manually create storage buckets in Supabase!");
+      console.warn("Please go to your Supabase dashboard, navigate to Storage, and create");
+      console.warn("two buckets named 'videos' and 'thumbnails' with public access enabled.");
+      console.warn("After creating the buckets, restart this application.\n");
+    }
+  } catch (error) {
+    console.error("Error while checking storage buckets:", error);
+  }
+}
+
 export async function registerRoutes(app: Express): Promise<Server> {
   const router = express.Router();
+  
+  // Ensure storage buckets exist before setting up routes
+  await ensureStorageBucketsExist();
   
   // Set up static file serving for local uploads (fallback storage)
   app.use('/uploads', express.static('./uploads'));
