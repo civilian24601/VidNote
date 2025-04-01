@@ -1,8 +1,9 @@
-import { useRef, useState } from "react";
+import { useRef, useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { useAuth } from "@/lib/auth";
 import { getInitials, formatTime, getAvatarColor } from "@/lib/utils";
+import { useWebSocket } from "@/hooks/use-websocket";
 import {
   Select,
   SelectContent,
@@ -35,22 +36,67 @@ export function CommentForm({ videoId, currentTime, onSubmit }: CommentFormProps
   const [content, setContent] = useState("");
   const [category, setCategory] = useState<string | undefined>(undefined);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isTyping, setIsTyping] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const typingTimerRef = useRef<NodeJS.Timeout | null>(null);
   
   // Determine if the user is a teacher
   const isTeacher = user?.role === "teacher";
+  
+  // Set up WebSocket connection for real-time collaboration
+  const { connected, sendNewComment, sendTypingIndicator } = useWebSocket({
+    videoId,
+    onNewComment: (comment) => {
+      // The parent component will handle new comments via query invalidation
+      console.log('Received real-time comment:', comment);
+    },
+    onTypingIndicator: (userId, typing) => {
+      // Handle typing indicator from other users here
+      console.log(`User ${userId} is ${typing ? 'typing' : 'stopped typing'}`);
+    }
+  });
 
   const handleSubmit = async () => {
     if (!content.trim()) return;
     
     setIsSubmitting(true);
     try {
-      await onSubmit(content, currentTime, isTeacher ? category : undefined);
+      const timestamp = currentTime;
+      const commentCategory = isTeacher ? category : undefined;
+      
+      // Submit comment through API
+      await onSubmit(content, timestamp, commentCategory);
+      
+      // Notify other users via WebSocket if connected
+      if (connected && user) {
+        const newComment = {
+          content,
+          timestamp,
+          category: commentCategory,
+          user: {
+            id: user.id,
+            fullName: user.fullName,
+            role: user.role
+          },
+          createdAt: new Date().toISOString()
+        };
+        
+        sendNewComment(newComment);
+      }
+      
+      // Reset form
       setContent("");
       if (isTeacher) setCategory(undefined);
       if (textareaRef.current) {
         textareaRef.current.style.height = "auto";
       }
+      
+      // Clear typing indicator
+      setIsTyping(false);
+      if (connected) {
+        sendTypingIndicator(false);
+      }
+      
     } catch (error) {
       console.error("Failed to submit comment:", error);
     } finally {
@@ -64,9 +110,44 @@ export function CommentForm({ videoId, currentTime, onSubmit }: CommentFormProps
     const textarea = textareaRef.current;
     if (!textarea) return;
     
+    // Adjust height
     textarea.style.height = "auto";
     textarea.style.height = `${textarea.scrollHeight}px`;
+    
+    // Handle typing indicator
+    if (!isTyping && content.length > 0) {
+      setIsTyping(true);
+      if (connected) {
+        sendTypingIndicator(true);
+      }
+    }
+    
+    // Set a timer to clear typing indicator after a delay
+    if (typingTimerRef.current) {
+      clearTimeout(typingTimerRef.current);
+    }
+    
+    typingTimerRef.current = setTimeout(() => {
+      if (isTyping) {
+        setIsTyping(false);
+        if (connected) {
+          sendTypingIndicator(false);
+        }
+      }
+    }, 3000); // 3 seconds of inactivity
   };
+  
+  // Clear typing indicator on unmount
+  useEffect(() => {
+    return () => {
+      if (typingTimerRef.current) {
+        clearTimeout(typingTimerRef.current);
+      }
+      if (connected && isTyping) {
+        sendTypingIndicator(false);
+      }
+    };
+  }, [connected, isTyping, sendTypingIndicator]);
 
   return (
     <div className="p-4 border-t border-gray-800 glassmorphism rounded-lg mt-2">

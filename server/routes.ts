@@ -1,5 +1,6 @@
 import express, { type Express, Request, Response } from "express";
 import { createServer, type Server } from "http";
+import { WebSocketServer, WebSocket } from 'ws';
 import { storage } from "./storage";
 import { insertUserSchema, insertVideoSchema, insertCommentSchema, insertVideoSharingSchema } from "@shared/schema";
 import { ZodError } from "zod";
@@ -472,5 +473,100 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.use("/api", router);
   
   const httpServer = createServer(app);
+  
+  // Set up WebSocket server for real-time collaboration
+  const wss = new WebSocketServer({ server: httpServer, path: '/ws' });
+  
+  // Store active connections
+  const clients = new Map();
+  
+  wss.on('connection', (ws) => {
+    console.log('New WebSocket connection established');
+    
+    // Generate a unique client ID
+    const clientId = Date.now();
+    clients.set(clientId, { ws, videoRooms: new Set() });
+    
+    // Handle incoming messages
+    ws.on('message', async (message) => {
+      try {
+        const data = JSON.parse(message.toString());
+        
+        // Handle joining a video room
+        if (data.type === 'join') {
+          const videoId = parseInt(data.videoId);
+          if (!videoId) return;
+          
+          // Add the client to the video room
+          const client = clients.get(clientId);
+          if (client) {
+            client.videoRooms.add(videoId);
+            client.userId = data.userId;
+            
+            console.log(`Client ${clientId} joined video room ${videoId}`);
+            
+            // Notify client they've joined successfully
+            ws.send(JSON.stringify({
+              type: 'joined',
+              videoId: videoId
+            }));
+          }
+        }
+        
+        // Handle new comments
+        if (data.type === 'new_comment') {
+          const { videoId, comment } = data;
+          if (!videoId || !comment) return;
+          
+          // Broadcast to all clients in the same video room
+          clients.forEach((client, id) => {
+            if (
+              id !== clientId && // Don't send back to the sender
+              client.videoRooms.has(videoId) && // Only clients in the same room
+              client.ws.readyState === WebSocket.OPEN // Make sure connection is open
+            ) {
+              client.ws.send(JSON.stringify({
+                type: 'new_comment',
+                videoId: videoId,
+                comment: comment
+              }));
+            }
+          });
+        }
+        
+        // Handle typing indicators
+        if (data.type === 'typing') {
+          const { videoId, userId, isTyping } = data;
+          if (!videoId) return;
+          
+          // Broadcast typing status to all clients in the same video room
+          clients.forEach((client, id) => {
+            if (
+              id !== clientId && 
+              client.videoRooms.has(videoId) && 
+              client.ws.readyState === WebSocket.OPEN
+            ) {
+              client.ws.send(JSON.stringify({
+                type: 'typing',
+                videoId: videoId,
+                userId: userId,
+                isTyping: isTyping
+              }));
+            }
+          });
+        }
+        
+      } catch (error) {
+        console.error('Error processing WebSocket message:', error);
+      }
+    });
+    
+    // Handle client disconnection
+    ws.on('close', () => {
+      console.log(`WebSocket client ${clientId} disconnected`);
+      clients.delete(clientId);
+    });
+  });
+  
   return httpServer;
 }

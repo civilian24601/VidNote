@@ -10,8 +10,9 @@ import { CommentForm } from "@/components/ui/comment-form";
 import { VideoInfo } from "@/components/ui/video-info";
 import { TeacherFeedback } from "@/components/ui/teacher-feedback";
 import { Button } from "@/components/ui/button";
-import { formatDate } from "@/lib/utils";
+import { formatDate, getInitials, getAvatarColor, formatTime } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
+import { useWebSocket } from "@/hooks/use-websocket";
 import {
   Dialog,
   DialogContent,
@@ -28,13 +29,26 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Skeleton } from "@/components/ui/skeleton";
+import { 
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList
+} from "@/components/ui/command";
+import { MOCK_USERS } from "@/lib/mockData";
 
 const shareSchema = z.object({
-  email: z.string().email("Please enter a valid email address"),
+  teacherId: z.number({
+    required_error: "Please select a teacher"
+  }),
+  customMessage: z.string().optional(),
 });
 
 type ShareValues = z.infer<typeof shareSchema>;
@@ -44,7 +58,7 @@ export default function Watch({ params }: { params: { id: string } }) {
   const [_, navigate] = useLocation();
   const { isAuthenticated, user } = useAuth();
   const { data: video, isLoading: isLoadingVideo } = useVideo(videoId);
-  const { data: comments = [], isLoading: isLoadingComments } = useComments(videoId);
+  const { data: comments = [], isLoading: isLoadingComments, refetch: refetchComments } = useComments(videoId);
   const { data: sharingData, isLoading: isLoadingSharing } = useVideoSharing(videoId);
   const { mutateAsync: addComment } = useAddComment(videoId);
   const { mutateAsync: shareVideo, isPending: isSharing } = useShareVideo(videoId);
@@ -52,6 +66,34 @@ export default function Watch({ params }: { params: { id: string } }) {
   const { toast } = useToast();
   const [shareDialogOpen, setShareDialogOpen] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
+  const [typingUsers, setTypingUsers] = useState<{ [key: number]: boolean }>({});
+  
+  // Set up WebSocket connection for real-time collaboration
+  const { connected, error: wsError } = useWebSocket({
+    videoId,
+    onNewComment: (comment: { 
+      user?: { id: number; fullName: string; }; 
+      timestamp: number; 
+    }) => {
+      // Fetch latest comments when a new one is received via WebSocket
+      refetchComments();
+      
+      // Show a notification
+      if (comment.user?.id !== user?.id) {
+        toast({
+          title: "New comment added",
+          description: `${comment.user?.fullName || 'Someone'} left a comment at ${formatTime(comment.timestamp)}.`,
+        });
+      }
+    },
+    onTypingIndicator: (userId: number, isTyping: boolean) => {
+      // Update typing indicators
+      setTypingUsers(prev => ({
+        ...prev,
+        [userId]: isTyping
+      }));
+    }
+  });
 
   const sharingUsers = Array.isArray(sharingData) 
     ? sharingData.map((sharing: any) => ({
@@ -60,10 +102,18 @@ export default function Watch({ params }: { params: { id: string } }) {
       })) 
     : [];
 
+  // Filter for available teachers
+  const availableTeachers = MOCK_USERS.filter(
+    user => user.role === 'teacher' && !sharingUsers.some(su => su.user.id === user.id)
+  );
+  
+  const [selectedTeacher, setSelectedTeacher] = useState<number | null>(null);
+  
   const form = useForm<ShareValues>({
     resolver: zodResolver(shareSchema),
     defaultValues: {
-      email: "",
+      teacherId: 0,
+      customMessage: "",
     },
   });
 
@@ -91,14 +141,27 @@ export default function Watch({ params }: { params: { id: string } }) {
 
   const handleShareVideo = async (values: ShareValues) => {
     try {
-      // This is a simplification - in a real app, you'd need to look up the user ID by email
-      // Since we don't have that API, we'll assume user ID 2 for demo purposes
-      await shareVideo(2);
+      if (!values.teacherId) {
+        toast({
+          title: "Teacher required",
+          description: "Please select a teacher to share this video with.",
+          variant: "destructive"
+        });
+        return;
+      }
+      
+      // Share with the selected teacher
+      await shareVideo(values.teacherId);
+      
+      // Find the teacher name for the toast message
+      const teacherName = MOCK_USERS.find(u => u.id === values.teacherId)?.fullName || "the teacher";
+      
       toast({
-        title: "Video shared",
-        description: `You've shared this video with ${values.email}.`,
+        title: "Video shared for feedback",
+        description: `You've shared this video with ${teacherName} for collaborative feedback.`,
       });
       setShareDialogOpen(false);
+      setSelectedTeacher(null);
       form.reset();
     } catch (error) {
       toast({
@@ -190,23 +253,82 @@ export default function Watch({ params }: { params: { id: string } }) {
               <form onSubmit={form.handleSubmit(handleShareVideo)} className="space-y-4">
                 <FormField
                   control={form.control}
-                  name="email"
+                  name="teacherId"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-white">Email address</FormLabel>
+                      <FormLabel className="text-white">Select teacher for feedback</FormLabel>
                       <FormControl>
-                        <Input placeholder="Enter email address" className="bg-gray-800/50 border-gray-600 text-white" {...field} />
+                        <Command className="rounded-lg border border-gray-700 bg-gray-800/50">
+                          <CommandInput 
+                            placeholder="Search for a teacher..." 
+                            className="text-white border-none focus:ring-0"
+                          />
+                          <CommandList className="text-white">
+                            <CommandEmpty>No teachers found.</CommandEmpty>
+                            <CommandGroup heading="Available Teachers">
+                              {availableTeachers.map((teacher) => (
+                                <CommandItem
+                                  key={teacher.id}
+                                  value={teacher.fullName}
+                                  onSelect={() => {
+                                    form.setValue('teacherId', teacher.id);
+                                    setSelectedTeacher(teacher.id);
+                                  }}
+                                  className={selectedTeacher === teacher.id ? "bg-primary/20 text-white" : "text-gray-200"}
+                                >
+                                  <div className="flex items-center">
+                                    <div className={`h-8 w-8 rounded-full ${getAvatarColor(teacher.id)} flex items-center justify-center text-white font-medium mr-2`}>
+                                      {getInitials(teacher.fullName)}
+                                    </div>
+                                    <div>
+                                      <div className="font-medium">{teacher.fullName}</div>
+                                      <div className="text-xs text-gray-400">{teacher.email}</div>
+                                    </div>
+                                  </div>
+                                </CommandItem>
+                              ))}
+                            </CommandGroup>
+                          </CommandList>
+                        </Command>
                       </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
-                <div className="flex justify-end space-x-3 mt-2">
-                  <Button type="button" variant="outline" className="border-gray-600 text-white hover:bg-gray-800/50" onClick={() => setShareDialogOpen(false)}>
+                
+                <FormField
+                  control={form.control}
+                  name="customMessage"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-white">Add a message (optional)</FormLabel>
+                      <FormControl>
+                        <Textarea 
+                          placeholder="Request specific feedback or add context about the performance..." 
+                          className="bg-gray-800/50 border-gray-600 text-white resize-none min-h-[80px]" 
+                          {...field} 
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <div className="flex justify-end space-x-3 mt-4">
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    className="border-gray-600 text-white hover:bg-gray-800/50" 
+                    onClick={() => {
+                      setShareDialogOpen(false);
+                      setSelectedTeacher(null);
+                      form.reset();
+                    }}
+                  >
                     Cancel
                   </Button>
-                  <Button type="submit" className="btn-gradient" disabled={isSharing}>
-                    {isSharing ? "Sharing..." : "Share Video"}
+                  <Button type="submit" className="btn-gradient" disabled={isSharing || !selectedTeacher}>
+                    {isSharing ? "Sharing..." : "Request Feedback"}
                   </Button>
                 </div>
               </form>
@@ -219,6 +341,8 @@ export default function Watch({ params }: { params: { id: string } }) {
             <CommentList 
               comments={comments} 
               onJumpToTimestamp={handleJumpToTimestamp} 
+              typingUsers={typingUsers}
+              activeUsers={MOCK_USERS} // In a real app, this would be the list of active users in the session
             />
             
             <div id="comment-form" className="mt-4">
