@@ -100,18 +100,18 @@ export default function Home() {
         {/* Hero Section */}
         <div className="relative overflow-hidden animated-bg">
           <div ref={heroRef} className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="pt-20 pb-24 md:pt-32 md:pb-32 lg:pt-40 lg:pb-40">
+            <div className="pt-12 pb-12 md:pt-16 md:pb-16 lg:pt-20 lg:pb-24">
               <div className="md:max-w-2xl lg:max-w-3xl xl:max-w-4xl">
                 <h1 className="hero-title text-4xl font-extrabold tracking-tight sm:text-5xl md:text-6xl">
                   <span className="block text-white">Better feedback for</span>
                   <span className="block text-gradient">music practice</span>
                 </h1>
-                <p className="hero-text mt-8 text-lg text-gray-300 max-w-3xl">
+                <p className="hero-text mt-4 text-lg text-gray-300 max-w-3xl">
                   VidNote helps music students get timestamped feedback on their practice
                   videos from teachers and peers. Upload a video, share it, and receive
                   detailed comments aligned to specific moments in your performance.
                 </p>
-                <div className="hero-buttons mt-12 flex flex-wrap gap-4">
+                <div className="hero-buttons mt-8 flex flex-wrap gap-4">
                   <Button className="btn-gradient text-lg" size="lg" onClick={() => navigate("/register")}>
                     Get Started
                   </Button>
@@ -125,78 +125,78 @@ export default function Home() {
         </div>
 
         {/* Features & How It Works Combined Section */}
-        <div className="py-20 sm:py-24 bg-gradient-to-b from-card/50 to-background/80">
+        <div className="py-8 sm:py-12 bg-gradient-to-b from-card/50 to-background/80">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             {/* Features Section */}
             <div ref={featuresRef}>
               <div className="lg:text-center features-heading">
-                <h2 className="text-base text-primary font-semibold tracking-wide uppercase">Features</h2>
-                <p className="mt-3 text-3xl leading-8 font-extrabold tracking-tight text-white sm:text-4xl">
+                <h2 className="text-sm text-primary font-semibold tracking-wide uppercase">Features</h2>
+                <p className="mt-2 text-2xl leading-8 font-extrabold tracking-tight text-white sm:text-3xl">
                   Perfect for music education
                 </p>
-                <p className="mt-5 max-w-2xl text-xl text-gray-300 lg:mx-auto">
+                <p className="mt-3 max-w-2xl text-base text-gray-300 lg:mx-auto">
                   A dedicated video feedback platform built for musicians and music teachers.
                 </p>
               </div>
 
-              <div ref={featureCardsRef} className="mt-16">
-                <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
-                  <div className="feature-card card p-6 rounded-lg">
-                    <div className="w-14 h-14 rounded-xl bg-primary/20 flex items-center justify-center mb-5">
-                      <Upload className="h-7 w-7 text-primary" />
+              <div ref={featureCardsRef} className="mt-8">
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+                  <div className="feature-card card p-4 rounded-lg">
+                    <div className="w-10 h-10 rounded-lg bg-primary/20 flex items-center justify-center mb-3">
+                      <Upload className="h-5 w-5 text-primary" />
                     </div>
-                    <h3 className="text-xl font-bold text-white">Simple Video Upload</h3>
-                    <p className="mt-3 text-gray-300">
+                    <h3 className="text-lg font-bold text-white">Simple Video Upload</h3>
+                    <p className="mt-2 text-gray-300 text-sm">
                       Upload your practice videos directly from your device with just a few clicks.
                     </p>
                   </div>
 
-                  <div className="feature-card card p-6 rounded-lg">
-                    <div className="w-14 h-14 rounded-xl bg-primary/20 flex items-center justify-center mb-5">
-                      <Clock className="h-7 w-7 text-primary" />
+                  <div className="feature-card card p-4 rounded-lg">
+                    <div className="w-10 h-10 rounded-lg bg-primary/20 flex items-center justify-center mb-3">
+                      <Clock className="h-5 w-5 text-primary" />
                     </div>
-                    <h3 className="text-xl font-bold text-white">Timestamped Feedback</h3>
-                    <p className="mt-3 text-gray-300">
+                    <h3 className="text-lg font-bold text-white">Timestamped Feedback</h3>
+                    <p className="mt-2 text-gray-300 text-sm">
                       Comments are tied to specific moments in your video for precise feedback.
                     </p>
                   </div>
 
-                  <div className="feature-card card p-6 rounded-lg">
-                    <div className="w-14 h-14 rounded-xl bg-primary/20 flex items-center justify-center mb-5">
-                      <Lock className="h-7 w-7 text-primary" />
+                  <div className="feature-card card p-4 rounded-lg">
+                    <div className="w-10 h-10 rounded-lg bg-primary/20 flex items-center justify-center mb-3">
+                      <Lock className="h-5 w-5 text-primary" />
                     </div>
-                    <h3 className="text-xl font-bold text-white">Private & Secure</h3>
-                    <p className="mt-3 text-gray-300">
+                    <h3 className="text-lg font-bold text-white">Private & Secure</h3>
+                    <p className="mt-2 text-gray-300 text-sm">
                       Your videos are private by default and only visible to people you invite.
                     </p>
                   </div>
 
-                  <div className="feature-card card p-6 rounded-lg">
-                    <div className="w-14 h-14 rounded-xl bg-primary/20 flex items-center justify-center mb-5">
-                      <Music className="h-7 w-7 text-primary" />
+                  <div className="feature-card card p-4 rounded-lg">
+                    <div className="w-10 h-10 rounded-lg bg-primary/20 flex items-center justify-center mb-3">
+                      <Music className="h-5 w-5 text-primary" />
                     </div>
-                    <h3 className="text-xl font-bold text-white">Music Focus</h3>
-                    <p className="mt-3 text-gray-300">
+                    <h3 className="text-lg font-bold text-white">Music Focus</h3>
+                    <p className="mt-2 text-gray-300 text-sm">
                       Built specifically for music education with features tailored for musicians.
                     </p>
                   </div>
 
-                  <div className="feature-card card p-6 rounded-lg">
-                    <div className="w-14 h-14 rounded-xl bg-primary/20 flex items-center justify-center mb-5">
-                      <Headphones className="h-7 w-7 text-primary" />
+                  <div className="feature-card card p-4 rounded-lg">
+                    <div className="w-10 h-10 rounded-lg bg-primary/20 flex items-center justify-center mb-3">
+                      <Headphones className="h-5 w-5 text-primary" />
                     </div>
-                    <h3 className="text-xl font-bold text-white">Audio Comments</h3>
-                    <p className="mt-3 text-gray-300">
+                    <h3 className="text-lg font-bold text-white">Audio Comments</h3>
+                    <p className="mt-2 text-gray-300 text-sm">
                       Teachers can provide audio feedback for more nuanced performance insights.
                     </p>
                   </div>
 
-                  <div className="feature-card card p-6 rounded-lg">
-                    <div className="w-14 h-14 rounded-xl bg-primary/20 flex items-center justify-center mb-5">
-                      <Users className="h-7 w-7 text-primary" />
+                  <div className="feature-card card p-4 rounded-lg">
+                    <div className="w-10 h-10 rounded-lg bg-primary/20 flex items-center justify-center mb-3">
+                      <Users className="h-5 w-5 text-primary" />
                     </div>
-                    <h3 className="text-xl font-bold text-white">Collaborative Learning</h3>
-                    <p className="mt-3 text-gray-300">
+                    <h3 className="text-lg font-bold text-white">Collaborative Learning</h3>
+                    <p className="mt-2 text-gray-300 text-sm">
                       Multiple teachers can provide feedback on the same performance video.
                     </p>
                   </div>
@@ -204,31 +204,30 @@ export default function Home() {
               </div>
             </div>
             
-            {/* Divider */}
-            <div className="relative my-20">
+            {/* Divider with How It Works Title */}
+            <div className="relative my-8">
               <div className="absolute inset-0 flex items-center">
                 <div className="w-full border-t border-primary/10"></div>
               </div>
-              <div className="relative flex justify-center">
-                <span className="bg-background/20 backdrop-blur-sm px-6 text-sm text-primary">HOW IT WORKS</span>
+              <div className="relative flex justify-center text-center">
+                <div className="bg-background/20 backdrop-blur-sm px-6 py-2">
+                  <h2 className="text-sm text-primary font-semibold tracking-wide uppercase">How it works</h2>
+                  <p className="mt-1 text-2xl leading-8 font-extrabold tracking-tight text-white sm:text-3xl">
+                    Improve faster with focused feedback
+                  </p>
+                  <p className="mt-2 max-w-2xl mx-auto text-base text-gray-300">
+                    Our platform makes it easy to get the specific guidance you need to advance your musical skills.
+                  </p>
+                </div>
               </div>
             </div>
             
-            {/* How It Works Section */}
-            <div className="text-center mb-16">
-              <h2 className="text-base text-primary font-semibold tracking-wide uppercase">How it works</h2>
-              <p className="mt-3 text-3xl leading-8 font-extrabold tracking-tight text-white sm:text-4xl">
-                Improve faster with focused feedback
-              </p>
-              <p className="mt-5 max-w-2xl mx-auto text-xl text-gray-300">
-                Our platform makes it easy to get the specific guidance you need to advance your musical skills.
-              </p>
-            </div>
+            {/* How It Works Content */}
 
-            <div className="grid grid-cols-1 gap-x-8 gap-y-16 lg:grid-cols-3">
+            <div className="grid grid-cols-1 gap-x-6 gap-y-8 lg:grid-cols-3">
               <div className="relative">
-                <div className="h-52 w-full overflow-hidden rounded-2xl mb-6 glassmorphism p-1">
-                  <div className="w-full h-full rounded-xl overflow-hidden">
+                <div className="h-40 w-full overflow-hidden rounded-lg mb-4 glassmorphism p-1">
+                  <div className="w-full h-full rounded-md overflow-hidden">
                     <img 
                       src="https://images.unsplash.com/photo-1511379938547-c1f69419868d?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=600&q=80" 
                       alt="Recording a music performance" 
@@ -236,18 +235,18 @@ export default function Home() {
                     />
                   </div>
                 </div>
-                <div className="absolute -top-6 -left-6 w-12 h-12 rounded-full bg-primary flex items-center justify-center text-white font-bold text-xl">
+                <div className="absolute -top-4 -left-4 w-8 h-8 rounded-full bg-primary flex items-center justify-center text-white font-bold text-sm">
                   1
                 </div>
-                <h3 className="text-xl font-bold text-white mb-4">Record & Upload</h3>
-                <p className="text-gray-300">
+                <h3 className="text-lg font-bold text-white mb-2">Record & Upload</h3>
+                <p className="text-gray-300 text-sm">
                   Capture your musical practice or performance and upload it to the platform in just a few clicks.
                 </p>
               </div>
 
               <div className="relative">
-                <div className="h-52 w-full overflow-hidden rounded-2xl mb-6 glassmorphism p-1">
-                  <div className="w-full h-full rounded-xl overflow-hidden">
+                <div className="h-40 w-full overflow-hidden rounded-lg mb-4 glassmorphism p-1">
+                  <div className="w-full h-full rounded-md overflow-hidden">
                     <img 
                       src="https://images.unsplash.com/photo-1522071820081-009f0129c71c?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=600&q=80" 
                       alt="Sharing with teachers" 
@@ -255,18 +254,18 @@ export default function Home() {
                     />
                   </div>
                 </div>
-                <div className="absolute -top-6 -left-6 w-12 h-12 rounded-full bg-primary flex items-center justify-center text-white font-bold text-xl">
+                <div className="absolute -top-4 -left-4 w-8 h-8 rounded-full bg-primary flex items-center justify-center text-white font-bold text-sm">
                   2
                 </div>
-                <h3 className="text-xl font-bold text-white mb-4">Share With Teachers</h3>
-                <p className="text-gray-300">
+                <h3 className="text-lg font-bold text-white mb-2">Share With Teachers</h3>
+                <p className="text-gray-300 text-sm">
                   Invite your instructors to view your video and provide specific, timestamped feedback.
                 </p>
               </div>
 
               <div className="relative">
-                <div className="h-52 w-full overflow-hidden rounded-2xl mb-6 glassmorphism p-1">
-                  <div className="w-full h-full rounded-xl overflow-hidden">
+                <div className="h-40 w-full overflow-hidden rounded-lg mb-4 glassmorphism p-1">
+                  <div className="w-full h-full rounded-md overflow-hidden">
                     <img 
                       src="https://images.unsplash.com/photo-1513682121497-80211f36a7d3?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=600&q=80" 
                       alt="Receiving feedback" 
@@ -274,11 +273,11 @@ export default function Home() {
                     />
                   </div>
                 </div>
-                <div className="absolute -top-6 -left-6 w-12 h-12 rounded-full bg-primary flex items-center justify-center text-white font-bold text-xl">
+                <div className="absolute -top-4 -left-4 w-8 h-8 rounded-full bg-primary flex items-center justify-center text-white font-bold text-sm">
                   3
                 </div>
-                <h3 className="text-xl font-bold text-white mb-4">Improve With Feedback</h3>
-                <p className="text-gray-300">
+                <h3 className="text-lg font-bold text-white mb-2">Improve With Feedback</h3>
+                <p className="text-gray-300 text-sm">
                   Review feedback at the exact moments it applies to, helping you focus your practice on specific areas.
                 </p>
               </div>
@@ -287,72 +286,72 @@ export default function Home() {
         </div>
 
         {/* Testimonials */}
-        <div className="py-24 px-4 sm:px-6 lg:px-8 bg-card/30">
+        <div className="py-10 px-4 sm:px-6 lg:px-8 bg-card/30">
           <div className="max-w-7xl mx-auto">
-            <div className="text-center mb-16">
+            <div className="text-center mb-8">
               <h2 className="text-base text-primary font-semibold tracking-wide uppercase">Testimonials</h2>
-              <p className="mt-3 text-3xl leading-8 font-extrabold tracking-tight text-white sm:text-4xl">
+              <p className="mt-2 text-3xl leading-8 font-extrabold tracking-tight text-white sm:text-4xl">
                 What musicians are saying
               </p>
             </div>
 
-            <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
-              <div className="card p-8 rounded-2xl glassmorphism hover:shadow-xl transition-all duration-300 flex flex-col">
-                <div className="flex items-center mb-6">
-                  <div className="w-12 h-12 rounded-full bg-primary/30 flex items-center justify-center">
-                    <Music className="h-6 w-6 text-primary" />
+            <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+              <div className="card p-6 rounded-2xl glassmorphism hover:shadow-xl transition-all duration-300 flex flex-col">
+                <div className="flex items-center mb-4">
+                  <div className="w-10 h-10 rounded-full bg-primary/30 flex items-center justify-center">
+                    <Music className="h-5 w-5 text-primary" />
                   </div>
-                  <div className="ml-4">
+                  <div className="ml-3">
                     <h4 className="text-white font-bold">Sarah Johnson</h4>
                     <p className="text-gray-400 text-sm">Piano Student</p>
                   </div>
                 </div>
-                <p className="text-gray-300 italic flex-grow">
+                <p className="text-gray-300 italic flex-grow text-sm">
                   "With VidNote, I get detailed feedback on my piano technique that would be impossible to convey in just a lesson. My teacher can pinpoint exactly where my hand position needs adjustment."
                 </p>
-                <div className="mt-6 flex text-primary gap-1">
+                <div className="mt-4 flex text-primary gap-1">
                   {[1, 2, 3, 4, 5].map((star) => (
-                    <Star key={star} className="h-5 w-5 fill-current" />
+                    <Star key={star} className="h-4 w-4 fill-current" />
                   ))}
                 </div>
               </div>
 
-              <div className="card p-8 rounded-2xl glassmorphism hover:shadow-xl transition-all duration-300 flex flex-col">
-                <div className="flex items-center mb-6">
-                  <div className="w-12 h-12 rounded-full bg-primary/30 flex items-center justify-center">
-                    <Music className="h-6 w-6 text-primary" />
+              <div className="card p-6 rounded-2xl glassmorphism hover:shadow-xl transition-all duration-300 flex flex-col">
+                <div className="flex items-center mb-4">
+                  <div className="w-10 h-10 rounded-full bg-primary/30 flex items-center justify-center">
+                    <Music className="h-5 w-5 text-primary" />
                   </div>
-                  <div className="ml-4">
+                  <div className="ml-3">
                     <h4 className="text-white font-bold">Michael Chen</h4>
                     <p className="text-gray-400 text-sm">Violin Teacher</p>
                   </div>
                 </div>
-                <p className="text-gray-300 italic flex-grow">
+                <p className="text-gray-300 italic flex-grow text-sm">
                   "As a teacher with 20+ students, VidNote has revolutionized how I provide feedback between lessons. I can give detailed guidance exactly where it's needed, saving time in our in-person sessions."
                 </p>
-                <div className="mt-6 flex text-primary gap-1">
+                <div className="mt-4 flex text-primary gap-1">
                   {[1, 2, 3, 4, 5].map((star) => (
-                    <Star key={star} className="h-5 w-5 fill-current" />
+                    <Star key={star} className="h-4 w-4 fill-current" />
                   ))}
                 </div>
               </div>
 
-              <div className="card p-8 rounded-2xl glassmorphism hover:shadow-xl transition-all duration-300 flex flex-col">
-                <div className="flex items-center mb-6">
-                  <div className="w-12 h-12 rounded-full bg-primary/30 flex items-center justify-center">
-                    <Music className="h-6 w-6 text-primary" />
+              <div className="card p-6 rounded-2xl glassmorphism hover:shadow-xl transition-all duration-300 flex flex-col">
+                <div className="flex items-center mb-4">
+                  <div className="w-10 h-10 rounded-full bg-primary/30 flex items-center justify-center">
+                    <Music className="h-5 w-5 text-primary" />
                   </div>
-                  <div className="ml-4">
+                  <div className="ml-3">
                     <h4 className="text-white font-bold">Emma Martinez</h4>
                     <p className="text-gray-400 text-sm">Guitar Student</p>
                   </div>
                 </div>
-                <p className="text-gray-300 italic flex-grow">
+                <p className="text-gray-300 italic flex-grow text-sm">
                   "Getting feedback from multiple teachers has been incredible. Each instructor focuses on different aspects of my playing, giving me a well-rounded perspective that's improved my technique dramatically."
                 </p>
-                <div className="mt-6 flex text-primary gap-1">
+                <div className="mt-4 flex text-primary gap-1">
                   {[1, 2, 3, 4, 5].map((star) => (
-                    <Star key={star} className="h-5 w-5 fill-current" />
+                    <Star key={star} className="h-4 w-4 fill-current" />
                   ))}
                 </div>
               </div>
@@ -361,17 +360,17 @@ export default function Home() {
         </div>
 
         {/* CTA Section */}
-        <div className="py-20 px-4 sm:px-6 lg:px-8 bg-gradient-to-b from-background/80 to-background">
+        <div className="py-10 px-4 sm:px-6 lg:px-8 bg-gradient-to-b from-background/80 to-background">
           <div className="max-w-5xl mx-auto text-center">
-            <div className="inline-block p-1 rounded-full bg-primary/20 mb-8">
-              <div className="w-20 h-20 rounded-full bg-primary/30 flex items-center justify-center">
-                <Sparkles className="h-10 w-10 text-primary" />
+            <div className="inline-block p-1 rounded-full bg-primary/20 mb-4">
+              <div className="w-16 h-16 rounded-full bg-primary/30 flex items-center justify-center">
+                <Sparkles className="h-8 w-8 text-primary" />
               </div>
             </div>
-            <h2 className="text-4xl md:text-5xl font-extrabold mb-8 text-white">
+            <h2 className="text-3xl md:text-4xl font-extrabold mb-4 text-white">
               Ready to accelerate your musical progress?
             </h2>
-            <p className="text-xl text-gray-300 max-w-3xl mx-auto mb-12">
+            <p className="text-lg text-gray-300 max-w-3xl mx-auto mb-6">
               Join thousands of musicians who are improving faster with personalized, timestamped feedback from their teachers.
             </p>
             <div className="flex flex-col sm:flex-row justify-center gap-4">
