@@ -1,5 +1,5 @@
 import { QueryClient, QueryFunction } from "@tanstack/react-query";
-import { MOCK_VIDEOS, MOCK_COMMENTS, MOCK_SHARINGS } from "./mockData";
+import { MOCK_VIDEOS, MOCK_COMMENTS, MOCK_SHARINGS, MOCK_USERS } from "./mockData";
 import { Video, Comment, VideoSharing } from "@shared/schema";
 
 // This file is temporarily modified for UI development without Supabase
@@ -140,11 +140,41 @@ export const getQueryFn: <T>(options: {
     }
     else if (path.match(/\/api\/videos\/\d+\/comments$/)) {
       const videoId = parseInt(path.split("/")[3]);
-      responseData = MOCK_COMMENTS.filter(c => c.videoId === videoId);
+      // Enrich comments with user data (excluding password)
+      const commentsWithUsers = MOCK_COMMENTS
+        .filter(c => c.videoId === videoId)
+        .map(comment => {
+          const user = MOCK_USERS.find((u: any) => u.id === comment.userId);
+          if (!user) return comment; // Shouldn't happen with valid data
+          
+          // Clone the user without password for security
+          const { password, ...userWithoutPassword } = user;
+          
+          return {
+            ...comment,
+            user: userWithoutPassword
+          };
+        });
+      responseData = commentsWithUsers;
     }
     else if (path.match(/\/api\/videos\/\d+\/sharing$/)) {
       const videoId = parseInt(path.split("/")[3]);
-      responseData = MOCK_SHARINGS.filter(s => s.videoId === videoId);
+      // Enrich sharing data with user information
+      const sharingWithUsers = MOCK_SHARINGS
+        .filter(s => s.videoId === videoId)
+        .map(sharing => {
+          const user = MOCK_USERS.find((u: any) => u.id === sharing.userId);
+          if (!user) return sharing; // Shouldn't happen with valid data
+          
+          // Clone the user without password for security
+          const { password, ...userWithoutPassword } = user;
+          
+          return {
+            ...sharing,
+            user: userWithoutPassword
+          };
+        });
+      responseData = sharingWithUsers;
     }
     else if (path === "/api/auth/me") {
       // This would normally check the session
@@ -159,7 +189,7 @@ export const getQueryFn: <T>(options: {
       responseData = null;
     }
     
-    return responseData as T;
+    return responseData as any;
   };
 
 export const queryClient = new QueryClient({
