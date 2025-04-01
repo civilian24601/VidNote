@@ -131,12 +131,29 @@ export default function Videos() {
 
   // Don't do anything here, redirection is handled by the ProtectedRoute wrapper
 
+  // Max file size: 100MB
+  const MAX_FILE_SIZE = 100 * 1024 * 1024;
+
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (files && files[0]) {
       const file = files[0];
+      
+      // Check file size
+      if (file.size > MAX_FILE_SIZE) {
+        toast({
+          title: "File too large",
+          description: `The maximum file size is 100MB. Your file is ${(file.size / (1024 * 1024)).toFixed(1)}MB.`,
+          variant: "destructive"
+        });
+        e.target.value = '';
+        return;
+      }
+      
       setSelectedFile(file);
       form.setValue("video", file);
+      
+      console.log(`Selected video: ${file.name}, ${(file.size / (1024 * 1024)).toFixed(2)}MB`);
     }
   };
 

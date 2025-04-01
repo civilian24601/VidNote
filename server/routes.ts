@@ -28,23 +28,78 @@ import multer from "multer";
 import path from "path";
 import fs from "fs";
 
-// Mock Supabase client for development
-const mockSupabase = {
-  storage: {
-    from: (bucket: string) => ({
-      upload: async (path: string, buffer: Buffer, options: any) => ({
-        data: { path },
-        error: null
-      }),
-      getPublicUrl: (path: string) => ({
-        data: { publicUrl: `https://example.com/${path}` }
-      })
-    })
-  }
-};
+import { createClient } from '@supabase/supabase-js';
 
-// Use mock Supabase for development
-const supabase = mockSupabase;
+// Initialize Supabase client with environment variables
+// Access client-side env variables through import.meta.env
+let supabaseUrl = process.env.VITE_SUPABASE_URL || import.meta.env?.VITE_SUPABASE_URL || '';
+const supabaseKey = process.env.VITE_SUPABASE_ANON_KEY || import.meta.env?.VITE_SUPABASE_ANON_KEY || '';
+
+// Ensure URL has https:// prefix
+if (supabaseUrl && !supabaseUrl.startsWith('https://')) {
+  supabaseUrl = `https://${supabaseUrl}`;
+}
+
+// Interface for Supabase client
+interface SupabaseClient {
+  storage: {
+    from: (bucket: string) => {
+      upload: (path: string, buffer: Buffer, options: any) => Promise<{
+        data: { path: string } | null;
+        error: any | null;
+      }>;
+      getPublicUrl: (path: string) => {
+        data: { publicUrl: string };
+      };
+    };
+  };
+}
+
+// Create Supabase client or fallback to mock client
+let supabase: SupabaseClient;
+
+try {
+  // Only create the client if we have valid URL and key
+  if (supabaseUrl && supabaseKey) {
+    supabase = createClient(supabaseUrl, supabaseKey);
+    console.log("Server: Supabase client initialized successfully");
+  } else {
+    console.warn("Server: Missing Supabase credentials, using mock client");
+    // Create a mock client if credentials are missing
+    supabase = {
+      storage: {
+        from: (bucket: string) => ({
+          upload: async (path: string, buffer: Buffer, options: any) => {
+            console.log(`Mock upload to ${bucket}/${path}`);
+            return {
+              data: { path },
+              error: null
+            };
+          },
+          getPublicUrl: (path: string) => ({
+            data: { publicUrl: `https://example.com/${bucket}/${path}` }
+          })
+        })
+      }
+    };
+  }
+} catch (error) {
+  console.error("Server: Error initializing Supabase:", error);
+  // Fallback to mock client
+  supabase = {
+    storage: {
+      from: (bucket: string) => ({
+        upload: async (path: string, buffer: Buffer, options: any) => ({
+          data: { path },
+          error: null
+        }),
+        getPublicUrl: (path: string) => ({
+          data: { publicUrl: `https://example.com/${bucket}/${path}` }
+        })
+      })
+    }
+  };
+}
 
 // Configure multer for file uploads
 const upload = multer({
@@ -191,6 +246,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "No video file uploaded" });
       }
       
+      console.log(`Processing video upload: ${req.file.originalname}, size: ${(req.file.size / (1024 * 1024)).toFixed(2)}MB`);
+      
       // Upload to Supabase Storage
       const fileExt = path.extname(req.file.originalname);
       const fileName = `${userId}-${Date.now()}${fileExt}`;
@@ -202,8 +259,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       
       if (error) {
+        console.error("Supabase storage upload error:", error);
         return res.status(500).json({ message: "Error uploading video", error });
       }
+      
+      console.log("Supabase storage upload successful");
       
       // Get public URL
       const { data: urlData } = supabase.storage
@@ -224,8 +284,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const parsedVideoData = insertVideoSchema.parse(videoData);
       const video = await storage.createVideo(parsedVideoData);
       
-      res.status(201).json(video);
+      console.log(`Video record created with ID: ${video.id}`);
+      
+      res.status(201).json({
+        ...video,
+        message: "Video uploaded successfully"
+      });
     } catch (err) {
+      console.error("Video upload error:", err);
       handleError(err, res);
     }
   });

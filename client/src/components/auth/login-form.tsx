@@ -46,12 +46,15 @@ export function LoginForm() {
         description: "You have been successfully logged in.",
       });
       
-      // Redirect based on user role
-      if (user.role === 'teacher') {
-        navigate("/dashboard");
-      } else {
-        navigate("/videos");
-      }
+      // Redirect based on user role with a small delay to ensure state updates
+      setTimeout(() => {
+        console.log("Redirecting user with role:", user.role);
+        if (user.role === 'teacher') {
+          navigate("/dashboard");
+        } else {
+          navigate("/videos");
+        }
+      }, 50);
     } catch (error) {
       toast({
         title: "Login failed",
