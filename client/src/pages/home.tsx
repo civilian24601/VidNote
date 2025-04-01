@@ -5,7 +5,11 @@ import { Button } from "@/components/ui/button";
 import { Navbar } from "@/components/layout/navbar";
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
-import { Music, Upload, Clock, Lock, Headphones, Users } from "lucide-react";
+import { 
+  Music, Upload, Clock, Lock, Headphones, Users, 
+  MessageSquare, Award, TrendingUp, ArrowRight, Sparkles,
+  Lightbulb, GraduationCap, Share2, Layers, Mic, Star
+} from "lucide-react";
 
 // Register the ScrollTrigger plugin
 gsap.registerPlugin(ScrollTrigger);
@@ -193,6 +197,179 @@ export default function Home() {
                   </p>
                 </div>
               </div>
+            </div>
+          </div>
+        </div>
+
+        {/* How It Works Section */}
+        <div className="py-24 px-4 sm:px-6 lg:px-8 bg-background/80">
+          <div className="max-w-7xl mx-auto">
+            <div className="text-center mb-16">
+              <h2 className="text-base text-primary font-semibold tracking-wide uppercase">How it works</h2>
+              <p className="mt-3 text-3xl leading-8 font-extrabold tracking-tight text-white sm:text-4xl">
+                Improve faster with focused feedback
+              </p>
+              <p className="mt-5 max-w-2xl mx-auto text-xl text-gray-300">
+                Our platform makes it easy to get the specific guidance you need to advance your musical skills.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 gap-x-8 gap-y-16 lg:grid-cols-3">
+              <div className="relative">
+                <div className="h-52 w-full overflow-hidden rounded-2xl mb-6 glassmorphism p-1">
+                  <div className="w-full h-full rounded-xl overflow-hidden">
+                    <img 
+                      src="https://images.unsplash.com/photo-1511379938547-c1f69419868d?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=600&q=80" 
+                      alt="Recording a music performance" 
+                      className="w-full h-full object-cover transition-transform duration-700 hover:scale-110"
+                    />
+                  </div>
+                </div>
+                <div className="absolute -top-6 -left-6 w-12 h-12 rounded-full bg-primary flex items-center justify-center text-white font-bold text-xl">
+                  1
+                </div>
+                <h3 className="text-xl font-bold text-white mb-4">Record & Upload</h3>
+                <p className="text-gray-300">
+                  Capture your musical practice or performance and upload it to the platform in just a few clicks.
+                </p>
+              </div>
+
+              <div className="relative">
+                <div className="h-52 w-full overflow-hidden rounded-2xl mb-6 glassmorphism p-1">
+                  <div className="w-full h-full rounded-xl overflow-hidden">
+                    <img 
+                      src="https://images.unsplash.com/photo-1522071820081-009f0129c71c?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=600&q=80" 
+                      alt="Sharing with teachers" 
+                      className="w-full h-full object-cover transition-transform duration-700 hover:scale-110"
+                    />
+                  </div>
+                </div>
+                <div className="absolute -top-6 -left-6 w-12 h-12 rounded-full bg-primary flex items-center justify-center text-white font-bold text-xl">
+                  2
+                </div>
+                <h3 className="text-xl font-bold text-white mb-4">Share With Teachers</h3>
+                <p className="text-gray-300">
+                  Invite your instructors to view your video and provide specific, timestamped feedback.
+                </p>
+              </div>
+
+              <div className="relative">
+                <div className="h-52 w-full overflow-hidden rounded-2xl mb-6 glassmorphism p-1">
+                  <div className="w-full h-full rounded-xl overflow-hidden">
+                    <img 
+                      src="https://images.unsplash.com/photo-1513682121497-80211f36a7d3?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=600&q=80" 
+                      alt="Receiving feedback" 
+                      className="w-full h-full object-cover transition-transform duration-700 hover:scale-110"
+                    />
+                  </div>
+                </div>
+                <div className="absolute -top-6 -left-6 w-12 h-12 rounded-full bg-primary flex items-center justify-center text-white font-bold text-xl">
+                  3
+                </div>
+                <h3 className="text-xl font-bold text-white mb-4">Improve With Feedback</h3>
+                <p className="text-gray-300">
+                  Review feedback at the exact moments it applies to, helping you focus your practice on specific areas.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Testimonials */}
+        <div className="py-24 px-4 sm:px-6 lg:px-8 bg-card/30">
+          <div className="max-w-7xl mx-auto">
+            <div className="text-center mb-16">
+              <h2 className="text-base text-primary font-semibold tracking-wide uppercase">Testimonials</h2>
+              <p className="mt-3 text-3xl leading-8 font-extrabold tracking-tight text-white sm:text-4xl">
+                What musicians are saying
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
+              <div className="card p-8 rounded-2xl glassmorphism hover:shadow-xl transition-all duration-300 flex flex-col">
+                <div className="flex items-center mb-6">
+                  <div className="w-12 h-12 rounded-full bg-primary/30 flex items-center justify-center">
+                    <Music className="h-6 w-6 text-primary" />
+                  </div>
+                  <div className="ml-4">
+                    <h4 className="text-white font-bold">Sarah Johnson</h4>
+                    <p className="text-gray-400 text-sm">Piano Student</p>
+                  </div>
+                </div>
+                <p className="text-gray-300 italic flex-grow">
+                  "With VidNote, I get detailed feedback on my piano technique that would be impossible to convey in just a lesson. My teacher can pinpoint exactly where my hand position needs adjustment."
+                </p>
+                <div className="mt-6 flex text-primary gap-1">
+                  {[1, 2, 3, 4, 5].map((star) => (
+                    <Star key={star} className="h-5 w-5 fill-current" />
+                  ))}
+                </div>
+              </div>
+
+              <div className="card p-8 rounded-2xl glassmorphism hover:shadow-xl transition-all duration-300 flex flex-col">
+                <div className="flex items-center mb-6">
+                  <div className="w-12 h-12 rounded-full bg-primary/30 flex items-center justify-center">
+                    <Music className="h-6 w-6 text-primary" />
+                  </div>
+                  <div className="ml-4">
+                    <h4 className="text-white font-bold">Michael Chen</h4>
+                    <p className="text-gray-400 text-sm">Violin Teacher</p>
+                  </div>
+                </div>
+                <p className="text-gray-300 italic flex-grow">
+                  "As a teacher with 20+ students, VidNote has revolutionized how I provide feedback between lessons. I can give detailed guidance exactly where it's needed, saving time in our in-person sessions."
+                </p>
+                <div className="mt-6 flex text-primary gap-1">
+                  {[1, 2, 3, 4, 5].map((star) => (
+                    <Star key={star} className="h-5 w-5 fill-current" />
+                  ))}
+                </div>
+              </div>
+
+              <div className="card p-8 rounded-2xl glassmorphism hover:shadow-xl transition-all duration-300 flex flex-col">
+                <div className="flex items-center mb-6">
+                  <div className="w-12 h-12 rounded-full bg-primary/30 flex items-center justify-center">
+                    <Music className="h-6 w-6 text-primary" />
+                  </div>
+                  <div className="ml-4">
+                    <h4 className="text-white font-bold">Emma Martinez</h4>
+                    <p className="text-gray-400 text-sm">Guitar Student</p>
+                  </div>
+                </div>
+                <p className="text-gray-300 italic flex-grow">
+                  "Getting feedback from multiple teachers has been incredible. Each instructor focuses on different aspects of my playing, giving me a well-rounded perspective that's improved my technique dramatically."
+                </p>
+                <div className="mt-6 flex text-primary gap-1">
+                  {[1, 2, 3, 4, 5].map((star) => (
+                    <Star key={star} className="h-5 w-5 fill-current" />
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* CTA Section */}
+        <div className="py-20 px-4 sm:px-6 lg:px-8 bg-gradient-to-b from-background/80 to-background">
+          <div className="max-w-5xl mx-auto text-center">
+            <div className="inline-block p-1 rounded-full bg-primary/20 mb-8">
+              <div className="w-20 h-20 rounded-full bg-primary/30 flex items-center justify-center">
+                <Sparkles className="h-10 w-10 text-primary" />
+              </div>
+            </div>
+            <h2 className="text-4xl md:text-5xl font-extrabold mb-8 text-white">
+              Ready to accelerate your musical progress?
+            </h2>
+            <p className="text-xl text-gray-300 max-w-3xl mx-auto mb-12">
+              Join thousands of musicians who are improving faster with personalized, timestamped feedback from their teachers.
+            </p>
+            <div className="flex flex-col sm:flex-row justify-center gap-4">
+              <Button className="btn-gradient text-lg" size="lg" onClick={() => navigate("/register")}>
+                Start Free Trial <ArrowRight className="ml-2 h-5 w-5" />
+              </Button>
+              <Button className="glassmorphism text-lg border-primary/40" variant="outline" size="lg" onClick={() => navigate("/login")}>
+                Login to Your Account
+              </Button>
             </div>
           </div>
         </div>
