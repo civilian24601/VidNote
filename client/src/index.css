@@ -6,10 +6,10 @@
 
 @layer base {
   :root {
-    --background-gradient: linear-gradient(145deg, hsl(213, 85%, 8%), hsl(213, 75%, 15%));
-    --card-gradient: linear-gradient(145deg, hsl(213, 83%, 15%), hsl(213, 83%, 20%));
-    --header-gradient: linear-gradient(90deg, hsl(213, 83%, 25%), hsl(213, 83%, 30%));
-    --accent-gradient: linear-gradient(145deg, hsl(188, 83%, 55%), hsl(213, 83%, 44%));
+    --background-gradient: linear-gradient(145deg, hsl(180, 85%, 5%), hsl(185, 75%, 12%));
+    --card-gradient: linear-gradient(145deg, hsl(185, 83%, 15%), hsl(185, 83%, 20%));
+    --header-gradient: linear-gradient(90deg, hsl(185, 83%, 18%), hsl(175, 83%, 25%));
+    --accent-gradient: linear-gradient(145deg, hsl(175, 83%, 45%), hsl(165, 83%, 35%));
   }
 
   * {
@@ -132,16 +132,16 @@
   }
   
   ::-webkit-scrollbar-track {
-    background: hsl(213, 75%, 15%);
+    background: hsl(185, 75%, 12%);
   }
   
   ::-webkit-scrollbar-thumb {
-    background: hsl(213, 83%, 40%);
+    background: hsl(175, 83%, 30%);
     border-radius: 4px;
   }
   
   ::-webkit-scrollbar-thumb:hover {
-    background: hsl(213, 83%, 50%);
+    background: hsl(175, 83%, 40%);
   }
 
   /* Form styling enhancements */

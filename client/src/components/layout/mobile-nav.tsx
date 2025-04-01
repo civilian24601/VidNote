@@ -20,11 +20,11 @@ export function MobileNav() {
   }
 
   return (
-    <div className="block sm:hidden fixed bottom-0 inset-x-0 bg-white border-t border-gray-200 z-10">
+    <div className="block sm:hidden fixed bottom-0 inset-x-0 header z-10 border-t border-gray-700">
       <div className="flex justify-around">
         <Link href="/videos">
           <a className={`flex flex-col items-center py-2 px-3 ${
-            location === "/videos" ? "text-primary-500" : "text-gray-500"
+            location === "/videos" ? "text-primary" : "text-gray-300"
           }`}>
             <i className="ri-video-line text-xl"></i>
             <span className="text-xs mt-1">Videos</span>
@@ -32,7 +32,7 @@ export function MobileNav() {
         </Link>
         <Link href="/shared">
           <a className={`flex flex-col items-center py-2 px-3 ${
-            location === "/shared" ? "text-primary-500" : "text-gray-500"
+            location === "/shared" ? "text-primary" : "text-gray-300"
           }`}>
             <i className="ri-share-line text-xl"></i>
             <span className="text-xs mt-1">Shared</span>
@@ -40,24 +40,24 @@ export function MobileNav() {
         </Link>
         <Dialog open={uploadDialogOpen} onOpenChange={setUploadDialogOpen}>
           <DialogTrigger asChild>
-            <button className="flex flex-col items-center py-2 px-3 text-gray-500 relative">
-              <div className="w-12 h-12 rounded-full bg-primary-500 flex items-center justify-center text-white absolute -top-6">
-                <i className="ri-add-line text-xl"></i>
+            <button className="flex flex-col items-center py-2 px-3 text-gray-300 relative">
+              <div className="w-14 h-14 rounded-full btn-gradient flex items-center justify-center text-white absolute -top-8 shadow-lg">
+                <i className="ri-add-line text-2xl"></i>
               </div>
-              <span className="text-xs mt-7">Upload</span>
+              <span className="text-xs mt-8">Upload</span>
             </button>
           </DialogTrigger>
-          <DialogContent>
+          <DialogContent className="glassmorphism text-white border-gray-700">
             <DialogHeader>
-              <DialogTitle>Upload a new video</DialogTitle>
+              <DialogTitle className="text-gradient text-xl">Upload a new video</DialogTitle>
             </DialogHeader>
             <div className="flex flex-col gap-4">
-              <p className="text-sm text-gray-500">
+              <p className="text-sm text-gray-300">
                 Select a video file from your device to upload.
               </p>
-              <div className="grid place-items-center p-4 border-2 border-dashed border-gray-300 rounded-lg">
-                <i className="ri-upload-cloud-2-line text-3xl text-gray-400"></i>
-                <p className="mt-2 text-sm text-gray-500">Click to select a video</p>
+              <div className="grid place-items-center p-6 border-2 border-dashed border-gray-600 rounded-lg bg-gray-800/30">
+                <i className="ri-upload-cloud-2-line text-4xl text-primary/80"></i>
+                <p className="mt-3 text-sm text-gray-300">Click to select a video</p>
                 <input
                   type="file"
                   accept="video/*"
@@ -71,17 +71,17 @@ export function MobileNav() {
                   }}
                 />
               </div>
-              <Button variant="outline" onClick={() => setUploadDialogOpen(false)}>
+              <Button variant="outline" className="border-gray-600 text-white hover:bg-gray-800/50" onClick={() => setUploadDialogOpen(false)}>
                 Cancel
               </Button>
             </div>
           </DialogContent>
         </Dialog>
-        <button className="flex flex-col items-center py-2 px-3 text-gray-500">
+        <button className="flex flex-col items-center py-2 px-3 text-gray-300">
           <i className="ri-notification-3-line text-xl"></i>
           <span className="text-xs mt-1">Alerts</span>
         </button>
-        <button className="flex flex-col items-center py-2 px-3 text-gray-500">
+        <button className="flex flex-col items-center py-2 px-3 text-gray-300">
           <i className="ri-user-line text-xl"></i>
           <span className="text-xs mt-1">Profile</span>
         </button>
