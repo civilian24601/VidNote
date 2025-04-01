@@ -134,12 +134,26 @@ export default function Home() {
                   detailed comments aligned to specific moments in your performance.
                 </p>
                 <div className="hero-buttons mt-8 flex flex-wrap gap-4">
-                  <Button className="btn-gradient text-lg" size="lg" onClick={() => navigate("/register")}>
+                  <a 
+                    href="/register"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      navigate("/register");
+                    }}
+                    className="btn-gradient inline-flex items-center justify-center px-8 py-3 text-lg font-bold rounded-md cursor-pointer"
+                  >
                     Get Started
-                  </Button>
-                  <Button className="glassmorphism text-lg" variant="outline" size="lg" onClick={() => navigate("/login")}>
-                    Log in
-                  </Button>
+                  </a>
+                  <a 
+                    href="/login"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      navigate("/login");
+                    }}
+                    className="inline-flex items-center justify-center px-8 py-3 text-lg font-medium text-white border border-primary/30 backdrop-blur-sm bg-white/5 rounded-md hover:bg-primary/10 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary cursor-pointer transition-all duration-300"
+                  >
+                    Log In
+                  </a>
                 </div>
               </div>
             </div>
@@ -162,62 +176,62 @@ export default function Home() {
 
               <div ref={featureCardsRef} className="mt-12">
                 <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-                  <div className="feature-card p-6 rounded-xl bg-card shadow-xl flex flex-col h-full border border-primary/10">
-                    <div className="w-12 h-12 rounded-lg bg-primary/20 flex items-center justify-center mb-4">
+                  <div className="feature-card p-6 rounded-xl bg-gradient-to-br from-card/90 to-primary/10 shadow-xl flex flex-col h-full border border-primary/20 hover:border-primary/40 transition-all duration-300">
+                    <div className="w-12 h-12 rounded-lg bg-primary/30 flex items-center justify-center mb-4 shadow-md">
                       <Upload className="h-6 w-6 text-primary" />
                     </div>
                     <h3 className="text-xl font-bold text-white">Simple Video Upload</h3>
-                    <p className="mt-3 text-gray-300 text-base flex-grow">
+                    <p className="mt-3 text-gray-200 text-base flex-grow">
                       Upload your practice videos directly from your device with just a few clicks.
                     </p>
                   </div>
 
-                  <div className="feature-card p-6 rounded-xl bg-card shadow-xl flex flex-col h-full border border-primary/10">
-                    <div className="w-12 h-12 rounded-lg bg-primary/20 flex items-center justify-center mb-4">
+                  <div className="feature-card p-6 rounded-xl bg-gradient-to-br from-card/90 to-primary/10 shadow-xl flex flex-col h-full border border-primary/20 hover:border-primary/40 transition-all duration-300">
+                    <div className="w-12 h-12 rounded-lg bg-primary/30 flex items-center justify-center mb-4 shadow-md">
                       <Clock className="h-6 w-6 text-primary" />
                     </div>
                     <h3 className="text-xl font-bold text-white">Timestamped Feedback</h3>
-                    <p className="mt-3 text-gray-300 text-base flex-grow">
+                    <p className="mt-3 text-gray-200 text-base flex-grow">
                       Comments are tied to specific moments in your video for precise feedback.
                     </p>
                   </div>
 
-                  <div className="feature-card p-6 rounded-xl bg-card shadow-xl flex flex-col h-full border border-primary/10">
-                    <div className="w-12 h-12 rounded-lg bg-primary/20 flex items-center justify-center mb-4">
+                  <div className="feature-card p-6 rounded-xl bg-gradient-to-br from-card/90 to-primary/10 shadow-xl flex flex-col h-full border border-primary/20 hover:border-primary/40 transition-all duration-300">
+                    <div className="w-12 h-12 rounded-lg bg-primary/30 flex items-center justify-center mb-4 shadow-md">
                       <Lock className="h-6 w-6 text-primary" />
                     </div>
                     <h3 className="text-xl font-bold text-white">Private & Secure</h3>
-                    <p className="mt-3 text-gray-300 text-base flex-grow">
+                    <p className="mt-3 text-gray-200 text-base flex-grow">
                       Your videos are private by default and only visible to people you invite.
                     </p>
                   </div>
 
-                  <div className="feature-card p-6 rounded-xl bg-card shadow-xl flex flex-col h-full border border-primary/10">
-                    <div className="w-12 h-12 rounded-lg bg-primary/20 flex items-center justify-center mb-4">
+                  <div className="feature-card p-6 rounded-xl bg-gradient-to-br from-card/90 to-primary/10 shadow-xl flex flex-col h-full border border-primary/20 hover:border-primary/40 transition-all duration-300">
+                    <div className="w-12 h-12 rounded-lg bg-primary/30 flex items-center justify-center mb-4 shadow-md">
                       <Music className="h-6 w-6 text-primary" />
                     </div>
                     <h3 className="text-xl font-bold text-white">Music Focus</h3>
-                    <p className="mt-3 text-gray-300 text-base flex-grow">
+                    <p className="mt-3 text-gray-200 text-base flex-grow">
                       Built specifically for music education with features tailored for musicians.
                     </p>
                   </div>
 
-                  <div className="feature-card p-6 rounded-xl bg-card shadow-xl flex flex-col h-full border border-primary/10">
-                    <div className="w-12 h-12 rounded-lg bg-primary/20 flex items-center justify-center mb-4">
+                  <div className="feature-card p-6 rounded-xl bg-gradient-to-br from-card/90 to-primary/10 shadow-xl flex flex-col h-full border border-primary/20 hover:border-primary/40 transition-all duration-300">
+                    <div className="w-12 h-12 rounded-lg bg-primary/30 flex items-center justify-center mb-4 shadow-md">
                       <Headphones className="h-6 w-6 text-primary" />
                     </div>
                     <h3 className="text-xl font-bold text-white">Audio Comments</h3>
-                    <p className="mt-3 text-gray-300 text-base flex-grow">
+                    <p className="mt-3 text-gray-200 text-base flex-grow">
                       Teachers can provide audio feedback for more nuanced performance insights.
                     </p>
                   </div>
 
-                  <div className="feature-card p-6 rounded-xl bg-card shadow-xl flex flex-col h-full border border-primary/10">
-                    <div className="w-12 h-12 rounded-lg bg-primary/20 flex items-center justify-center mb-4">
+                  <div className="feature-card p-6 rounded-xl bg-gradient-to-br from-card/90 to-primary/10 shadow-xl flex flex-col h-full border border-primary/20 hover:border-primary/40 transition-all duration-300">
+                    <div className="w-12 h-12 rounded-lg bg-primary/30 flex items-center justify-center mb-4 shadow-md">
                       <Users className="h-6 w-6 text-primary" />
                     </div>
                     <h3 className="text-xl font-bold text-white">Collaborative Learning</h3>
-                    <p className="mt-3 text-gray-300 text-base flex-grow">
+                    <p className="mt-3 text-gray-200 text-base flex-grow">
                       Multiple teachers can provide feedback on the same performance video.
                     </p>
                   </div>
