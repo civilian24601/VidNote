@@ -1,11 +1,21 @@
 import { createClient } from '@supabase/supabase-js';
 
 // Initialize Supabase client with environment variables
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
+// Make sure we have the correct format with https://
+let supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
 const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
 
+// Ensure URL has https:// prefix
+if (supabaseUrl && !supabaseUrl.startsWith('https://')) {
+  supabaseUrl = `https://${supabaseUrl}`;
+}
+
 // For debugging
-console.log("Supabase URL length:", supabaseUrl.length);
+console.log("Supabase URL format check:", 
+  supabaseUrl ? 
+  (supabaseUrl.startsWith('https://') && supabaseUrl.includes('supabase.co')) : 
+  false
+);
 
 // Create Supabase client with fallback to avoid runtime errors
 // If URL is invalid, we'll use a mock client instead
@@ -13,7 +23,7 @@ let supabaseClient;
 
 try {
   // Only create the client if we have valid URL and key
-  if (supabaseUrl && supabaseUrl.includes('supabase.co') && supabaseKey) {
+  if (supabaseUrl && supabaseUrl.startsWith('https://') && supabaseUrl.includes('supabase.co') && supabaseKey) {
     supabaseClient = createClient(supabaseUrl, supabaseKey);
     console.log("Supabase client initialized successfully");
   } else {

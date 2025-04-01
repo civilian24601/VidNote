@@ -57,27 +57,19 @@ export default function Home() {
                   videos from teachers and peers. Upload a video, share it, and receive
                   detailed comments aligned to specific moments in your performance.
                 </p>
-                <div className="mt-8 flex flex-wrap gap-4">
-                  <a 
-                    href="/register"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      navigate("/register");
-                    }}
+                <div className="mt-8 flex flex-wrap gap-4 relative z-10">
+                  <button
+                    onClick={() => navigate("/register")}
                     className="inline-flex items-center justify-center px-8 py-3 text-lg font-bold rounded-md cursor-pointer bg-primary text-white hover:bg-primary/90 transition-colors"
                   >
                     Get Started
-                  </a>
-                  <a 
-                    href="/login"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      navigate("/login");
-                    }}
+                  </button>
+                  <button
+                    onClick={() => navigate("/login")}
                     className="inline-flex items-center justify-center px-8 py-3 text-lg font-medium text-white border border-primary/30 bg-black/50 rounded-md hover:bg-primary/10 cursor-pointer transition-colors"
                   >
                     Log In
-                  </a>
+                  </button>
                 </div>
               </div>
             </div>
@@ -363,29 +355,21 @@ export default function Home() {
               <span className="block text-primary mt-1">Start using VidNote today.</span>
             </h2>
             <div className="mt-8 flex lg:mt-0 lg:flex-shrink-0">
-              <div className="inline-flex rounded-md shadow">
-                <a
-                  href="/register"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    navigate("/register");
-                  }}
+              <div className="inline-flex rounded-md shadow relative z-10">
+                <button
+                  onClick={() => navigate("/register")}
                   className="inline-flex items-center justify-center px-5 py-3 border border-transparent text-base font-medium rounded-md text-white bg-primary hover:bg-primary/90 cursor-pointer"
                 >
                   Get started
-                </a>
+                </button>
               </div>
-              <div className="ml-3 inline-flex rounded-md shadow">
-                <a
-                  href="/login"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    navigate("/login");
-                  }}
+              <div className="ml-3 inline-flex rounded-md shadow relative z-10">
+                <button
+                  onClick={() => navigate("/login")}
                   className="inline-flex items-center justify-center px-5 py-3 border border-transparent text-base font-medium rounded-md text-primary bg-white hover:bg-gray-50 cursor-pointer"
                 >
                   Log in
-                </a>
+                </button>
               </div>
             </div>
           </div>
