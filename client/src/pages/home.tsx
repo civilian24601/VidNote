@@ -97,6 +97,7 @@ export default function Home() {
     <div className="min-h-screen flex flex-col bg-background">
       <Navbar />
       <main>
+        {/* Hero Section */}
         <div className="relative overflow-hidden animated-bg">
           <div ref={heroRef} className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="pt-20 pb-24 md:pt-32 md:pb-32 lg:pt-40 lg:pb-40">
@@ -123,87 +124,97 @@ export default function Home() {
           </div>
         </div>
 
-        <div className="py-20 sm:py-28 bg-card/50">
-          <div ref={featuresRef} className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="lg:text-center features-heading">
-              <h2 className="text-base text-primary font-semibold tracking-wide uppercase">Features</h2>
-              <p className="mt-3 text-3xl leading-8 font-extrabold tracking-tight text-white sm:text-4xl">
-                Perfect for music education
-              </p>
-              <p className="mt-5 max-w-2xl text-xl text-gray-300 lg:mx-auto">
-                A dedicated video feedback platform built for musicians and music teachers.
-              </p>
-            </div>
+        {/* Features & How It Works Combined Section */}
+        <div className="py-20 sm:py-24 bg-gradient-to-b from-card/50 to-background/80">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            {/* Features Section */}
+            <div ref={featuresRef}>
+              <div className="lg:text-center features-heading">
+                <h2 className="text-base text-primary font-semibold tracking-wide uppercase">Features</h2>
+                <p className="mt-3 text-3xl leading-8 font-extrabold tracking-tight text-white sm:text-4xl">
+                  Perfect for music education
+                </p>
+                <p className="mt-5 max-w-2xl text-xl text-gray-300 lg:mx-auto">
+                  A dedicated video feedback platform built for musicians and music teachers.
+                </p>
+              </div>
 
-            <div ref={featureCardsRef} className="mt-20">
-              <div className="grid grid-cols-1 gap-10 md:grid-cols-2 lg:grid-cols-3">
-                <div className="feature-card card p-6 rounded-lg">
-                  <div className="w-14 h-14 rounded-xl bg-primary/20 flex items-center justify-center mb-5">
-                    <Upload className="h-7 w-7 text-primary" />
+              <div ref={featureCardsRef} className="mt-16">
+                <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
+                  <div className="feature-card card p-6 rounded-lg">
+                    <div className="w-14 h-14 rounded-xl bg-primary/20 flex items-center justify-center mb-5">
+                      <Upload className="h-7 w-7 text-primary" />
+                    </div>
+                    <h3 className="text-xl font-bold text-white">Simple Video Upload</h3>
+                    <p className="mt-3 text-gray-300">
+                      Upload your practice videos directly from your device with just a few clicks.
+                    </p>
                   </div>
-                  <h3 className="text-xl font-bold text-white">Simple Video Upload</h3>
-                  <p className="mt-3 text-gray-300">
-                    Upload your practice videos directly from your device with just a few clicks.
-                  </p>
-                </div>
 
-                <div className="feature-card card p-6 rounded-lg">
-                  <div className="w-14 h-14 rounded-xl bg-primary/20 flex items-center justify-center mb-5">
-                    <Clock className="h-7 w-7 text-primary" />
+                  <div className="feature-card card p-6 rounded-lg">
+                    <div className="w-14 h-14 rounded-xl bg-primary/20 flex items-center justify-center mb-5">
+                      <Clock className="h-7 w-7 text-primary" />
+                    </div>
+                    <h3 className="text-xl font-bold text-white">Timestamped Feedback</h3>
+                    <p className="mt-3 text-gray-300">
+                      Comments are tied to specific moments in your video for precise feedback.
+                    </p>
                   </div>
-                  <h3 className="text-xl font-bold text-white">Timestamped Feedback</h3>
-                  <p className="mt-3 text-gray-300">
-                    Comments are tied to specific moments in your video for precise feedback.
-                  </p>
-                </div>
 
-                <div className="feature-card card p-6 rounded-lg">
-                  <div className="w-14 h-14 rounded-xl bg-primary/20 flex items-center justify-center mb-5">
-                    <Lock className="h-7 w-7 text-primary" />
+                  <div className="feature-card card p-6 rounded-lg">
+                    <div className="w-14 h-14 rounded-xl bg-primary/20 flex items-center justify-center mb-5">
+                      <Lock className="h-7 w-7 text-primary" />
+                    </div>
+                    <h3 className="text-xl font-bold text-white">Private & Secure</h3>
+                    <p className="mt-3 text-gray-300">
+                      Your videos are private by default and only visible to people you invite.
+                    </p>
                   </div>
-                  <h3 className="text-xl font-bold text-white">Private & Secure</h3>
-                  <p className="mt-3 text-gray-300">
-                    Your videos are private by default and only visible to people you invite.
-                  </p>
-                </div>
 
-                <div className="feature-card card p-6 rounded-lg">
-                  <div className="w-14 h-14 rounded-xl bg-primary/20 flex items-center justify-center mb-5">
-                    <Music className="h-7 w-7 text-primary" />
+                  <div className="feature-card card p-6 rounded-lg">
+                    <div className="w-14 h-14 rounded-xl bg-primary/20 flex items-center justify-center mb-5">
+                      <Music className="h-7 w-7 text-primary" />
+                    </div>
+                    <h3 className="text-xl font-bold text-white">Music Focus</h3>
+                    <p className="mt-3 text-gray-300">
+                      Built specifically for music education with features tailored for musicians.
+                    </p>
                   </div>
-                  <h3 className="text-xl font-bold text-white">Music Focus</h3>
-                  <p className="mt-3 text-gray-300">
-                    Built specifically for music education with features tailored for musicians.
-                  </p>
-                </div>
 
-                <div className="feature-card card p-6 rounded-lg">
-                  <div className="w-14 h-14 rounded-xl bg-primary/20 flex items-center justify-center mb-5">
-                    <Headphones className="h-7 w-7 text-primary" />
+                  <div className="feature-card card p-6 rounded-lg">
+                    <div className="w-14 h-14 rounded-xl bg-primary/20 flex items-center justify-center mb-5">
+                      <Headphones className="h-7 w-7 text-primary" />
+                    </div>
+                    <h3 className="text-xl font-bold text-white">Audio Comments</h3>
+                    <p className="mt-3 text-gray-300">
+                      Teachers can provide audio feedback for more nuanced performance insights.
+                    </p>
                   </div>
-                  <h3 className="text-xl font-bold text-white">Audio Comments</h3>
-                  <p className="mt-3 text-gray-300">
-                    Teachers can provide audio feedback for more nuanced performance insights.
-                  </p>
-                </div>
 
-                <div className="feature-card card p-6 rounded-lg">
-                  <div className="w-14 h-14 rounded-xl bg-primary/20 flex items-center justify-center mb-5">
-                    <Users className="h-7 w-7 text-primary" />
+                  <div className="feature-card card p-6 rounded-lg">
+                    <div className="w-14 h-14 rounded-xl bg-primary/20 flex items-center justify-center mb-5">
+                      <Users className="h-7 w-7 text-primary" />
+                    </div>
+                    <h3 className="text-xl font-bold text-white">Collaborative Learning</h3>
+                    <p className="mt-3 text-gray-300">
+                      Multiple teachers can provide feedback on the same performance video.
+                    </p>
                   </div>
-                  <h3 className="text-xl font-bold text-white">Collaborative Learning</h3>
-                  <p className="mt-3 text-gray-300">
-                    Multiple teachers can provide feedback on the same performance video.
-                  </p>
                 </div>
               </div>
             </div>
-          </div>
-        </div>
-
-        {/* How It Works Section */}
-        <div className="py-24 px-4 sm:px-6 lg:px-8 bg-background/80">
-          <div className="max-w-7xl mx-auto">
+            
+            {/* Divider */}
+            <div className="relative my-20">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-primary/10"></div>
+              </div>
+              <div className="relative flex justify-center">
+                <span className="bg-background/20 backdrop-blur-sm px-6 text-sm text-primary">HOW IT WORKS</span>
+              </div>
+            </div>
+            
+            {/* How It Works Section */}
             <div className="text-center mb-16">
               <h2 className="text-base text-primary font-semibold tracking-wide uppercase">How it works</h2>
               <p className="mt-3 text-3xl leading-8 font-extrabold tracking-tight text-white sm:text-4xl">
