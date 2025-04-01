@@ -13,6 +13,7 @@ import { AuthProvider } from "./lib/auth";
 import Dashboard from "./pages/dashboard";
 import Profile from "./pages/profile";
 import Students from "./pages/students";
+import StudentDetail from "./pages/student-detail";
 import Analytics from "./pages/analytics";
 
 function Router() {
@@ -27,6 +28,7 @@ function Router() {
       <Route path="/dashboard" component={Dashboard} />
       <Route path="/profile" component={Profile} />
       <Route path="/students" component={Students} />
+      <Route path="/students/:id" component={StudentDetail} />
       <Route path="/analytics" component={Analytics} />
       <Route component={NotFound} />
     </Switch>
