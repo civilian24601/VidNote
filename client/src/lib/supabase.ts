@@ -1,9 +1,9 @@
 import { createClient } from '@supabase/supabase-js';
 
 // Initialize Supabase client with environment variables
-// Make sure we have the correct format with https://
-let supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
-const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
+// Use both SUPABASE_ and VITE_SUPABASE_ env vars with correct precedence
+let supabaseUrl = import.meta.env.SUPABASE_URL || import.meta.env.VITE_SUPABASE_URL || '';
+const supabaseKey = import.meta.env.SUPABASE_ANON_KEY || import.meta.env.VITE_SUPABASE_ANON_KEY || '';
 
 console.log('Supabase URL:', supabaseUrl ? 'Exists (value hidden)' : 'Missing');
 console.log('Supabase Key:', supabaseKey ? 'Exists (value hidden)' : 'Missing');

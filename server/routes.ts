@@ -32,8 +32,37 @@ import { createClient } from '@supabase/supabase-js';
 
 // Initialize Supabase client with environment variables
 // Access client-side env variables through import.meta.env
-let supabaseUrl = process.env.VITE_SUPABASE_URL || import.meta.env?.VITE_SUPABASE_URL || '';
-const supabaseKey = process.env.VITE_SUPABASE_ANON_KEY || import.meta.env?.VITE_SUPABASE_ANON_KEY || '';
+// Use the proper SUPABASE environment variables first, then fall back to VITE_ prefixed ones
+let supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL || import.meta.env?.VITE_SUPABASE_URL || '';
+const supabaseKey = process.env.SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY || import.meta.env?.VITE_SUPABASE_ANON_KEY || '';
+
+// Debugging - log the URL (without revealing the actual values)
+// Securely print the first few characters and domain part without showing the full URL
+const safeUrlLogging = (url: string): string => {
+  if (!url) return 'missing';
+  try {
+    // Check if it's already a URL
+    if (url.startsWith('http')) {
+      const urlObj = new URL(url);
+      return `${url.substring(0, 10)}...${urlObj.hostname}`;
+    } else {
+      // If it doesn't start with http, it might be a domain or something else
+      return `${url.substring(0, 5)}...`;
+    }
+  } catch (e) {
+    // If parsing fails, show only a few chars
+    return `${url.substring(0, 5)}...`;
+  }
+};
+
+console.log('Server: Supabase URL check:', safeUrlLogging(supabaseUrl));
+console.log('Server: Supabase URL format check:', {
+  exists: !!supabaseUrl,
+  length: supabaseUrl?.length || 0,
+  startsWithHttps: supabaseUrl?.startsWith('https://') || false,
+  endsWithSupabaseIo: supabaseUrl?.includes('.supabase.co') || false,
+  containsValidDomain: !!(supabaseUrl?.includes('.') || false)
+});
 
 // Ensure URL has https:// prefix
 if (supabaseUrl && !supabaseUrl.startsWith('https://')) {
