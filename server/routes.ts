@@ -376,6 +376,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Return user without password
       const { password, ...userWithoutPassword } = user;
+      console.log("User created with internal ID:", user.id);
       res.status(201).json(userWithoutPassword);
     } catch (err) {
       handleError(err, res);
@@ -395,8 +396,56 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ message: "Invalid credentials" });
       }
       
+      // Update last login timestamp
+      await storage.updateLastLogin(user.id);
+      
       // Return user without password
       const { password: _, ...userWithoutPassword } = user;
+      console.log("User logged in with internal ID:", user.id);
+      res.json(userWithoutPassword);
+    } catch (err) {
+      handleError(err, res);
+    }
+  });
+  
+  // Get user by ID - used to verify a user exists in our storage
+  router.get("/users/:id", async (req: express.Request, res: express.Response) => {
+    try {
+      const userId = parseInt(req.params.id);
+      if (isNaN(userId)) {
+        return res.status(400).json({ message: "Invalid user ID format" });
+      }
+      
+      const user = await storage.getUser(userId);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      
+      // Return user without password
+      const { password, ...userWithoutPassword } = user;
+      res.json(userWithoutPassword);
+    } catch (err) {
+      handleError(err, res);
+    }
+  });
+  
+  // Look up user by email - used for session restoration
+  router.post("/users/lookup", async (req: express.Request, res: express.Response) => {
+    try {
+      const { email } = req.body;
+      
+      if (!email) {
+        return res.status(400).json({ message: "Email is required" });
+      }
+      
+      const user = await storage.getUserByEmail(email);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      
+      // Return user without password
+      const { password, ...userWithoutPassword } = user;
+      console.log("User looked up by email with internal ID:", user.id);
       res.json(userWithoutPassword);
     } catch (err) {
       handleError(err, res);

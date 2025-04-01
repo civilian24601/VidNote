@@ -88,21 +88,85 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             setUser(JSON.parse(storedUser));
           }
         } else {
-          // Use Supabase Auth
+          // First check if we have a stored user from a previous login
+          const storedUser = localStorage.getItem("user");
+          
+          if (storedUser) {
+            // We have a stored user, use it first for immediate UI response
+            const parsedUser = JSON.parse(storedUser);
+            
+            // Verify this user exists in our server storage
+            try {
+              const verifyResponse = await fetch(`/api/users/${parsedUser.id}`);
+              
+              if (verifyResponse.ok) {
+                // Server confirms user exists, we can safely use the stored user
+                setUser(parsedUser);
+                console.log("Restored session for user ID:", parsedUser.id);
+              } else {
+                // Server doesn't recognize this user - will try Supabase instead
+                console.warn("Stored user not found in server:", parsedUser.id);
+                localStorage.removeItem("user");
+              }
+            } catch (verifyError) {
+              console.error("Error verifying stored user:", verifyError);
+              // We'll continue with Supabase auth in case of error
+            }
+          }
+          
+          // Use Supabase Auth as backup or if no stored user
           const { data: sessionData } = await supabase.auth.getSession();
-          if (sessionData?.session?.user) {
-            // Convert Supabase user to our User model
-            const userData = mapSupabaseAuthToUser(sessionData.session.user);
-            setUser(userData);
+          if (sessionData?.session?.user && !user) {
+            console.log("Found Supabase session, retrieving user...");
+            
+            // We have a Supabase session but no valid user in server
+            // Try to get user from server by email
+            try {
+              const email = sessionData.session.user.email;
+              
+              if (email) {
+                const serverResponse = await fetch('/api/users/lookup', {
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': 'application/json',
+                  },
+                  body: JSON.stringify({ email }),
+                });
+                
+                if (serverResponse.ok) {
+                  // Server found a user with this email
+                  const serverUser = await serverResponse.json();
+                  
+                  // Map Supabase user data but use our server ID
+                  const userData = {
+                    ...mapSupabaseAuthToUser(sessionData.session.user),
+                    id: serverUser.id // Use server-assigned ID
+                  };
+                  
+                  localStorage.setItem("user", JSON.stringify(userData));
+                  setUser(userData);
+                  console.log("Retrieved user from server ID:", userData.id);
+                } else {
+                  console.warn("Supabase user not found in server storage:", email);
+                  // Clean up by signing out from Supabase too
+                  await supabase.auth.signOut();
+                }
+              }
+            } catch (lookupError) {
+              console.error("Error looking up user by email:", lookupError);
+            }
           }
           
           // Set up auth state change listener
           const { data: authListener } = supabase.auth.onAuthStateChange(
             async (event, session) => {
               if (event === 'SIGNED_IN' && session?.user) {
-                const userData = mapSupabaseAuthToUser(session.user);
-                setUser(userData);
+                // We handle sign-in in the login and register functions
+                // No need to handle it here as we need the server ID
+                console.log("Auth state change: SIGNED_IN");
               } else if (event === 'SIGNED_OUT') {
+                console.log("Auth state change: SIGNED_OUT");
+                localStorage.removeItem("user");
                 setUser(null);
               }
             }
@@ -152,13 +216,40 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (error) throw error;
         
         if (data.user) {
-          const userData = mapSupabaseAuthToUser(data.user);
-          
-          // Store complete user data in localStorage for persistence across refreshes
-          localStorage.setItem("user", JSON.stringify(userData));
-          
-          setUser(userData);
-          return userData;
+          // Server login to get our internal user with the correct ID
+          try {
+            const serverResponse = await fetch('/api/users/login', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({ email, password }),
+            });
+            
+            if (!serverResponse.ok) {
+              throw new Error(`Server login failed: ${serverResponse.statusText}`);
+            }
+            
+            // Get the server-side user with proper ID
+            const serverUser = await serverResponse.json();
+            
+            // Map Supabase user data but use our server ID
+            const userData = {
+              ...mapSupabaseAuthToUser(data.user),
+              id: serverUser.id // Use server-assigned ID
+            };
+            
+            console.log("User logged in successfully with ID:", userData.id);
+            
+            // Store complete user data in localStorage for persistence across refreshes
+            localStorage.setItem("user", JSON.stringify(userData));
+            
+            setUser(userData);
+            return userData;
+          } catch (serverError) {
+            console.error("Server login error:", serverError);
+            throw serverError;
+          }
         } else {
           throw new Error('Login successful but user data is missing');
         }
@@ -213,13 +304,50 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (error) throw error;
         
         if (data.user) {
-          const newUser = mapSupabaseAuthToUser(data.user, userData);
-          
-          // Store complete user data in localStorage for persistence across refreshes
-          localStorage.setItem("user", JSON.stringify(newUser));
-          
-          setUser(newUser);
-          return newUser;
+          // After Supabase registration succeeds, we need to register the user with our server too
+          try {
+            // Create user in our server API
+            const serverResponse = await fetch('/api/users/register', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                username: userData.username,
+                email: userData.email,
+                password: userData.password, // This should be hashed on the server
+                fullName: userData.fullName,
+                role: userData.role || 'student',
+                instruments: userData.instruments || [],
+                experienceLevel: userData.experienceLevel || 'Beginner',
+                bio: userData.bio || ''
+              }),
+            });
+            
+            if (!serverResponse.ok) {
+              throw new Error(`Server registration failed: ${serverResponse.statusText}`);
+            }
+            
+            // Parse the server response to get our internal user
+            const serverUser = await serverResponse.json();
+            
+            // Map the Supabase user to our format but use the server-assigned ID
+            const newUser = {
+              ...mapSupabaseAuthToUser(data.user, userData),
+              id: serverUser.id // Use the ID from our server
+            };
+            
+            console.log("User registered successfully with ID:", newUser.id);
+            
+            // Store complete user data in localStorage for persistence across refreshes
+            localStorage.setItem("user", JSON.stringify(newUser));
+            
+            setUser(newUser);
+            return newUser;
+          } catch (serverError) {
+            console.error("Server registration error:", serverError);
+            throw serverError;
+          }
         } else {
           throw new Error('Registration successful but user data is missing');
         }
