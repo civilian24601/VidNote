@@ -113,6 +113,9 @@ const upload = multer({
 export async function registerRoutes(app: Express): Promise<Server> {
   const router = express.Router();
   
+  // Set up static file serving for local uploads (fallback storage)
+  app.use('/uploads', express.static('./uploads'));
+  
   // Error handling middleware
   const handleError = (err: any, res: express.Response) => {
     console.error(err);
@@ -248,33 +251,61 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       console.log(`Processing video upload: ${req.file.originalname}, size: ${(req.file.size / (1024 * 1024)).toFixed(2)}MB`);
       
-      // Upload to Supabase Storage
-      const fileExt = path.extname(req.file.originalname);
-      const fileName = `${userId}-${Date.now()}${fileExt}`;
+      let videoUrl: string;
+      let isLocalFile = false;
       
-      const { data, error } = await supabase.storage
-        .from("videos")
-        .upload(fileName, req.file.buffer, {
-          contentType: req.file.mimetype,
-        });
-      
-      if (error) {
-        console.error("Supabase storage upload error:", error);
-        return res.status(500).json({ message: "Error uploading video", error });
+      try {
+        // Upload to Supabase Storage
+        const fileExt = path.extname(req.file.originalname);
+        const fileName = `${userId}-${Date.now()}${fileExt}`;
+        
+        const { data, error } = await supabase.storage
+          .from("videos")
+          .upload(fileName, req.file.buffer, {
+            contentType: req.file.mimetype,
+          });
+        
+        if (error) {
+          throw new Error(error.message);
+        }
+        
+        // Get public URL
+        const { data: urlData } = supabase.storage
+          .from("videos")
+          .getPublicUrl(fileName);
+          
+        videoUrl = urlData.publicUrl;
+        console.log("Supabase storage upload successful");
       }
-      
-      console.log("Supabase storage upload successful");
-      
-      // Get public URL
-      const { data: urlData } = supabase.storage
-        .from("videos")
-        .getPublicUrl(fileName);
+      catch (uploadError) {
+        console.error("Supabase storage upload error:", uploadError);
+        
+        // Fall back to storing the file locally for development
+        isLocalFile = true;
+        const uploadsDir = './uploads';
+        
+        // Create uploads directory if it doesn't exist
+        if (!fs.existsSync(uploadsDir)) {
+          fs.mkdirSync(uploadsDir, { recursive: true });
+        }
+        
+        const fileExt = path.extname(req.file.originalname);
+        const fileName = `${userId}-${Date.now()}${fileExt}`;
+        const filePath = path.join(uploadsDir, fileName);
+        
+        // Write file to disk
+        fs.writeFileSync(filePath, req.file.buffer);
+        
+        // Use a local URL
+        videoUrl = `/uploads/${fileName}`;
+        console.log(`Fallback to local storage: ${filePath}`);
+      }
       
       // Create video record
       const videoData = {
         title: req.body.title,
         description: req.body.description,
-        url: urlData.publicUrl,
+        url: videoUrl,
         thumbnailUrl: req.body.thumbnailUrl || null,
         userId,
         isPublic: req.body.isPublic === "true",
@@ -288,7 +319,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       res.status(201).json({
         ...video,
-        message: "Video uploaded successfully"
+        message: "Video uploaded successfully",
+        storedLocally: isLocalFile
       });
     } catch (err) {
       console.error("Video upload error:", err);

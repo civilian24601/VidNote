@@ -81,51 +81,85 @@ export default function Videos() {
       }
     }
 
-    try {
-      console.log("Starting video upload for:", {
-        title: formData.get('title'),
-        description: formData.get('description'),
-        isPublic: formData.get('isPublic'),
-        hasVideoFile: !!formData.get('video'),
-      });
-      toast({
-        title: "Uploading video...",
-        description: "Please wait while your video is being processed.",
-      });
-      
-      await uploadVideo(formData);
-      
-      // Manually refetch videos to ensure latest uploads appear
-      await refetch();
-      
-      toast({
-        title: "Video uploaded successfully",
-        description: "Your video has been uploaded and is ready to view.",
-      });
-      setUploadDialogOpen(false);
-      form.reset();
-      setSelectedFile(null);
-    } catch (error) {
-      console.error("Video upload error:", error);
-      
-      // More specific error handling
-      let errorMessage = "An error occurred while uploading your video.";
-      if (error instanceof Error) {
-        errorMessage = error.message;
+    // Retry logic parameters
+    const MAX_RETRIES = 2;
+    let retries = 0;
+    let success = false;
+
+    while (retries <= MAX_RETRIES && !success) {
+      try {
+        // Show uploading message (with retry notification if applicable)
+        const toastMessage = retries === 0 
+          ? "Please wait while your video is being processed."
+          : `Retry attempt ${retries}/${MAX_RETRIES}. Please wait...`;
+          
+        toast({
+          title: retries === 0 ? "Uploading video..." : `Retrying upload (${retries}/${MAX_RETRIES})`,
+          description: toastMessage,
+        });
+        
+        console.log(`${retries > 0 ? `Retry ${retries}/${MAX_RETRIES}: ` : ""}Starting video upload for:`, {
+          title: formData.get('title'),
+          description: formData.get('description'),
+          isPublic: formData.get('isPublic'),
+          hasVideoFile: !!formData.get('video'),
+        });
+        
+        const result = await uploadVideo(formData);
+        success = true;
+        
+        // Manually refetch videos to ensure latest uploads appear
+        await refetch();
+        
+        // Check if the response indicates local file storage (fallback)
+        if (result?.storedLocally) {
+          toast({
+            title: "Video uploaded successfully",
+            description: "Note: Your video was stored locally as Supabase connection wasn't available.",
+          });
+        } else {
+          toast({
+            title: "Video uploaded successfully",
+            description: "Your video has been uploaded and is ready to view.",
+          });
+        }
+        
+        setUploadDialogOpen(false);
+        form.reset();
+        setSelectedFile(null);
+      } catch (error) {
+        console.error(`Video upload error (attempt ${retries + 1}/${MAX_RETRIES + 1}):`, error);
+        
+        // If we've run out of retries, show the error
+        if (retries === MAX_RETRIES) {
+          // More specific error handling
+          let errorMessage = "An error occurred while uploading your video.";
+          if (error instanceof Error) {
+            errorMessage = error.message;
+          }
+          
+          // Check for common HTTP errors and provide more specific info
+          if (errorMessage.includes("401")) {
+            errorMessage = "Authentication error: Please log in again and try once more.";
+          } else if (errorMessage.includes("500")) {
+            errorMessage = "Server error: The server encountered an error processing your request. This could be due to problems with Supabase connection.";
+          } else if (errorMessage.includes("503")) {
+            errorMessage = "Service unavailable: The server is currently unable to handle this request.";
+          } else if (errorMessage.includes("fetch failed") || errorMessage.includes("network")) {
+            errorMessage = "Network error: Please check your connection and Supabase credentials.";
+          }
+          
+          toast({
+            title: "Upload failed",
+            description: errorMessage,
+            variant: "destructive",
+          });
+        } else {
+          // If we still have retries, wait a bit before trying again
+          retries++;
+          await new Promise(resolve => setTimeout(resolve, 1000 * retries));
+        }
       }
-      
-      // Check for common HTTP errors
-      if (errorMessage.includes("401")) {
-        errorMessage = "Authentication error: Please log in again and try once more.";
-      } else if (errorMessage.includes("503")) {
-        errorMessage = "Service unavailable: The server is currently unable to handle this request.";
-      }
-      
-      toast({
-        title: "Upload failed",
-        description: errorMessage,
-        variant: "destructive",
-      });
     }
   };
 
