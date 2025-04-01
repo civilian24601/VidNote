@@ -1,29 +1,58 @@
 import { createClient } from '@supabase/supabase-js';
 
 // Initialize Supabase client with environment variables
-// Use only SUPABASE_ env vars with proper names (not VITE prefixed)
-let supabaseUrl = import.meta.env.SUPABASE_URL || '';
-const supabaseKey = import.meta.env.SUPABASE_ANON_KEY || '';
+// Check both formats of environment variables
+let supabaseUrl = '';
+let supabaseAnonKey = '';
 
-// For debugging purposes
-console.log('Client: Supabase URL:', supabaseUrl ? 'Exists (value hidden)' : 'Missing');
-console.log('Client: Supabase Key:', supabaseKey ? 'Exists (value hidden)' : 'Missing');
+// Debug info about which environment variables are available
+console.log('Client: Environment Variables Status:');
+console.log('- SUPABASE_URL:', import.meta.env.SUPABASE_URL ? 'Available' : 'Missing');
+console.log('- SUPABASE_ANON_KEY:', import.meta.env.SUPABASE_ANON_KEY ? 'Available' : 'Missing');
+console.log('- VITE_SUPABASE_URL:', import.meta.env.VITE_SUPABASE_URL ? 'Available' : 'Missing');
+console.log('- VITE_SUPABASE_ANON_KEY:', import.meta.env.VITE_SUPABASE_ANON_KEY ? 'Available' : 'Missing');
 
-// Also check for VITE_ prefixed variables as fallback
-if (!supabaseUrl) {
-  supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
-  console.log('Client: Falling back to VITE_SUPABASE_URL:', supabaseUrl ? 'Exists (value hidden)' : 'Missing');
+// Try standard non-prefixed variables first (best practice)
+if (import.meta.env.SUPABASE_URL) {
+  supabaseUrl = import.meta.env.SUPABASE_URL;
+  console.log('Client: Using SUPABASE_URL environment variable');
+}
+// Fallback to VITE_ prefixed versions
+else if (import.meta.env.VITE_SUPABASE_URL) {
+  supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+  console.log('Client: Using VITE_SUPABASE_URL environment variable');
+} 
+else {
+  console.error('Client: No Supabase URL found in environment variables');
 }
 
-let supabaseAnonKey = supabaseKey;
-if (!supabaseAnonKey) {
-  supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
-  console.log('Client: Falling back to VITE_SUPABASE_ANON_KEY:', supabaseAnonKey ? 'Exists (value hidden)' : 'Missing');
+// Same pattern for the API key
+if (import.meta.env.SUPABASE_ANON_KEY) {
+  supabaseAnonKey = import.meta.env.SUPABASE_ANON_KEY;
+  console.log('Client: Using SUPABASE_ANON_KEY environment variable');
+}
+else if (import.meta.env.VITE_SUPABASE_ANON_KEY) {
+  supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+  console.log('Client: Using VITE_SUPABASE_ANON_KEY environment variable');
+}
+else {
+  console.error('Client: No Supabase anon key found in environment variables');
 }
 
 // Ensure URL has https:// prefix
 if (supabaseUrl && !supabaseUrl.startsWith('https://')) {
   supabaseUrl = `https://${supabaseUrl}`;
+  console.log('Client: Added https:// prefix to Supabase URL');
+}
+
+// Validate URL format
+if (supabaseUrl) {
+  const isValidFormat = supabaseUrl.startsWith('https://') && supabaseUrl.includes('.supabase.co');
+  console.log('Client: Supabase URL format is', isValidFormat ? 'valid' : 'potentially invalid');
+  
+  if (!isValidFormat) {
+    console.warn('Client: Supabase URL doesn\'t match the expected format (https://xxx.supabase.co)');
+  }
 }
 
 // Create Supabase client with fallback to avoid runtime errors
