@@ -1,0 +1,71 @@
+> rest-express@1.0.0 dev
+> tsx server/index.ts
+
+Server: Supabase URL check: https://xr...xryyraxjizhssyrifksx.supabase.co
+Server: Supabase URL format check: {
+  exists: true,
+  length: 40,
+  startsWithHttps: true,
+  endsWithSupabaseIo: true,
+  containsValidDomain: true
+}
+Server: Supabase Anon Key: Exists (value hidden)
+Server: Supabase Service Key: Exists (value hidden)
+Server: Supabase client initialized successfully
+Server: Supabase admin client initialized successfully
+Checking Supabase storage buckets...
+Existing buckets: none
+
+⚠️ IMPORTANT: Required Supabase storage buckets are missing!
+Please go to your Supabase dashboard and set up the following buckets:
+
+1. Bucket name: 'videos'
+   Purpose: Stores user-uploaded video files
+   Security setup: Configure RLS to allow:
+- Public READ access (so videos can be viewed without authentication)
+- Authenticated WRITE access only for the file owner
+- RESTRICT UPDATE/DELETE to file owners and admins
+
+1. Bucket name: 'thumbnails'
+   Purpose: Stores video thumbnail images
+   Security setup: Configure RLS to allow:
+- Public READ access (so thumbnails can be viewed without authentication)
+- Authenticated WRITE access only for the file owner
+- RESTRICT UPDATE/DELETE to file owners and admins
+
+Recommended RLS policy for secure access:
+
+CREATE POLICY "Public Access" 
+ON storage.objects FOR SELECT 
+USING (bucket_id IN ('videos', 'thumbnails'));
+
+CREATE POLICY "Authenticated users can upload files"
+ON storage.objects FOR INSERT 
+TO authenticated
+USING (bucket_id IN ('videos', 'thumbnails'));
+
+CREATE POLICY "Users can update own files"
+ON storage.objects FOR UPDATE
+TO authenticated
+USING (bucket_id IN ('videos', 'thumbnails') 
+       AND (storage.foldername(name))[1] = auth.uid()::text)
+WITH CHECK (bucket_id IN ('videos', 'thumbnails') 
+           AND (storage.foldername(name))[1] = auth.uid()::text);
+
+CREATE POLICY "Users can delete own files"
+ON storage.objects FOR DELETE
+TO authenticated
+USING (bucket_id IN ('videos', 'thumbnails') 
+       AND (storage.foldername(name))[1] = auth.uid()::text);
+
+
+After creating the buckets and applying security policies, restart this application.
+8:06:37 PM [express] serving on port 5000
+Browserslist: browsers data (caniuse-lite) is 6 months old. Please run:
+  npx update-browserslist-db@latest
+  Why you should do it regularly: https://github.com/browserslist/update-db#readme
+Processing video upload: Giant Steps (NYO Jazz Audition).mp4, size: 21.43MB
+Uploading video to Supabase: 1/1743538028225.mp4
+Supabase storage upload successful
+Video record created with ID: 3
+8:07:14 PM [express] POST /api/videos 201 in 10349ms :: {"title":"nyo audition","description":"giant…

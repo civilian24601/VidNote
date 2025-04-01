@@ -292,6 +292,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Set up static file serving for local uploads (fallback storage)
   app.use('/uploads', express.static('./uploads'));
   
+  // Create HTTP server instance first (needed for WebSocket)
+  const httpServer = createServer(app);
+  
   // Error handling middleware
   const handleError = (err: any, res: express.Response) => {
     console.error(err);
@@ -801,7 +804,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       // Try to access the bucket using the admin client to bypass RLS
-      let data = null;
+      let data: Array<{ name: string, id: string, metadata?: any }> | null = null;
       let error = null;
       
       try {
@@ -851,7 +854,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       return res.status(200).json({ 
         message: `Bucket '${bucketName}' exists`,
         exists: true,
-        files: data.length
+        files: data ? data.length : 0
       });
     } catch (err: any) {
       console.error("Error testing bucket:", err);
@@ -864,8 +867,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Register routes
   app.use("/api", router);
-  
-  const httpServer = createServer(app);
   
   // Set up WebSocket server for real-time collaboration
   const wss = new WebSocketServer({ server: httpServer, path: '/ws' });

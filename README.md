@@ -72,18 +72,107 @@ cd musecollab
 npm install
 ```
 
-3. Create a `.env` file with your Supabase credentials
+3. Set up your Supabase project:
+   - Create a project at [supabase.com](https://supabase.com)
+   - Create two storage buckets: `videos` and `thumbnails`
+   - Set up RLS (Row Level Security) policies for these buckets:
+     ```sql
+     -- Public read access to videos and thumbnails
+     CREATE POLICY "Public Access" 
+     ON storage.objects FOR SELECT 
+     USING (bucket_id IN ('videos', 'thumbnails'));
+
+     -- Authenticated users can upload files
+     CREATE POLICY "Authenticated users can upload files"
+     ON storage.objects FOR INSERT 
+     TO authenticated
+     USING (bucket_id IN ('videos', 'thumbnails'));
+
+     -- Users can update their own files
+     CREATE POLICY "Users can update own files"
+     ON storage.objects FOR UPDATE
+     TO authenticated
+     USING (bucket_id IN ('videos', 'thumbnails') 
+           AND (storage.foldername(name))[1] = auth.uid()::text)
+     WITH CHECK (bucket_id IN ('videos', 'thumbnails') 
+               AND (storage.foldername(name))[1] = auth.uid()::text);
+
+     -- Users can delete their own files
+     CREATE POLICY "Users can delete own files"
+     ON storage.objects FOR DELETE
+     TO authenticated
+     USING (bucket_id IN ('videos', 'thumbnails') 
+           AND (storage.foldername(name))[1] = auth.uid()::text);
+     ```
+
+4. Create a `.env` file with your Supabase credentials:
 ```
+# Server-side environment variables
+SUPABASE_URL=your_supabase_url
+SUPABASE_ANON_KEY=your_supabase_anon_key
+SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
+
+# Client-side environment variables (for browser access)
 VITE_SUPABASE_URL=your_supabase_url
 VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
 ```
 
-4. Start the development server
+   > **Important**: Never expose your service role key in client-side code. This key has admin privileges and should only be used on the server.
+
+5. Verify your environment setup
+```bash
+# Check if all required environment variables are set
+node scripts/check-env.js
+
+# If there are any issues with URL matching, run:
+node scripts/fix-env.js
+
+# Validate Supabase connection and check buckets
+node scripts/validate-supabase.js
+```
+
+6. Start the development server
 ```bash
 npm run dev
 ```
 
-5. Open your browser to `http://localhost:5000`
+7. Open your browser to `http://localhost:5000`
+
+## Troubleshooting
+
+### Environment Variables Issues
+
+If you encounter problems with environment variables, we've included several scripts to help:
+
+- **check-env.js**: Verifies all required variables exist and have the correct format
+- **fix-env.js**: Automatically synchronizes client and server environment variables
+- **validate-supabase.js**: Tests Supabase connection and verifies storage buckets
+
+Common issues:
+
+1. **Client-side connection issues**: Make sure your environment variables with the `VITE_` prefix match the server-side variables. Client-side variables must have this prefix to be accessible in the browser.
+
+2. **Storage bucket errors**: Ensure you've created both the `videos` and `thumbnails` buckets in your Supabase storage. The `validate-supabase.js` script can create these automatically or guide you through the process.
+
+3. **Different values for server and client**: The URL and anon key should be identical for both client and server sides. Use `fix-env.js` to ensure consistency.
+
+### Supabase Connection Issues
+
+If you're having trouble connecting to Supabase:
+
+1. Verify credentials in the Supabase dashboard: Project Settings > API
+2. Ensure your project is active (not paused)
+3. Check if your IP is allowed (if you have restrictions enabled)
+4. Run the `validate-supabase.js` script for detailed diagnostics
+
+### Video Upload Issues
+
+If videos fail to upload:
+
+1. Check if the storage buckets exist and have the correct RLS policies
+2. Verify the file size doesn't exceed the 100MB limit
+3. Ensure you're authenticated when attempting to upload
+4. Look for CORS-related errors in the browser console
 
 ## License
 
