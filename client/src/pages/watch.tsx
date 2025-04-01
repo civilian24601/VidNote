@@ -40,11 +40,13 @@ import {
 } from "@/components/ui/command";
 import { MOCK_USERS } from "@/lib/mockData";
 
-// Import our new enhanced components
+// Import enhanced components
 import EnhancedVideoPlayer from "@/components/video/enhanced-video-player";
 import { CategorizedComments } from "@/components/video/categorized-comments";
 import TeacherFeedback from "@/components/video/teacher-feedback";
 import FeedbackExport from "@/components/video/feedback-export";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
 
 const shareSchema = z.object({
   teacherId: z.number({
@@ -59,18 +61,27 @@ export default function Watch({ params }: { params: { id: string } }) {
   const videoId = parseInt(params.id);
   const [_, navigate] = useLocation();
   const { isAuthenticated, user } = useAuth();
-  const { data: video, isLoading: isLoadingVideo } = useVideo(videoId);
+  const { data: video, isLoading: isLoadingVideo, error: videoError } = useVideo(videoId);
   const { data: comments = [], isLoading: isLoadingComments, refetch: refetchComments } = useComments(videoId);
   const { data: sharingData, isLoading: isLoadingSharing } = useVideoSharing(videoId);
   const { mutateAsync: addComment } = useAddComment(videoId);
   const { mutateAsync: shareVideo, isPending: isSharing } = useShareVideo(videoId);
   const { mutateAsync: unshareVideo } = useUnshareVideo(videoId);
   const { toast } = useToast();
+  
+  // All React hooks declarations - placed at the top level to comply with rules of hooks
   const [shareDialogOpen, setShareDialogOpen] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [typingUsers, setTypingUsers] = useState<{ [key: number]: boolean }>({});
+  const [activeTab, setActiveTab] = useState("comments");
+  const [exportDialogOpen, setExportDialogOpen] = useState(false);
+  const [selectedTeacher, setSelectedTeacher] = useState<number | null>(null);
+  const [playerError, setPlayerError] = useState<string | null>(null);
+  const [isVideoReady, setIsVideoReady] = useState(false);
+  const [videoStatus, setVideoStatus] = useState<"loading" | "ready" | "error" | "processing">("loading");
+  const videoPlayerRef = useRef<HTMLDivElement>(null);
   
-  // Set up WebSocket connection for real-time collaboration
+  // WebSocket connection for real-time collaboration
   const { connected, error: wsError } = useWebSocket({
     videoId,
     onNewComment: (comment: { 
@@ -97,6 +108,7 @@ export default function Watch({ params }: { params: { id: string } }) {
     }
   });
 
+  // Process sharing users
   const sharingUsers = Array.isArray(sharingData) 
     ? sharingData.map((sharing: any) => ({
         ...sharing,
@@ -109,8 +121,7 @@ export default function Watch({ params }: { params: { id: string } }) {
     user => user.role === 'teacher' && !sharingUsers.some(su => su.user.id === user.id)
   );
   
-  const [selectedTeacher, setSelectedTeacher] = useState<number | null>(null);
-  
+  // Form setup
   const form = useForm<ShareValues>({
     resolver: zodResolver(shareSchema),
     defaultValues: {
@@ -119,12 +130,62 @@ export default function Watch({ params }: { params: { id: string } }) {
     },
   });
 
+  // Check authentication
   useEffect(() => {
     if (!isAuthenticated) {
       navigate("/login");
     }
   }, [isAuthenticated, navigate]);
 
+  // Handle video status checking
+  useEffect(() => {
+    if (isLoadingVideo) {
+      setVideoStatus("loading");
+    } else if (videoError) {
+      setVideoStatus("error");
+    } else if (video) {
+      // Check if video exists but URL might not be valid yet (processing)
+      if (!video.url || video.url.includes('undefined') || video.url.trim() === '') {
+        setVideoStatus("processing");
+      } else {
+        // Try to load the video to verify it's accessible
+        const checkVideoUrl = () => {
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 8000);
+
+          fetch(video.url, {
+            method: 'HEAD',
+            signal: controller.signal
+          })
+            .then(response => {
+              clearTimeout(timeoutId);
+              if (response.ok) {
+                setVideoStatus("ready");
+                setIsVideoReady(true);
+              } else {
+                console.warn(`Video URL returned status ${response.status}`);
+                setVideoStatus("processing");
+              }
+            })
+            .catch(error => {
+              clearTimeout(timeoutId);
+              console.error("Error checking video URL:", error);
+              if (error.name === 'AbortError') {
+                console.warn("Video URL check timed out");
+                setVideoStatus("processing");
+              } else {
+                setVideoStatus("error");
+                setPlayerError(`Failed to load video: ${error.message}`);
+              }
+            });
+        };
+
+        checkVideoUrl();
+      }
+    }
+  }, [isLoadingVideo, videoError, video]);
+
+  // Handle comments
   const handleAddComment = async (content: string, timestamp: number, category?: string) => {
     try {
       await addComment({ content, timestamp, category });
@@ -141,6 +202,7 @@ export default function Watch({ params }: { params: { id: string } }) {
     }
   };
 
+  // Handle video sharing
   const handleShareVideo = async (values: ShareValues) => {
     try {
       if (!values.teacherId) {
@@ -174,24 +236,83 @@ export default function Watch({ params }: { params: { id: string } }) {
     }
   };
 
-  const handleJumpToTimestamp = (timestamp: number) => {
-    setCurrentTime(timestamp);
-    // In a real implementation, this would be connected to the video player
-    // to make it seek to the specified timestamp
+  // Handle adding comment at specific time
+  const handleAddCommentAtTime = (time: number) => {
+    setCurrentTime(time);
+    
+    // Scroll to comment section if needed
+    if (activeTab !== "comments") {
+      setActiveTab("comments");
+    }
   };
 
+  // Handle seeking to timestamps
+  const handleSeekToTimestamp = (timestamp: number) => {
+    setCurrentTime(timestamp);
+    
+    // Scroll to video player for mobile views
+    if (videoPlayerRef.current) {
+      videoPlayerRef.current.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
+
+  // Handle exporting feedback
+  const handleExportFeedback = () => {
+    setExportDialogOpen(true);
+  };
+
+  // Process comments for display
+  const processedComments = comments.map((comment: any) => {
+    const user = MOCK_USERS.find(u => u.id === comment.userId) || {
+      id: comment.userId,
+      fullName: `User ${comment.userId}`,
+      role: "student"
+    };
+    
+    return {
+      ...comment,
+      user,
+      replies: comments
+        .filter((reply: any) => reply.parentId === comment.id)
+        .map((reply: any) => ({
+          ...reply,
+          user: MOCK_USERS.find(u => u.id === reply.userId) || {
+            id: reply.userId,
+            fullName: `User ${reply.userId}`,
+            role: "student"
+          }
+        }))
+    };
+  }).filter((comment: any) => !comment.parentId);
+
+  // Handle video retry
+  const handleVideoRetry = () => {
+    setVideoStatus("loading");
+    setPlayerError(null);
+    window.location.reload();
+  };
+
+  // Loading state
   if (isLoadingVideo) {
     return (
       <div className="min-h-screen bg-background flex flex-col">
         <Navbar />
         <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+          <div className="flex items-center mb-4">
+            <Skeleton className="h-8 w-64" />
+            <div className="ml-auto">
+              <Skeleton className="h-8 w-24" />
+            </div>
+          </div>
           <Skeleton className="h-[400px] w-full rounded-xl mb-6" />
           <div className="lg:flex lg:space-x-6">
             <div className="lg:w-2/3">
-              <Skeleton className="h-[400px] w-full rounded-xl" />
+              <Skeleton className="h-10 w-full mb-4" />
+              <Skeleton className="h-[300px] w-full rounded-xl" />
             </div>
             <div className="lg:w-1/3 mt-6 lg:mt-0">
-              <Skeleton className="h-[300px] w-full rounded-xl" />
+              <Skeleton className="h-10 w-full mb-4" />
+              <Skeleton className="h-[280px] w-full rounded-xl" />
             </div>
           </div>
         </main>
@@ -199,6 +320,7 @@ export default function Watch({ params }: { params: { id: string } }) {
     );
   }
 
+  // Video not found
   if (!video) {
     return (
       <div className="min-h-screen bg-background flex flex-col">
@@ -224,72 +346,34 @@ export default function Watch({ params }: { params: { id: string } }) {
     );
   }
 
-  // New state for our enhanced UI
-  const [activeTab, setActiveTab] = useState("comments");
-  const [exportDialogOpen, setExportDialogOpen] = useState(false);
-  const videoPlayerRef = useRef<HTMLDivElement>(null);
-
-  // Handle adding a comment at a specific timestamp
-  const handleAddCommentAtTime = (time: number) => {
-    // This would be used to add a comment at the current video time
-    setCurrentTime(time);
-    
-    // Scroll to comment section if needed
-    if (activeTab !== "comments") {
-      setActiveTab("comments");
-    }
-  };
-
-  // Handle seeking to a specific timestamp in the video
-  const handleSeekToTimestamp = (timestamp: number) => {
-    // In a real implementation, this would directly interact with the video player
-    setCurrentTime(timestamp);
-    
-    // Scroll to video player for mobile views
-    if (videoPlayerRef.current) {
-      videoPlayerRef.current.scrollIntoView({ behavior: 'smooth' });
-    }
-  };
-
-  // Handle exporting feedback
-  const handleExportFeedback = () => {
-    setExportDialogOpen(true);
-  };
-
-  // Process comments to add user data and structure replies
-  const processedComments = comments.map((comment: any) => {
-    // In a real implementation, this would be properly typed
-    // and would handle nested replies
-    const user = MOCK_USERS.find(u => u.id === comment.userId) || {
-      id: comment.userId,
-      fullName: `User ${comment.userId}`,
-      role: "student"
-    };
-    
-    return {
-      ...comment,
-      user,
-      replies: comments
-        .filter((reply: any) => reply.parentId === comment.id)
-        .map((reply: any) => ({
-          ...reply,
-          user: MOCK_USERS.find(u => u.id === reply.userId) || {
-            id: reply.userId,
-            fullName: `User ${reply.userId}`,
-            role: "student"
-          }
-        }))
-    };
-  }).filter((comment: any) => !comment.parentId);
-
   return (
     <div className="min-h-screen bg-background flex flex-col pb-16 sm:pb-0">
       <Navbar />
       
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        {/* Video Header */}
+        {/* Video Header with Status */}
         <div className="mb-6">
-          <h1 className="text-2xl font-bold text-white mb-2">{video.title}</h1>
+          <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
+            <h1 className="text-2xl font-bold text-white">{video.title}</h1>
+            
+            {/* Video Status Badge */}
+            {videoStatus === "processing" && (
+              <Badge variant="outline" className="bg-yellow-500/20 text-yellow-300 border-yellow-600">
+                <span className="mr-1.5">⚙️</span> Processing
+              </Badge>
+            )}
+            {videoStatus === "ready" && (
+              <Badge variant="outline" className="bg-green-500/20 text-green-300 border-green-600">
+                <span className="mr-1.5">✓</span> Ready
+              </Badge>
+            )}
+            {videoStatus === "error" && (
+              <Badge variant="outline" className="bg-red-500/20 text-red-300 border-red-600">
+                <span className="mr-1.5">⚠️</span> Error
+              </Badge>
+            )}
+          </div>
+          
           <div className="flex flex-wrap items-center gap-3 text-gray-400 text-sm">
             <span>Uploaded on {formatDate(video.createdAt)}</span>
             <span className="text-gray-500">•</span>
@@ -304,27 +388,99 @@ export default function Watch({ params }: { params: { id: string } }) {
                 <i className="ri-share-line mr-1.5"></i>
                 Share
               </Button>
-              <Button 
-                className="h-8 px-3 text-xs bg-primary text-white"
-                onClick={() => window.open(video.url, '_blank')}
-              >
-                <i className="ri-download-line mr-1.5"></i>
-                Download
-              </Button>
+              {videoStatus === "ready" && (
+                <Button 
+                  className="h-8 px-3 text-xs bg-primary text-white"
+                  onClick={() => window.open(video.url, '_blank')}
+                >
+                  <i className="ri-download-line mr-1.5"></i>
+                  Download
+                </Button>
+              )}
             </div>
           </div>
         </div>
         
+        {/* Video Status Messages */}
+        {videoStatus === "processing" && (
+          <Alert className="bg-yellow-500/10 border-yellow-600 mb-6">
+            <AlertTitle className="text-yellow-300">Video is still processing</AlertTitle>
+            <AlertDescription className="text-gray-300">
+              Your video has been uploaded and is currently being processed. This usually takes a few minutes depending on the video size.
+              The player will automatically update once processing is complete.
+            </AlertDescription>
+          </Alert>
+        )}
+        
+        {videoStatus === "error" && (
+          <Alert className="bg-red-500/10 border-red-600 mb-6">
+            <AlertTitle className="text-red-300">Failed to load video</AlertTitle>
+            <AlertDescription className="text-gray-300 mb-2">
+              {playerError || "There was an error loading your video. This might be due to processing issues or an invalid file format."}
+            </AlertDescription>
+            <Button 
+              variant="outline" 
+              size="sm"
+              className="border-red-600 hover:bg-red-600/20 ml-auto"
+              onClick={handleVideoRetry}
+            >
+              <i className="ri-refresh-line mr-1.5"></i>
+              Try again
+            </Button>
+          </Alert>
+        )}
+        
         {/* Enhanced Video Player */}
         <div ref={videoPlayerRef}>
-          <EnhancedVideoPlayer 
-            videoUrl={video.url} 
-            thumbnailUrl={video.thumbnailUrl}
-            comments={processedComments}
-            onTimeUpdate={(time) => setCurrentTime(time)}
-            onCommentAtTime={handleAddCommentAtTime}
-            onSeekToMarker={handleSeekToTimestamp}
-          />
+          {videoStatus === "ready" ? (
+            <EnhancedVideoPlayer 
+              videoUrl={video.url} 
+              thumbnailUrl={video.thumbnailUrl}
+              comments={processedComments}
+              onTimeUpdate={(time) => setCurrentTime(time)}
+              onCommentAtTime={handleAddCommentAtTime}
+              onSeekToMarker={handleSeekToTimestamp}
+            />
+          ) : videoStatus === "processing" ? (
+            <div className="glassmorphism border border-gray-700 rounded-md overflow-hidden">
+              <div className="relative bg-gray-800 h-[400px] flex items-center justify-center">
+                <div className="text-center p-6">
+                  <div className="mx-auto mb-6 w-16 h-16 rounded-full bg-yellow-500/20 flex items-center justify-center">
+                    <svg className="animate-spin h-8 w-8 text-yellow-300" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                  </div>
+                  <h3 className="text-xl font-semibold text-white mb-2">Video Processing</h3>
+                  <p className="text-gray-300 max-w-md">
+                    Your video is still being processed. This usually takes a few minutes. You can add comments and share the video while you wait.
+                  </p>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="glassmorphism border border-gray-700 rounded-md overflow-hidden">
+              <div className="relative bg-gray-800 h-[400px] flex items-center justify-center">
+                <div className="text-center p-6">
+                  <div className="mx-auto mb-6 w-16 h-16 rounded-full bg-red-500/20 flex items-center justify-center">
+                    <i className="ri-error-warning-line text-4xl text-red-300"></i>
+                  </div>
+                  <h3 className="text-xl font-semibold text-white mb-2">Video Unavailable</h3>
+                  <p className="text-gray-300 max-w-md mb-6">
+                    {playerError || "There was an issue loading your video. This could be due to processing errors or permissions."}
+                  </p>
+                  <Button 
+                    variant="outline"
+                    className="border-red-600 hover:bg-red-600/20"
+                    onClick={handleVideoRetry}
+                  >
+                    <i className="ri-refresh-line mr-1.5"></i>
+                    Try again
+                  </Button>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Sharing Dialog */}
@@ -466,30 +622,7 @@ export default function Watch({ params }: { params: { id: string } }) {
                         <div className="text-sm text-gray-400">Composer</div>
                         <div>{video.composer || "Not specified"}</div>
                       </div>
-                      <div className="bg-gray-800/40 p-3 rounded-md border border-gray-700">
-                        <div className="text-sm text-gray-400">Difficulty</div>
-                        <div>{video.difficulty || "Not specified"}</div>
-                      </div>
-                      <div className="bg-gray-800/40 p-3 rounded-md border border-gray-700">
-                        <div className="text-sm text-gray-400">Practice Time</div>
-                        <div>{video.practiceTime ? `${video.practiceTime} hours` : "Not tracked"}</div>
-                      </div>
                     </div>
-                  </div>
-                  
-                  <div>
-                    <h4 className="text-white font-medium">Practice Goals</h4>
-                    <ul className="mt-2 space-y-2">
-                      <li className="bg-gray-800/40 p-3 rounded-md border border-gray-700">
-                        Improve finger independence
-                      </li>
-                      <li className="bg-gray-800/40 p-3 rounded-md border border-gray-700">
-                        Work on pedaling technique
-                      </li>
-                      <li className="bg-gray-800/40 p-3 rounded-md border border-gray-700">
-                        Maintain consistent tempo
-                      </li>
-                    </ul>
                   </div>
                   
                   <div>
