@@ -3,26 +3,51 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { useAuth } from "@/lib/auth";
 import { getInitials, formatTime, getAvatarColor } from "@/lib/utils";
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectLabel,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+
+// Feedback categories for teachers
+const FEEDBACK_CATEGORIES = [
+  { value: "technique", label: "Technique" },
+  { value: "interpretation", label: "Interpretation" },
+  { value: "rhythm", label: "Rhythm" },
+  { value: "dynamics", label: "Dynamics" },
+  { value: "tone", label: "Tone Quality" },
+  { value: "theory", label: "Music Theory" },
+  { value: "general", label: "General" }
+];
 
 interface CommentFormProps {
   videoId: number;
   currentTime: number;
-  onSubmit: (content: string, timestamp: number) => Promise<void>;
+  onSubmit: (content: string, timestamp: number, category?: string) => Promise<void>;
 }
 
 export function CommentForm({ videoId, currentTime, onSubmit }: CommentFormProps) {
   const { user } = useAuth();
   const [content, setContent] = useState("");
+  const [category, setCategory] = useState<string | undefined>(undefined);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  
+  // Determine if the user is a teacher
+  const isTeacher = user?.role === "teacher";
 
   const handleSubmit = async () => {
     if (!content.trim()) return;
     
     setIsSubmitting(true);
     try {
-      await onSubmit(content, currentTime);
+      await onSubmit(content, currentTime, isTeacher ? category : undefined);
       setContent("");
+      if (isTeacher) setCategory(undefined);
       if (textareaRef.current) {
         textareaRef.current.style.height = "auto";
       }
@@ -52,12 +77,42 @@ export function CommentForm({ videoId, currentTime, onSubmit }: CommentFormProps
           </div>
         </div>
         <div className="flex-grow">
+          {/* Show feedback category selector for teachers */}
+          {isTeacher && (
+            <div className="mb-2">
+              <Select value={category} onValueChange={setCategory}>
+                <SelectTrigger className="w-full sm:w-64 border-gray-700 bg-gray-800/30 text-gray-300 focus:ring-primary">
+                  <SelectValue placeholder="Select feedback category (optional)" />
+                </SelectTrigger>
+                <SelectContent className="glassmorphism border-gray-700 text-white">
+                  <SelectGroup>
+                    <SelectLabel>Feedback Categories</SelectLabel>
+                    {FEEDBACK_CATEGORIES.map((cat) => (
+                      <SelectItem key={cat.value} value={cat.value} className="hover:bg-gray-800/70">
+                        {cat.label}
+                      </SelectItem>
+                    ))}
+                  </SelectGroup>
+                </SelectContent>
+              </Select>
+              {category && (
+                <div className="mt-1 text-xs text-primary flex items-center">
+                  <i className="ri-price-tag-3-line mr-1"></i>
+                  Category: {FEEDBACK_CATEGORIES.find(c => c.value === category)?.label}
+                </div>
+              )}
+            </div>
+          )}
+          
           <div className="relative rounded-lg border border-gray-700 bg-gray-800/50 shadow-sm overflow-hidden focus-within:border-primary focus-within:ring-1 focus-within:ring-primary">
             <Textarea
               ref={textareaRef}
               rows={2}
               className="block w-full border-0 py-3 px-3 resize-none bg-transparent text-white placeholder-gray-400 focus:ring-0 sm:text-sm"
-              placeholder="Add a comment at current timestamp..."
+              placeholder={isTeacher 
+                ? "Add feedback at current timestamp..."
+                : "Add a comment at current timestamp..."
+              }
               value={content}
               onChange={(e) => setContent(e.target.value)}
               onInput={handleTextareaInput}

@@ -8,6 +8,7 @@ import { VideoPlayer } from "@/components/ui/video-player";
 import { CommentList } from "@/components/ui/comment-list";
 import { CommentForm } from "@/components/ui/comment-form";
 import { VideoInfo } from "@/components/ui/video-info";
+import { TeacherFeedback } from "@/components/ui/teacher-feedback";
 import { Button } from "@/components/ui/button";
 import { formatDate } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
@@ -72,17 +73,17 @@ export default function Watch({ params }: { params: { id: string } }) {
     }
   }, [isAuthenticated, navigate]);
 
-  const handleAddComment = async (content: string, timestamp: number) => {
+  const handleAddComment = async (content: string, timestamp: number, category?: string) => {
     try {
-      await addComment({ content, timestamp });
+      await addComment({ content, timestamp, category });
       toast({
-        title: "Comment added",
-        description: `Your comment at ${Math.floor(timestamp / 60)}:${(timestamp % 60).toString().padStart(2, "0")} has been added.`,
+        title: category ? "Feedback added" : "Comment added",
+        description: `Your ${category ? 'feedback' : 'comment'} at ${Math.floor(timestamp / 60)}:${(timestamp % 60).toString().padStart(2, "0")} has been added.`,
       });
     } catch (error) {
       toast({
-        title: "Failed to add comment",
-        description: error instanceof Error ? error.message : "An error occurred while adding your comment.",
+        title: `Failed to add ${category ? 'feedback' : 'comment'}`,
+        description: error instanceof Error ? error.message : `An error occurred while adding your ${category ? 'feedback' : 'comment'}.`,
         variant: "destructive",
       });
     }
@@ -246,60 +247,20 @@ export default function Watch({ params }: { params: { id: string } }) {
               }}
             />
             
-            {/* Feedback Summary Card */}
-            <div className="mt-6 card glassmorphism rounded-xl overflow-hidden border-primary/10">
-              <div className="p-4 border-b border-gray-800">
-                <h2 className="font-semibold text-gradient">Feedback Summary</h2>
-              </div>
-              <div className="p-4">
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium text-white">Technical Accuracy</span>
-                    <div className="w-24 bg-gray-700 rounded-full h-2">
-                      <div className="bg-primary h-2 rounded-full" style={{ width: "75%" }}></div>
-                    </div>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium text-white">Interpretation</span>
-                    <div className="w-24 bg-gray-700 rounded-full h-2">
-                      <div className="bg-primary h-2 rounded-full" style={{ width: "85%" }}></div>
-                    </div>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium text-white">Dynamics</span>
-                    <div className="w-24 bg-gray-700 rounded-full h-2">
-                      <div className="bg-primary h-2 rounded-full" style={{ width: "70%" }}></div>
-                    </div>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium text-white">Tempo</span>
-                    <div className="w-24 bg-gray-700 rounded-full h-2">
-                      <div className="bg-primary h-2 rounded-full" style={{ width: "60%" }}></div>
-                    </div>
-                  </div>
-                </div>
-                
-                <div className="mt-4 pt-3 border-t border-gray-800">
-                  <h3 className="text-sm font-medium text-gray-400 mb-2">Key Areas to Improve</h3>
-                  <ul className="text-sm text-gray-300 space-y-1">
-                    <li className="flex items-start">
-                      <i className="ri-focus-3-line text-primary mr-1.5 mt-0.5"></i>
-                      <span>Consistent pedaling through chord changes</span>
-                    </li>
-                    <li className="flex items-start">
-                      <i className="ri-focus-3-line text-primary mr-1.5 mt-0.5"></i>
-                      <span>Left hand position and wrist height</span>
-                    </li>
-                  </ul>
-                </div>
-                
-                <div className="mt-4">
-                  <Button className="btn-gradient w-full inline-flex justify-center items-center">
-                    <i className="ri-sticky-note-line mr-1.5"></i>
-                    Generate Practice Notes
-                  </Button>
-                </div>
-              </div>
+            {/* Collaborative Teacher Feedback Component */}
+            <div className="mt-6">
+              <TeacherFeedback
+                comments={comments}
+                onJumpToTimestamp={handleJumpToTimestamp}
+              />
+            </div>
+            
+            {/* Practice Notes Button */}
+            <div className="mt-4">
+              <Button className="btn-gradient w-full inline-flex justify-center items-center">
+                <i className="ri-sticky-note-line mr-1.5"></i>
+                Generate Practice Notes
+              </Button>
             </div>
           </div>
         </div>

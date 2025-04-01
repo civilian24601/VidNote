@@ -90,7 +90,7 @@ export const useComments = (videoId: string | number) => {
 
 export const useAddComment = (videoId: string | number) => {
   return useMutation({
-    mutationFn: async (data: { content: string; timestamp: number }) => {
+    mutationFn: async (data: { content: string; timestamp: number; category?: string }) => {
       const response = await apiRequest('POST', `/api/videos/${videoId}/comments`, data);
       return response.json();
     },
