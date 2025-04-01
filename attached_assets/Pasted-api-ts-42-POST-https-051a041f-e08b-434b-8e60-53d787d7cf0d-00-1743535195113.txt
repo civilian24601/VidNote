@@ -1,0 +1,51 @@
+api.ts:42 
+            
+            
+           POST https://051a041f-e08b-434b-8e60-53d787d7cf0d-00-3a4e41zp9uerx.kirk.replit.dev/api/videos 500 (Internal Server Error)
+mutationFn @ api.ts:42
+fn @ @tanstack_react-query.js?v=c927f685:1189
+run @ @tanstack_react-query.js?v=c927f685:494
+start @ @tanstack_react-query.js?v=c927f685:536
+execute @ @tanstack_react-query.js?v=c927f685:1225
+await in execute
+mutate @ @tanstack_react-query.js?v=c927f685:2630
+onSubmit @ videos.tsx:108
+videos.tsx:131 Video upload error (attempt 3/3): Error: {"message":"Upload failed: new row violates row-level security policy. Please check your Supabase storage configuration."}
+    at Object.mutationFn (api.ts:50:15)
+onSubmit @ videos.tsx:131
+videos.tsx:101 Retry 2/2: Starting video upload for: {title: 'NYO jazz audition', description: 'giant steps alto sax', isPublic: 'false', hasVideoFile: true}
+api.ts:12 Auth header set with user ID: 1
+api.ts:42 
+            
+            
+           POST https://051a041f-e08b-434b-8e60-53d787d7cf0d-00-3a4e41zp9uerx.kirk.replit.dev/api/videos 500 (Internal Server Error)
+mutationFn @ api.ts:42
+fn @ @tanstack_react-query.js?v=c927f685:1189
+run @ @tanstack_react-query.js?v=c927f685:494
+start @ @tanstack_react-query.js?v=c927f685:536
+execute @ @tanstack_react-query.js?v=c927f685:1225
+await in execute
+mutate @ @tanstack_react-query.js?v=c927f685:2630
+onSubmit @ videos.tsx:108
+videos.tsx:131 Video upload error (attempt 3/3): Error: {"message":"Upload failed: new row violates row-level security policy. Please check your Supabase storage configuration."}
+    at Object.mutationFn (api.ts:50:15)
+onSubmit @ videos.tsx:131
+videos.tsx:101 Retry 2/2: Starting video upload for: {title: 'NYO jazz audition', description: 'giant steps alto sax', isPublic: 'false', hasVideoFile: true}
+api.ts:12 Auth header set with user ID: 1
+api.ts:42 
+            
+            
+           POST https://051a041f-e08b-434b-8e60-53d787d7cf0d-00-3a4e41zp9uerx.kirk.replit.dev/api/videos 500 (Internal Server Error)
+mutationFn @ api.ts:42
+fn @ @tanstack_react-query.js?v=c927f685:1189
+run @ @tanstack_react-query.js?v=c927f685:494
+start @ @tanstack_react-query.js?v=c927f685:536
+execute @ @tanstack_react-query.js?v=c927f685:1225
+await in execute
+mutate @ @tanstack_react-query.js?v=c927f685:2630
+onSubmit @ videos.tsx:108
+videos.tsx:131 Video upload error (attempt 3/3): Error: {"message":"Upload failed: new row violates row-level security policy. Please check your Supabase storage configuration."}
+    at Object.mutationFn (api.ts:50:15)
+onSubmit @ videos.tsx:131
+videos.tsx:101 Retry 2/2: Starting video upload for: {title: 'NYO jazz audition', description: 'giant steps alto sax', isPublic: 'false', hasVideoFile: true}
+api.ts:12 

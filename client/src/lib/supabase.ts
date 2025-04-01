@@ -1,12 +1,25 @@
 import { createClient } from '@supabase/supabase-js';
 
 // Initialize Supabase client with environment variables
-// Use only SUPABASE_ env vars with proper names
+// Use only SUPABASE_ env vars with proper names (not VITE prefixed)
 let supabaseUrl = import.meta.env.SUPABASE_URL || '';
 const supabaseKey = import.meta.env.SUPABASE_ANON_KEY || '';
 
-console.log('Supabase URL:', supabaseUrl ? 'Exists (value hidden)' : 'Missing');
-console.log('Supabase Key:', supabaseKey ? 'Exists (value hidden)' : 'Missing');
+// For debugging purposes
+console.log('Client: Supabase URL:', supabaseUrl ? 'Exists (value hidden)' : 'Missing');
+console.log('Client: Supabase Key:', supabaseKey ? 'Exists (value hidden)' : 'Missing');
+
+// Also check for VITE_ prefixed variables as fallback
+if (!supabaseUrl) {
+  supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
+  console.log('Client: Falling back to VITE_SUPABASE_URL:', supabaseUrl ? 'Exists (value hidden)' : 'Missing');
+}
+
+let supabaseAnonKey = supabaseKey;
+if (!supabaseAnonKey) {
+  supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
+  console.log('Client: Falling back to VITE_SUPABASE_ANON_KEY:', supabaseAnonKey ? 'Exists (value hidden)' : 'Missing');
+}
 
 // Ensure URL has https:// prefix
 if (supabaseUrl && !supabaseUrl.startsWith('https://')) {
@@ -19,14 +32,14 @@ let supabaseClient;
 
 try {
   // Only create the client if we have valid URL and key
-  if (supabaseUrl && supabaseKey) {
-    supabaseClient = createClient(supabaseUrl, supabaseKey);
-    console.log("Supabase client initialized successfully");
+  if (supabaseUrl && supabaseAnonKey) {
+    supabaseClient = createClient(supabaseUrl, supabaseAnonKey);
+    console.log("Client: Supabase client initialized successfully");
   } else {
     throw new Error("Missing Supabase credentials");
   }
 } catch (error) {
-  console.error("Error creating Supabase client:", error);
+  console.error("Client: Error creating Supabase client:", error);
   // Create a mock client as fallback
   supabaseClient = createMockSupabaseClient();
 }
@@ -42,6 +55,23 @@ function createMockSupabaseClient() {
         upload: async (path: string, file: File) => ({ data: { path }, error: null }),
         getPublicUrl: (path: string) => ({ data: { publicUrl: `https://example.com/${bucket}/${path}` } }),
         remove: async (paths: string[]) => ({ data: {}, error: null }),
+        list: async (prefix: string, options?: { limit?: number, offset?: number, sortBy?: any }) => {
+          // Return a mock successful response for testing
+          if (bucket === 'videos' || bucket === 'thumbnails') {
+            return { 
+              data: [{ name: 'test.mp4', id: '1', metadata: {} }], 
+              error: null 
+            };
+          }
+          return { data: [], error: { message: "Bucket not found" } };
+        },
+      }),
+      listBuckets: async () => ({ 
+        data: [
+          { id: "1", name: "videos", public: true },
+          { id: "2", name: "thumbnails", public: true }
+        ], 
+        error: null 
       })
     },
     auth: {

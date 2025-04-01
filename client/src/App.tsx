@@ -15,6 +15,7 @@ import Profile from "./pages/profile";
 import Students from "./pages/students";
 import StudentDetail from "./pages/student-detail";
 import Analytics from "./pages/analytics";
+import TestSupabase from "./pages/test-supabase";
 import { useEffect } from "react";
 
 // Protected route component that redirects to login if not authenticated
@@ -75,6 +76,9 @@ function Router() {
       <Route path="/students" component={(props) => <TeacherRoute component={Students} {...props} />} />
       <Route path="/students/:id" component={(props) => <TeacherRoute component={StudentDetail} {...props} />} />
       <Route path="/analytics" component={(props) => <TeacherRoute component={Analytics} {...props} />} />
+      
+      {/* Test route for Supabase connectivity */}
+      <Route path="/test-supabase" component={TestSupabase} />
       
       <Route component={NotFound} />
     </Switch>
