@@ -93,13 +93,151 @@ export class MemStorage implements IStorage {
     this.notifications = new Map();
     this.guestInvitations = new Map();
     
-    this.userIdCounter = 1;
+    this.userIdCounter = 3; // Start after our mock users
     this.videoIdCounter = 1;
     this.commentIdCounter = 1;
     this.videoSharingIdCounter = 1;
     this.relationshipIdCounter = 1;
     this.notificationIdCounter = 1;
     this.guestInvitationIdCounter = 1;
+    
+    // Initialize with mock data
+    this.initMockData();
+  }
+  
+  // Initialize with mock data for development
+  private initMockData() {
+    // Add mock users with explicitly typed instruments as string[]
+    const mockUsers: User[] = [
+      {
+        id: 1,
+        username: "student_demo",
+        email: "student@example.com",
+        password: "password123",
+        fullName: "Student Demo",
+        role: "student",
+        avatarUrl: null,
+        instruments: ["Piano", "Guitar"],
+        experienceLevel: "Intermediate",
+        bio: "Music student passionate about classical piano and acoustic guitar.",
+        verified: true,
+        active: true,
+        lastLogin: new Date(),
+        createdAt: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) // 30 days ago
+      },
+      {
+        id: 2,
+        username: "teacher_demo",
+        email: "teacher@example.com",
+        password: "password123",
+        fullName: "Teacher Demo",
+        role: "teacher",
+        avatarUrl: null,
+        instruments: ["Violin", "Piano"],
+        experienceLevel: "Expert",
+        bio: "Professional violinist and piano teacher with 15 years of experience.",
+        verified: true,
+        active: true,
+        lastLogin: new Date(),
+        createdAt: new Date(Date.now() - 90 * 24 * 60 * 60 * 1000) // 90 days ago
+      }
+    ];
+    
+    // Add users to storage
+    mockUsers.forEach(user => {
+      this.users.set(user.id, user);
+    });
+    
+    // Add mock videos
+    const mockVideos: Video[] = [
+      {
+        id: 1,
+        title: "Chopin Nocturne Op. 9 No. 2",
+        userId: 1, // Student
+        url: "https://example.com/videos/nocturne.mp4", // Field name must be 'url', not 'videoUrl'
+        thumbnailUrl: "https://example.com/thumbnails/nocturne.jpg",
+        description: "My interpretation of Chopin's Nocturne Op. 9 No. 2 in E-flat major.",
+        pieceName: "Nocturne Op. 9 No. 2",
+        composer: "Frédéric Chopin",
+        duration: 270, // 4:30 in seconds
+        viewCount: 8,
+        isPublic: false,
+        videoStatus: "ready",
+        practiceGoals: "Working on expression and dynamics in the middle section.",
+        createdAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000), // 7 days ago
+        updatedAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
+      },
+      {
+        id: 2,
+        title: "Bach Prelude in C Major",
+        userId: 1, // Student
+        url: "https://example.com/videos/bach_prelude.mp4", // Field name must be 'url', not 'videoUrl'
+        thumbnailUrl: "https://example.com/thumbnails/bach_prelude.jpg",
+        description: "My practice session on Bach's Prelude in C Major from The Well-Tempered Clavier.",
+        pieceName: "Prelude in C Major",
+        composer: "Johann Sebastian Bach",
+        duration: 180, // 3:00 in seconds
+        viewCount: 3,
+        isPublic: false,
+        videoStatus: "ready",
+        practiceGoals: "Maintaining consistent tempo and articulation throughout.",
+        createdAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000), // 3 days ago
+        updatedAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000)
+      }
+    ];
+    
+    // Add videos to storage
+    mockVideos.forEach(video => {
+      this.videos.set(video.id, video);
+    });
+    
+    // Update counter
+    this.videoIdCounter = 3;
+    
+    // Add mock comments
+    const mockComments: Comment[] = [
+      {
+        id: 1,
+        videoId: 1,
+        userId: 2, // Teacher
+        content: "Beautiful dynamics in the opening section. Try to maintain that expressiveness throughout.",
+        category: "interpretation",
+        timestamp: 45, // 0:45
+        parentCommentId: null,
+        createdAt: new Date(Date.now() - 6 * 24 * 60 * 60 * 1000), // 6 days ago
+        updatedAt: new Date(Date.now() - 6 * 24 * 60 * 60 * 1000)
+      },
+      {
+        id: 2,
+        videoId: 1,
+        userId: 2, // Teacher
+        content: "Watch your hand position here. Your wrist is a bit too low, causing tension.",
+        category: "technique",
+        timestamp: 120, // 2:00
+        parentCommentId: null,
+        createdAt: new Date(Date.now() - 6 * 24 * 60 * 60 * 1000), // 6 days ago
+        updatedAt: new Date(Date.now() - 6 * 24 * 60 * 60 * 1000)
+      }
+    ];
+    
+    // Add comments to storage
+    mockComments.forEach(comment => {
+      this.comments.set(comment.id, comment);
+    });
+    
+    // Update counter
+    this.commentIdCounter = 3;
+    
+    // Create sharing relationship (teacher can access student's video)
+    const mockSharing: VideoSharing = {
+      id: 1,
+      videoId: 1,
+      userId: 2, // Teacher ID
+      createdAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) // 7 days ago
+    };
+    
+    this.videoSharings.set(mockSharing.id, mockSharing);
+    this.videoSharingIdCounter = 2;
   }
   
   // User operations
@@ -122,6 +260,17 @@ export class MemStorage implements IStorage {
   async createUser(insertUser: InsertUser): Promise<User> {
     const id = this.userIdCounter++;
     const now = new Date();
+    
+    // Ensure instruments is properly formatted as string[] | null
+    let instruments: string[] | null = null;
+    if (insertUser.instruments) {
+      if (Array.isArray(insertUser.instruments)) {
+        instruments = insertUser.instruments;
+      } else if (typeof insertUser.instruments === 'object') {
+        instruments = Array.from(Object.values(insertUser.instruments) as string[]);
+      }
+    }
+    
     const user: User = { 
       ...insertUser, 
       id, 
@@ -129,13 +278,7 @@ export class MemStorage implements IStorage {
       verified: false,
       active: true,
       lastLogin: null,
-      instruments: insertUser.instruments ? 
-                   (Array.isArray(insertUser.instruments) ? 
-                     insertUser.instruments : 
-                     typeof insertUser.instruments === 'object' ? 
-                       Array.from(Object.values(insertUser.instruments)).map(v => String(v)) : 
-                       null) : 
-                   null,
+      instruments,
       experienceLevel: insertUser.experienceLevel || null,
       bio: insertUser.bio || null
     };
@@ -152,13 +295,17 @@ export class MemStorage implements IStorage {
     // If instruments field is present, ensure proper format
     let processedUserData = { ...userData };
     if (userData.instruments) {
+      // Ensure instruments is properly formatted as string[] | null
+      let instruments: string[] | null = null;
+      if (Array.isArray(userData.instruments)) {
+        instruments = userData.instruments;
+      } else if (typeof userData.instruments === 'object') {
+        instruments = Array.from(Object.values(userData.instruments) as string[]);
+      }
+      
       processedUserData = {
         ...userData,
-        instruments: Array.isArray(userData.instruments) ? 
-          userData.instruments : 
-          typeof userData.instruments === 'object' ? 
-            Array.from(Object.values(userData.instruments)).map(v => String(v)) : 
-            null
+        instruments
       };
     }
     
