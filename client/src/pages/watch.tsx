@@ -81,32 +81,7 @@ export default function Watch({ params }: { params: { id: string } }) {
   const [videoStatus, setVideoStatus] = useState<"loading" | "ready" | "error" | "processing">("loading");
   const videoPlayerRef = useRef<HTMLDivElement>(null);
   
-  // WebSocket connection for real-time collaboration
-  const { connected, error: wsError } = useWebSocket({
-    videoId,
-    onNewComment: (comment: { 
-      user?: { id: number; fullName: string; }; 
-      timestamp: number; 
-    }) => {
-      // Fetch latest comments when a new one is received via WebSocket
-      refetchComments();
-      
-      // Show a notification
-      if (comment.user?.id !== user?.id) {
-        toast({
-          title: "New comment added",
-          description: `${comment.user?.fullName || 'Someone'} left a comment at ${formatTime(comment.timestamp)}.`,
-        });
-      }
-    },
-    onTypingIndicator: (userId: number, isTyping: boolean) => {
-      // Update typing indicators
-      setTypingUsers(prev => ({
-        ...prev,
-        [userId]: isTyping
-      }));
-    }
-  });
+  // Real-time collaboration functionality has been removed as requested
 
   // Process sharing users
   const sharingUsers = Array.isArray(sharingData) 

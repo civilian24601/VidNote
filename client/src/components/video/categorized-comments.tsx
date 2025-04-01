@@ -12,7 +12,6 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { getInitials, getAvatarColor, formatDateTime } from "@/lib/utils";
 import { useAuth } from "@/lib/auth";
-import { useWebSocket } from "@/hooks/use-websocket";
 import { useToast } from "@/hooks/use-toast";
 import { Comment, User } from "@/shared/schema";
 
@@ -180,51 +179,7 @@ export const CommentForm = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isTyping, setIsTyping] = useState(false);
   
-  const { sendMessage } = useWebSocket({
-    videoId,
-    onNewComment: () => {
-      // Handle new comment from websocket - will refresh comments
-    }
-  });
-  
-  // Handle typing indicator with debounce
-  useEffect(() => {
-    if (!user) return;
-    
-    let typingTimeout: NodeJS.Timeout;
-    
-    if (content.length > 0 && !isTyping) {
-      setIsTyping(true);
-      sendMessage({
-        type: "typing",
-        videoId,
-        userId: user.id,
-        isTyping: true
-      });
-    }
-    
-    if (typingTimeout) {
-      clearTimeout(typingTimeout);
-    }
-    
-    typingTimeout = setTimeout(() => {
-      if (isTyping) {
-        setIsTyping(false);
-        sendMessage({
-          type: "typing",
-          videoId,
-          userId: user.id,
-          isTyping: false
-        });
-      }
-    }, 1000);
-    
-    return () => {
-      if (typingTimeout) {
-        clearTimeout(typingTimeout);
-      }
-    };
-  }, [content, isTyping, user, videoId, sendMessage]);
+  // WebSocket functionality for real-time collaboration has been removed
   
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -243,13 +198,7 @@ export const CommentForm = ({
         timestamp: currentTimestamp,
       };
       
-      // Send over websocket for real-time updates
-      sendMessage({
-        type: "comment",
-        comment: commentData
-      });
-      
-      // Also make an API call to persist the comment
+      // Make an API call to persist the comment
       const response = await fetch("/api/comments", {
         method: "POST",
         headers: {
@@ -403,26 +352,7 @@ export const CategorizedComments = ({ videoId, onSeek }: CategorizedCommentsProp
   const [activeCategory, setActiveCategory] = useState<string>("all");
   const [typingUsers, setTypingUsers] = useState<User[]>([]);
   
-  const { sendMessage } = useWebSocket({
-    videoId,
-    onNewComment: (newComment) => {
-      // In a real app, we'd have to refresh the comments
-      // For now, we'll simulate adding the comment
-      if (newComment) {
-        fetchComments();
-      }
-    },
-    onTypingIndicator: (userId, isTyping) => {
-      setTypingUsers(prev => {
-        if (isTyping) {
-          const user = { id: userId, fullName: `User ${userId}`, role: "student" };
-          return [...prev.filter(u => u.id !== userId), user];
-        } else {
-          return prev.filter(u => u.id !== userId);
-        }
-      });
-    }
-  });
+  // WebSocket functionality for real-time collaboration has been removed
   
   // Fetch comments from API
   const fetchComments = async () => {
@@ -480,15 +410,7 @@ export const CategorizedComments = ({ videoId, onSeek }: CategorizedCommentsProp
     if (!user) return;
     
     try {
-      // Send a message over websocket to notify of deletion
-      sendMessage({
-        type: "deleteComment",
-        commentId,
-        userId: user.id,
-        videoId
-      });
-      
-      // Also make an API call to persist the deletion
+      // Make an API call to delete the comment
       const response = await fetch(`/api/comments/${commentId}`, {
         method: "DELETE"
       });
