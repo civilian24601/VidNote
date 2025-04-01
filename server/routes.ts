@@ -745,13 +745,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         thumbnailUrl: req.body.thumbnailUrl || null,
         userId,
         isPublic: req.body.isPublic === "true",
-        duration: parseInt(req.body.duration) || 0
+        duration: parseInt(req.body.duration) || 0,
+        videoStatus: "ready" // Set status to ready immediately after successful upload
       };
       
       const parsedVideoData = insertVideoSchema.parse(videoData);
       const video = await storage.createVideo(parsedVideoData);
       
-      console.log(`Video record created with ID: ${video.id}`);
+      console.log(`Video record created with ID: ${video.id} and is ready for playback`);
       
       res.status(201).json({
         ...video,

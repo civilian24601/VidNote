@@ -51,7 +51,7 @@ export const insertVideoSchema = createInsertSchema(videos).omit({
   id: true,
   createdAt: true,
   updatedAt: true,
-  videoStatus: true,
+  // videoStatus is no longer omitted to allow setting it during insertion
   viewCount: true
 });
 

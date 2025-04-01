@@ -364,7 +364,7 @@ export class MemStorage implements IStorage {
       id, 
       createdAt: now,
       updatedAt: now,
-      videoStatus: "processing",
+      videoStatus: insertVideo.videoStatus || "processing", // Use provided status or default to processing
       viewCount: 0,
       isPublic: insertVideo.isPublic !== undefined ? insertVideo.isPublic : false,
       description: insertVideo.description || null,
