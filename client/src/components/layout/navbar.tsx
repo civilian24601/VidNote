@@ -20,13 +20,11 @@ export function Navbar() {
           <div className="flex justify-between h-16">
             <div className="flex">
               <div className="flex-shrink-0 flex items-center">
-                <Link href="/">
-                  <div className="flex items-center space-x-2 cursor-pointer">
-                    <div className="w-8 h-8 rounded-md bg-primary/80 flex items-center justify-center">
-                      <i className="ri-movie-2-line text-white text-lg"></i>
-                    </div>
-                    <span className="font-bold text-xl text-gradient">VidNote</span>
+                <Link href="/" className="flex items-center space-x-2 cursor-pointer">
+                  <div className="w-8 h-8 rounded-md bg-primary/80 flex items-center justify-center">
+                    <i className="ri-movie-2-line text-white text-lg"></i>
                   </div>
+                  <span className="font-bold text-xl text-gradient">VidNote</span>
                 </Link>
               </div>
             </div>
@@ -50,76 +48,62 @@ export function Navbar() {
         <div className="flex justify-between h-16">
           <div className="flex">
             <div className="flex-shrink-0 flex items-center">
-              <Link href="/">
-                <div className="flex items-center space-x-2 cursor-pointer">
-                  <div className="w-8 h-8 rounded-md bg-primary/80 flex items-center justify-center">
-                    <i className="ri-movie-2-line text-white text-lg"></i>
-                  </div>
-                  <span className="font-bold text-xl text-gradient">VidNote</span>
+              <Link href="/" className="flex items-center space-x-2 cursor-pointer">
+                <div className="w-8 h-8 rounded-md bg-primary/80 flex items-center justify-center">
+                  <i className="ri-movie-2-line text-white text-lg"></i>
                 </div>
+                <span className="font-bold text-xl text-gradient">VidNote</span>
               </Link>
             </div>
             <div className="hidden sm:ml-6 sm:flex sm:space-x-8">
               {user?.role === "student" ? (
                 // Student navigation options
                 <>
-                  <Link href="/videos">
-                    <a className={`inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium ${
-                      location === "/videos" 
-                        ? "border-primary text-white" 
-                        : "border-transparent text-gray-200 hover:text-white hover:border-white/30"
-                    }`}>
-                      <i className="ri-video-line mr-1.5"></i>My Videos
-                    </a>
+                  <Link href="/videos" className={`inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium ${
+                    location === "/videos" 
+                      ? "border-primary text-white" 
+                      : "border-transparent text-gray-200 hover:text-white hover:border-white/30"
+                  }`}>
+                    <i className="ri-video-line mr-1.5"></i>My Videos
                   </Link>
-                  <Link href="/shared">
-                    <a className={`inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium ${
-                      location === "/shared" 
-                        ? "border-primary text-white" 
-                        : "border-transparent text-gray-200 hover:text-white hover:border-white/30"
-                    }`}>
-                      <i className="ri-feedback-line mr-1.5"></i>Shared with me
-                    </a>
+                  <Link href="/shared" className={`inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium ${
+                    location === "/shared" 
+                      ? "border-primary text-white" 
+                      : "border-transparent text-gray-200 hover:text-white hover:border-white/30"
+                  }`}>
+                    <i className="ri-feedback-line mr-1.5"></i>Shared with me
                   </Link>
-                  <Link href="/dashboard">
-                    <a className={`inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium ${
-                      location === "/dashboard" 
-                        ? "border-primary text-white" 
-                        : "border-transparent text-gray-200 hover:text-white hover:border-white/30"
-                    }`}>
-                      <i className="ri-dashboard-line mr-1.5"></i>Dashboard
-                    </a>
+                  <Link href="/dashboard" className={`inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium ${
+                    location === "/dashboard" 
+                      ? "border-primary text-white" 
+                      : "border-transparent text-gray-200 hover:text-white hover:border-white/30"
+                  }`}>
+                    <i className="ri-dashboard-line mr-1.5"></i>Dashboard
                   </Link>
                 </>
               ) : (
                 // Teacher navigation options
                 <>
-                  <Link href="/students">
-                    <a className={`inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium ${
-                      location === "/students" 
-                        ? "border-primary text-white" 
-                        : "border-transparent text-gray-200 hover:text-white hover:border-white/30"
-                    }`}>
-                      <i className="ri-user-line mr-1.5"></i>Students
-                    </a>
+                  <Link href="/students" className={`inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium ${
+                    location === "/students" 
+                      ? "border-primary text-white" 
+                      : "border-transparent text-gray-200 hover:text-white hover:border-white/30"
+                  }`}>
+                    <i className="ri-user-line mr-1.5"></i>Students
                   </Link>
-                  <Link href="/shared">
-                    <a className={`inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium ${
-                      location === "/shared" 
-                        ? "border-primary text-white" 
-                        : "border-transparent text-gray-200 hover:text-white hover:border-white/30"
-                    }`}>
-                      <i className="ri-video-line mr-1.5"></i>Pending Reviews
-                    </a>
+                  <Link href="/shared" className={`inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium ${
+                    location === "/shared" 
+                      ? "border-primary text-white" 
+                      : "border-transparent text-gray-200 hover:text-white hover:border-white/30"
+                  }`}>
+                    <i className="ri-video-line mr-1.5"></i>Pending Reviews
                   </Link>
-                  <Link href="/dashboard">
-                    <a className={`inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium ${
-                      location === "/dashboard" 
-                        ? "border-primary text-white" 
-                        : "border-transparent text-gray-200 hover:text-white hover:border-white/30"
-                    }`}>
-                      <i className="ri-dashboard-line mr-1.5"></i>Dashboard
-                    </a>
+                  <Link href="/dashboard" className={`inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium ${
+                    location === "/dashboard" 
+                      ? "border-primary text-white" 
+                      : "border-transparent text-gray-200 hover:text-white hover:border-white/30"
+                  }`}>
+                    <i className="ri-dashboard-line mr-1.5"></i>Dashboard
                   </Link>
                 </>
               )}

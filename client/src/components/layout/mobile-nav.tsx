@@ -27,21 +27,17 @@ export function MobileNav() {
         {user?.role === "student" ? (
           // Student mobile navigation
           <>
-            <Link href="/videos">
-              <a className={`flex flex-col items-center py-2 px-3 ${
+            <Link href="/videos" className={`flex flex-col items-center py-2 px-3 ${
                 location === "/videos" ? "text-primary" : "text-gray-300"
               }`}>
                 <i className="ri-video-line text-xl"></i>
                 <span className="text-xs mt-1">My Videos</span>
-              </a>
             </Link>
-            <Link href="/shared">
-              <a className={`flex flex-col items-center py-2 px-3 ${
+            <Link href="/shared" className={`flex flex-col items-center py-2 px-3 ${
                 location === "/shared" ? "text-primary" : "text-gray-300"
               }`}>
                 <i className="ri-feedback-line text-xl"></i>
                 <span className="text-xs mt-1">Shared</span>
-              </a>
             </Link>
             <Dialog open={uploadDialogOpen} onOpenChange={setUploadDialogOpen}>
               <DialogTrigger asChild>
@@ -86,65 +82,51 @@ export function MobileNav() {
                 </div>
               </DialogContent>
             </Dialog>
-            <Link href="/dashboard">
-              <a className={`flex flex-col items-center py-2 px-3 ${
+            <Link href="/dashboard" className={`flex flex-col items-center py-2 px-3 ${
                 location === "/dashboard" ? "text-primary" : "text-gray-300"
               }`}>
                 <i className="ri-dashboard-line text-xl"></i>
                 <span className="text-xs mt-1">Dashboard</span>
-              </a>
             </Link>
-            <Link href="/profile">
-              <a className={`flex flex-col items-center py-2 px-3 ${
+            <Link href="/profile" className={`flex flex-col items-center py-2 px-3 ${
                 location === "/profile" ? "text-primary" : "text-gray-300"
               }`}>
                 <i className="ri-user-line text-xl"></i>
                 <span className="text-xs mt-1">Profile</span>
-              </a>
             </Link>
           </>
         ) : (
           // Teacher mobile navigation
           <>
-            <Link href="/students">
-              <a className={`flex flex-col items-center py-2 px-3 ${
+            <Link href="/students" className={`flex flex-col items-center py-2 px-3 ${
                 location === "/students" ? "text-primary" : "text-gray-300"
               }`}>
                 <i className="ri-user-line text-xl"></i>
                 <span className="text-xs mt-1">Students</span>
-              </a>
             </Link>
-            <Link href="/shared">
-              <a className={`flex flex-col items-center py-2 px-3 ${
+            <Link href="/shared" className={`flex flex-col items-center py-2 px-3 ${
                 location === "/shared" ? "text-primary" : "text-gray-300"
               }`}>
                 <i className="ri-video-line text-xl"></i>
                 <span className="text-xs mt-1">Reviews</span>
-              </a>
             </Link>
-            <Link href="/dashboard">
-              <a className={`flex flex-col items-center py-2 px-3 ${
+            <Link href="/dashboard" className={`flex flex-col items-center py-2 px-3 ${
                 location === "/dashboard" ? "text-primary" : "text-gray-300"
               }`}>
                 <i className="ri-dashboard-line text-xl"></i>
                 <span className="text-xs mt-1">Dashboard</span>
-              </a>
             </Link>
-            <Link href="/analytics">
-              <a className={`flex flex-col items-center py-2 px-3 ${
+            <Link href="/analytics" className={`flex flex-col items-center py-2 px-3 ${
                 location === "/analytics" ? "text-primary" : "text-gray-300"
               }`}>
                 <i className="ri-bar-chart-line text-xl"></i>
                 <span className="text-xs mt-1">Analytics</span>
-              </a>
             </Link>
-            <Link href="/profile">
-              <a className={`flex flex-col items-center py-2 px-3 ${
+            <Link href="/profile" className={`flex flex-col items-center py-2 px-3 ${
                 location === "/profile" ? "text-primary" : "text-gray-300"
               }`}>
                 <i className="ri-settings-line text-xl"></i>
                 <span className="text-xs mt-1">Settings</span>
-              </a>
             </Link>
           </>
         )}
