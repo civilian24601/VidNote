@@ -100,8 +100,8 @@ export default function Home() {
 
               <div className="mt-12">
                 <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-                  <div className="p-6 rounded-xl bg-black shadow-xl flex flex-col h-full border-2 border-primary/30 hover:border-primary/60 transition-all duration-300">
-                    <div className="w-12 h-12 rounded-lg bg-primary/40 flex items-center justify-center mb-4 shadow-md">
+                  <div className="p-6 rounded-xl bg-gradient-to-br from-primary/20 to-primary/5 shadow-xl flex flex-col h-full border-2 border-primary/50 hover:border-primary/80 transition-all duration-300 transform hover:-translate-y-1 hover:shadow-2xl">
+                    <div className="w-12 h-12 rounded-lg bg-primary flex items-center justify-center mb-4 shadow-md">
                       <Upload className="h-6 w-6 text-white" />
                     </div>
                     <h3 className="text-xl font-bold text-white">Simple Video Upload</h3>
@@ -110,8 +110,8 @@ export default function Home() {
                     </p>
                   </div>
 
-                  <div className="p-6 rounded-xl bg-black shadow-xl flex flex-col h-full border-2 border-primary/30 hover:border-primary/60 transition-all duration-300">
-                    <div className="w-12 h-12 rounded-lg bg-primary/40 flex items-center justify-center mb-4 shadow-md">
+                  <div className="p-6 rounded-xl bg-gradient-to-br from-primary/20 to-primary/5 shadow-xl flex flex-col h-full border-2 border-primary/50 hover:border-primary/80 transition-all duration-300 transform hover:-translate-y-1 hover:shadow-2xl">
+                    <div className="w-12 h-12 rounded-lg bg-primary flex items-center justify-center mb-4 shadow-md">
                       <Clock className="h-6 w-6 text-white" />
                     </div>
                     <h3 className="text-xl font-bold text-white">Timestamped Feedback</h3>
@@ -120,8 +120,8 @@ export default function Home() {
                     </p>
                   </div>
 
-                  <div className="p-6 rounded-xl bg-black shadow-xl flex flex-col h-full border-2 border-primary/30 hover:border-primary/60 transition-all duration-300">
-                    <div className="w-12 h-12 rounded-lg bg-primary/40 flex items-center justify-center mb-4 shadow-md">
+                  <div className="p-6 rounded-xl bg-gradient-to-br from-primary/20 to-primary/5 shadow-xl flex flex-col h-full border-2 border-primary/50 hover:border-primary/80 transition-all duration-300 transform hover:-translate-y-1 hover:shadow-2xl">
+                    <div className="w-12 h-12 rounded-lg bg-primary flex items-center justify-center mb-4 shadow-md">
                       <Lock className="h-6 w-6 text-white" />
                     </div>
                     <h3 className="text-xl font-bold text-white">Private & Secure</h3>
@@ -130,8 +130,8 @@ export default function Home() {
                     </p>
                   </div>
 
-                  <div className="p-6 rounded-xl bg-black shadow-xl flex flex-col h-full border-2 border-primary/30 hover:border-primary/60 transition-all duration-300">
-                    <div className="w-12 h-12 rounded-lg bg-primary/40 flex items-center justify-center mb-4 shadow-md">
+                  <div className="p-6 rounded-xl bg-gradient-to-br from-primary/20 to-primary/5 shadow-xl flex flex-col h-full border-2 border-primary/50 hover:border-primary/80 transition-all duration-300 transform hover:-translate-y-1 hover:shadow-2xl">
+                    <div className="w-12 h-12 rounded-lg bg-primary flex items-center justify-center mb-4 shadow-md">
                       <Music className="h-6 w-6 text-white" />
                     </div>
                     <h3 className="text-xl font-bold text-white">Music Focus</h3>
@@ -140,8 +140,8 @@ export default function Home() {
                     </p>
                   </div>
 
-                  <div className="p-6 rounded-xl bg-black shadow-xl flex flex-col h-full border-2 border-primary/30 hover:border-primary/60 transition-all duration-300">
-                    <div className="w-12 h-12 rounded-lg bg-primary/40 flex items-center justify-center mb-4 shadow-md">
+                  <div className="p-6 rounded-xl bg-gradient-to-br from-primary/20 to-primary/5 shadow-xl flex flex-col h-full border-2 border-primary/50 hover:border-primary/80 transition-all duration-300 transform hover:-translate-y-1 hover:shadow-2xl">
+                    <div className="w-12 h-12 rounded-lg bg-primary flex items-center justify-center mb-4 shadow-md">
                       <Headphones className="h-6 w-6 text-white" />
                     </div>
                     <h3 className="text-xl font-bold text-white">Audio Comments</h3>
@@ -150,8 +150,8 @@ export default function Home() {
                     </p>
                   </div>
 
-                  <div className="p-6 rounded-xl bg-black shadow-xl flex flex-col h-full border-2 border-primary/30 hover:border-primary/60 transition-all duration-300">
-                    <div className="w-12 h-12 rounded-lg bg-primary/40 flex items-center justify-center mb-4 shadow-md">
+                  <div className="p-6 rounded-xl bg-gradient-to-br from-primary/20 to-primary/5 shadow-xl flex flex-col h-full border-2 border-primary/50 hover:border-primary/80 transition-all duration-300 transform hover:-translate-y-1 hover:shadow-2xl">
+                    <div className="w-12 h-12 rounded-lg bg-primary flex items-center justify-center mb-4 shadow-md">
                       <Users className="h-6 w-6 text-white" />
                     </div>
                     <h3 className="text-xl font-bold text-white">Collaborative Learning</h3>
@@ -183,11 +183,11 @@ export default function Home() {
             
             {/* How It Works Content */}
             <div className="grid grid-cols-1 gap-x-8 gap-y-12 lg:grid-cols-3 mt-12">
-              <div className="relative bg-black p-6 rounded-xl shadow-lg flex flex-col">
+              <div className="relative p-6 rounded-xl bg-gradient-to-br from-primary/20 to-primary/5 shadow-xl flex flex-col border-2 border-primary/50 transform hover:-translate-y-1 hover:shadow-2xl transition-all duration-300">
                 <div className="absolute -top-6 -left-6 w-12 h-12 rounded-full bg-primary flex items-center justify-center text-white font-bold text-lg shadow-lg">
                   1
                 </div>
-                <div className="h-48 sm:h-56 w-full overflow-hidden rounded-lg mb-6 p-1 border border-primary/20">
+                <div className="h-48 sm:h-56 w-full overflow-hidden rounded-lg mb-6 p-1 border border-primary/40">
                   <div className="w-full h-full rounded-md overflow-hidden">
                     <img 
                       src="https://images.unsplash.com/photo-1511379938547-c1f69419868d?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=600&q=80" 
@@ -197,16 +197,16 @@ export default function Home() {
                   </div>
                 </div>
                 <h3 className="text-xl font-bold text-white mb-3">Record & Upload</h3>
-                <p className="text-gray-300 text-base">
+                <p className="text-gray-200 text-base">
                   Capture your musical practice or performance and upload it to the platform in just a few clicks.
                 </p>
               </div>
 
-              <div className="relative bg-black p-6 rounded-xl shadow-lg flex flex-col">
+              <div className="relative p-6 rounded-xl bg-gradient-to-br from-primary/20 to-primary/5 shadow-xl flex flex-col border-2 border-primary/50 transform hover:-translate-y-1 hover:shadow-2xl transition-all duration-300">
                 <div className="absolute -top-6 -left-6 w-12 h-12 rounded-full bg-primary flex items-center justify-center text-white font-bold text-lg shadow-lg">
                   2
                 </div>
-                <div className="h-48 sm:h-56 w-full overflow-hidden rounded-lg mb-6 p-1 border border-primary/20">
+                <div className="h-48 sm:h-56 w-full overflow-hidden rounded-lg mb-6 p-1 border border-primary/40">
                   <div className="w-full h-full rounded-md overflow-hidden">
                     <img 
                       src="https://images.unsplash.com/photo-1522071820081-009f0129c71c?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=600&q=80" 
@@ -216,16 +216,16 @@ export default function Home() {
                   </div>
                 </div>
                 <h3 className="text-xl font-bold text-white mb-3">Share With Teachers</h3>
-                <p className="text-gray-300 text-base">
+                <p className="text-gray-200 text-base">
                   Invite your instructors to view your video and provide specific, timestamped feedback.
                 </p>
               </div>
 
-              <div className="relative bg-black p-6 rounded-xl shadow-lg flex flex-col">
+              <div className="relative p-6 rounded-xl bg-gradient-to-br from-primary/20 to-primary/5 shadow-xl flex flex-col border-2 border-primary/50 transform hover:-translate-y-1 hover:shadow-2xl transition-all duration-300">
                 <div className="absolute -top-6 -left-6 w-12 h-12 rounded-full bg-primary flex items-center justify-center text-white font-bold text-lg shadow-lg">
                   3
                 </div>
-                <div className="h-48 sm:h-56 w-full overflow-hidden rounded-lg mb-6 p-1 border border-primary/20">
+                <div className="h-48 sm:h-56 w-full overflow-hidden rounded-lg mb-6 p-1 border border-primary/40">
                   <div className="w-full h-full rounded-md overflow-hidden">
                     <img 
                       src="https://images.unsplash.com/photo-1513682121497-80211f36a7d3?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=600&q=80" 
@@ -235,7 +235,7 @@ export default function Home() {
                   </div>
                 </div>
                 <h3 className="text-xl font-bold text-white mb-3">Improve With Feedback</h3>
-                <p className="text-gray-300 text-base">
+                <p className="text-gray-200 text-base">
                   Review feedback at the exact moments it applies to, helping you focus your practice on specific areas.
                 </p>
               </div>
@@ -283,9 +283,9 @@ export default function Home() {
                 <div className="flex py-6">
                   {/* Testimonial Card 1 */}
                   <div className="flex-[0_0_90%] sm:flex-[0_0_45%] md:flex-[0_0_30%] mx-3">
-                    <div className="p-6 rounded-xl bg-black border border-primary/20 hover:shadow-xl transition-all duration-300 flex flex-col h-full">
+                    <div className="p-6 rounded-xl bg-gradient-to-br from-primary/20 to-primary/5 border-2 border-primary/50 shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1 flex flex-col h-full">
                       <div className="flex items-center mb-4">
-                        <div className="w-12 h-12 rounded-full bg-primary/30 flex items-center justify-center">
+                        <div className="w-12 h-12 rounded-full bg-primary flex items-center justify-center shadow-md">
                           <Music className="h-6 w-6 text-white" />
                         </div>
                         <div className="ml-3">
@@ -293,7 +293,7 @@ export default function Home() {
                           <p className="text-gray-400 text-sm">Piano Student</p>
                         </div>
                       </div>
-                      <p className="text-gray-300 italic flex-grow text-base">
+                      <p className="text-gray-200 italic flex-grow text-base">
                         "With VidNote, I get detailed feedback on my piano technique that would be impossible to convey in just a lesson. My teacher can pinpoint exactly where my hand position needs adjustment."
                       </p>
                       <div className="mt-4 flex text-primary gap-1">
@@ -306,9 +306,9 @@ export default function Home() {
 
                   {/* Testimonial Card 2 */}
                   <div className="flex-[0_0_90%] sm:flex-[0_0_45%] md:flex-[0_0_30%] mx-3">
-                    <div className="p-6 rounded-xl bg-black border border-primary/20 hover:shadow-xl transition-all duration-300 flex flex-col h-full">
+                    <div className="p-6 rounded-xl bg-gradient-to-br from-primary/20 to-primary/5 border-2 border-primary/50 shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1 flex flex-col h-full">
                       <div className="flex items-center mb-4">
-                        <div className="w-12 h-12 rounded-full bg-primary/30 flex items-center justify-center">
+                        <div className="w-12 h-12 rounded-full bg-primary flex items-center justify-center shadow-md">
                           <Music className="h-6 w-6 text-white" />
                         </div>
                         <div className="ml-3">
@@ -316,7 +316,7 @@ export default function Home() {
                           <p className="text-gray-400 text-sm">Violin Teacher</p>
                         </div>
                       </div>
-                      <p className="text-gray-300 italic flex-grow text-base">
+                      <p className="text-gray-200 italic flex-grow text-base">
                         "As a teacher with 20+ students, VidNote has revolutionized how I provide feedback between lessons. I can give detailed guidance exactly where it's needed, saving time in our in-person sessions."
                       </p>
                       <div className="mt-4 flex text-primary gap-1">
@@ -329,9 +329,9 @@ export default function Home() {
 
                   {/* Testimonial Card 3 */}
                   <div className="flex-[0_0_90%] sm:flex-[0_0_45%] md:flex-[0_0_30%] mx-3">
-                    <div className="p-6 rounded-xl bg-black border border-primary/20 hover:shadow-xl transition-all duration-300 flex flex-col h-full">
+                    <div className="p-6 rounded-xl bg-gradient-to-br from-primary/20 to-primary/5 border-2 border-primary/50 shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1 flex flex-col h-full">
                       <div className="flex items-center mb-4">
-                        <div className="w-12 h-12 rounded-full bg-primary/30 flex items-center justify-center">
+                        <div className="w-12 h-12 rounded-full bg-primary flex items-center justify-center shadow-md">
                           <Music className="h-6 w-6 text-white" />
                         </div>
                         <div className="ml-3">
@@ -339,7 +339,7 @@ export default function Home() {
                           <p className="text-gray-400 text-sm">Guitar Student</p>
                         </div>
                       </div>
-                      <p className="text-gray-300 italic flex-grow text-base">
+                      <p className="text-gray-200 italic flex-grow text-base">
                         "Getting feedback from multiple teachers has been incredible. Each instructor focuses on different aspects of my playing, giving me a well-rounded perspective that's improved my technique dramatically."
                       </p>
                       <div className="mt-4 flex text-primary gap-1">
