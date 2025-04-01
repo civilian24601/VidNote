@@ -1,4 +1,4 @@
-import { pgTable, text, serial, integer, timestamp, boolean, json } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, timestamp, boolean, json, uuid } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -121,6 +121,30 @@ export const insertNotificationSchema = createInsertSchema(notifications).omit({
   isRead: true
 });
 
+// Guest Invitations model for one-time adjudicator feedback
+export const guestInvitations = pgTable("guest_invitations", {
+  id: serial("id").primaryKey(),
+  inviteToken: uuid("invite_token").notNull().unique(),
+  videoId: integer("video_id").notNull().references(() => videos.id),
+  studentId: integer("student_id").notNull().references(() => users.id),
+  email: text("email").notNull(),
+  guestName: text("guest_name").notNull(),
+  message: text("message"),
+  role: text("role").default("adjudicator"),
+  status: text("status").default("pending"), // pending, accepted, expired
+  expiresAt: timestamp("expires_at").notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+  usedAt: timestamp("used_at"),
+});
+
+export const insertGuestInvitationSchema = createInsertSchema(guestInvitations).omit({
+  id: true,
+  inviteToken: true,
+  createdAt: true,
+  usedAt: true,
+  status: true,
+});
+
 // Types
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
@@ -139,3 +163,6 @@ export type InsertStudentTeacherRelationship = z.infer<typeof insertStudentTeach
 
 export type Notification = typeof notifications.$inferSelect;
 export type InsertNotification = z.infer<typeof insertNotificationSchema>;
+
+export type GuestInvitation = typeof guestInvitations.$inferSelect;
+export type InsertGuestInvitation = z.infer<typeof insertGuestInvitationSchema>;

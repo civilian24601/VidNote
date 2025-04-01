@@ -1,10 +1,12 @@
+import * as crypto from 'crypto';
 import {
   users, User, InsertUser,
   videos, Video, InsertVideo,
   comments, Comment, InsertComment,
   videoSharing, VideoSharing, InsertVideoSharing,
   studentTeacherRelationships, StudentTeacherRelationship, InsertStudentTeacherRelationship,
-  notifications, Notification, InsertNotification
+  notifications, Notification, InsertNotification,
+  guestInvitations, GuestInvitation, InsertGuestInvitation
 } from "@shared/schema";
 
 export interface IStorage {
@@ -55,6 +57,14 @@ export interface IStorage {
   getNotificationsByUser(userId: number): Promise<Notification[]>;
   markNotificationAsRead(id: number): Promise<boolean>;
   markAllNotificationsAsRead(userId: number): Promise<boolean>;
+  
+  // Guest Invitation operations (for one-time adjudicator access)
+  createGuestInvitation(invitation: InsertGuestInvitation): Promise<GuestInvitation>;
+  getGuestInvitationByToken(token: string): Promise<GuestInvitation | undefined>;
+  getGuestInvitationsByVideo(videoId: number): Promise<GuestInvitation[]>;
+  getGuestInvitationsByStudent(studentId: number): Promise<GuestInvitation[]>;
+  updateGuestInvitationStatus(id: number, status: string): Promise<boolean>;
+  markGuestInvitationUsed(id: number): Promise<boolean>;
 }
 
 export class MemStorage implements IStorage {
@@ -64,6 +74,7 @@ export class MemStorage implements IStorage {
   private videoSharings: Map<number, VideoSharing>;
   private relationships: Map<number, StudentTeacherRelationship>;
   private notifications: Map<number, Notification>;
+  private guestInvitations: Map<number, GuestInvitation>;
   
   private userIdCounter: number;
   private videoIdCounter: number;
@@ -71,6 +82,7 @@ export class MemStorage implements IStorage {
   private videoSharingIdCounter: number;
   private relationshipIdCounter: number;
   private notificationIdCounter: number;
+  private guestInvitationIdCounter: number;
   
   constructor() {
     this.users = new Map();
@@ -79,6 +91,7 @@ export class MemStorage implements IStorage {
     this.videoSharings = new Map();
     this.relationships = new Map();
     this.notifications = new Map();
+    this.guestInvitations = new Map();
     
     this.userIdCounter = 1;
     this.videoIdCounter = 1;
@@ -86,6 +99,7 @@ export class MemStorage implements IStorage {
     this.videoSharingIdCounter = 1;
     this.relationshipIdCounter = 1;
     this.notificationIdCounter = 1;
+    this.guestInvitationIdCounter = 1;
   }
   
   // User operations
@@ -115,7 +129,13 @@ export class MemStorage implements IStorage {
       verified: false,
       active: true,
       lastLogin: null,
-      instruments: insertUser.instruments || null,
+      instruments: insertUser.instruments ? 
+                   (Array.isArray(insertUser.instruments) ? 
+                     insertUser.instruments : 
+                     typeof insertUser.instruments === 'object' ? 
+                       Object.values(insertUser.instruments).map(v => String(v)) : 
+                       null) : 
+                   null,
       experienceLevel: insertUser.experienceLevel || null,
       bio: insertUser.bio || null
     };
@@ -129,7 +149,20 @@ export class MemStorage implements IStorage {
       return undefined;
     }
     
-    const updatedUser = { ...existingUser, ...userData };
+    // If instruments field is present, ensure proper format
+    let processedUserData = { ...userData };
+    if (userData.instruments) {
+      processedUserData = {
+        ...userData,
+        instruments: Array.isArray(userData.instruments) ? 
+          userData.instruments : 
+          typeof userData.instruments === 'object' ? 
+            Object.values(userData.instruments).map(v => String(v)) : 
+            null
+      };
+    }
+    
+    const updatedUser = { ...existingUser, ...processedUserData };
     this.users.set(id, updatedUser);
     return updatedUser;
   }
@@ -178,6 +211,7 @@ export class MemStorage implements IStorage {
   async createVideo(insertVideo: InsertVideo): Promise<Video> {
     const id = this.videoIdCounter++;
     const now = new Date();
+    // Need to ensure all optional fields have null fallbacks
     const video: Video = { 
       ...insertVideo, 
       id, 
@@ -185,9 +219,13 @@ export class MemStorage implements IStorage {
       updatedAt: now,
       videoStatus: "processing",
       viewCount: 0,
+      isPublic: insertVideo.isPublic !== undefined ? insertVideo.isPublic : false,
+      description: insertVideo.description || null,
+      thumbnailUrl: insertVideo.thumbnailUrl || null,
       pieceName: insertVideo.pieceName || null,
       composer: insertVideo.composer || null,
-      practiceGoals: insertVideo.practiceGoals || null
+      practiceGoals: insertVideo.practiceGoals || null,
+      duration: insertVideo.duration || null
     };
     this.videos.set(id, video);
     return video;
@@ -421,7 +459,10 @@ export class MemStorage implements IStorage {
   async getNotificationsByUser(userId: number): Promise<Notification[]> {
     return Array.from(this.notifications.values())
       .filter(notif => notif.userId === userId)
-      .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime()); // Sort newest first
+      .sort((a, b) => {
+        if (!a.createdAt || !b.createdAt) return 0;
+        return b.createdAt.getTime() - a.createdAt.getTime(); // Sort newest first
+      });
   }
   
   async markNotificationAsRead(id: number): Promise<boolean> {
@@ -442,6 +483,67 @@ export class MemStorage implements IStorage {
       this.notifications.set(notification.id, notification);
     }
     
+    return true;
+  }
+  
+  // Guest Invitation operations
+  async createGuestInvitation(insertInvitation: InsertGuestInvitation): Promise<GuestInvitation> {
+    const id = this.guestInvitationIdCounter++;
+    const now = new Date();
+    
+    // Generate a unique UUID token
+    const inviteToken = crypto.randomUUID ? crypto.randomUUID() : 
+                         `inv-${Date.now()}-${Math.random().toString(36).substring(2, 15)}`;
+    
+    const invitation: GuestInvitation = {
+      ...insertInvitation,
+      id,
+      inviteToken,
+      createdAt: now,
+      role: insertInvitation.role || "adjudicator",
+      message: insertInvitation.message || null,
+      status: "pending",
+      usedAt: null
+    };
+    
+    this.guestInvitations.set(id, invitation);
+    return invitation;
+  }
+  
+  async getGuestInvitationByToken(token: string): Promise<GuestInvitation | undefined> {
+    return Array.from(this.guestInvitations.values()).find(
+      invitation => invitation.inviteToken === token
+    );
+  }
+  
+  async getGuestInvitationsByVideo(videoId: number): Promise<GuestInvitation[]> {
+    return Array.from(this.guestInvitations.values()).filter(
+      invitation => invitation.videoId === videoId
+    );
+  }
+  
+  async getGuestInvitationsByStudent(studentId: number): Promise<GuestInvitation[]> {
+    return Array.from(this.guestInvitations.values()).filter(
+      invitation => invitation.studentId === studentId
+    );
+  }
+  
+  async updateGuestInvitationStatus(id: number, status: string): Promise<boolean> {
+    const invitation = this.guestInvitations.get(id);
+    if (!invitation) return false;
+    
+    invitation.status = status;
+    this.guestInvitations.set(id, invitation);
+    return true;
+  }
+  
+  async markGuestInvitationUsed(id: number): Promise<boolean> {
+    const invitation = this.guestInvitations.get(id);
+    if (!invitation) return false;
+    
+    invitation.status = "used";
+    invitation.usedAt = new Date();
+    this.guestInvitations.set(id, invitation);
     return true;
   }
 }

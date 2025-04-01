@@ -63,9 +63,38 @@ export default function Videos() {
     formData.append("description", values.description || "");
     formData.append("video", selectedFile);
     formData.append("isPublic", "false");
+    
+    // Add duration if available
+    if (selectedFile.type.startsWith('video/')) {
+      try {
+        const duration = await new Promise<number>((resolve) => {
+          const video = document.createElement('video');
+          video.preload = 'metadata';
+          video.onloadedmetadata = () => resolve(video.duration);
+          video.onerror = () => resolve(0);
+          video.src = URL.createObjectURL(selectedFile);
+        });
+        formData.append("duration", Math.round(duration).toString());
+      } catch (e) {
+        console.error("Error getting video duration:", e);
+        // If we can't get duration, just continue without it
+      }
+    }
 
     try {
+      console.log("Starting video upload for:", {
+        title: formData.get('title'),
+        description: formData.get('description'),
+        isPublic: formData.get('isPublic'),
+        hasVideoFile: !!formData.get('video'),
+      });
+      toast({
+        title: "Uploading video...",
+        description: "Please wait while your video is being processed.",
+      });
+      
       await uploadVideo(formData);
+      
       toast({
         title: "Video uploaded successfully",
         description: "Your video has been uploaded and is ready to view.",
@@ -74,9 +103,24 @@ export default function Videos() {
       form.reset();
       setSelectedFile(null);
     } catch (error) {
+      console.error("Video upload error:", error);
+      
+      // More specific error handling
+      let errorMessage = "An error occurred while uploading your video.";
+      if (error instanceof Error) {
+        errorMessage = error.message;
+      }
+      
+      // Check for common HTTP errors
+      if (errorMessage.includes("401")) {
+        errorMessage = "Authentication error: Please log in again and try once more.";
+      } else if (errorMessage.includes("503")) {
+        errorMessage = "Service unavailable: The server is currently unable to handle this request.";
+      }
+      
       toast({
         title: "Upload failed",
-        description: error instanceof Error ? error.message : "An error occurred while uploading your video.",
+        description: errorMessage,
         variant: "destructive",
       });
     }

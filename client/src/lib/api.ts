@@ -9,6 +9,9 @@ export const getAuthHeader = (): Headers => {
   const headers = new Headers();
   if (user?.id) {
     headers.append('Authorization', String(user.id));
+    console.log('Auth header set with user ID:', user.id);
+  } else {
+    console.warn('No user ID found for auth header');
   }
   return headers;
 };

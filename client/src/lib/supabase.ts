@@ -5,17 +5,13 @@ import { createClient } from '@supabase/supabase-js';
 let supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
 const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
 
+console.log('Supabase URL:', supabaseUrl ? 'Exists (value hidden)' : 'Missing');
+console.log('Supabase Key:', supabaseKey ? 'Exists (value hidden)' : 'Missing');
+
 // Ensure URL has https:// prefix
 if (supabaseUrl && !supabaseUrl.startsWith('https://')) {
   supabaseUrl = `https://${supabaseUrl}`;
 }
-
-// For debugging
-console.log("Supabase URL format check:", 
-  supabaseUrl ? 
-  (supabaseUrl.startsWith('https://') && supabaseUrl.includes('supabase.co')) : 
-  false
-);
 
 // Create Supabase client with fallback to avoid runtime errors
 // If URL is invalid, we'll use a mock client instead
@@ -23,11 +19,11 @@ let supabaseClient;
 
 try {
   // Only create the client if we have valid URL and key
-  if (supabaseUrl && supabaseUrl.startsWith('https://') && supabaseUrl.includes('supabase.co') && supabaseKey) {
+  if (supabaseUrl && supabaseKey) {
     supabaseClient = createClient(supabaseUrl, supabaseKey);
     console.log("Supabase client initialized successfully");
   } else {
-    throw new Error("Invalid Supabase credentials");
+    throw new Error("Missing Supabase credentials");
   }
 } catch (error) {
   console.error("Error creating Supabase client:", error);

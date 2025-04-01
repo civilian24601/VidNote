@@ -24,7 +24,10 @@ export function useWebSocket({ videoId, onNewComment, onTypingIndicator }: UseWe
     if (!videoId) return;
     
     const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
-    const wsUrl = `${protocol}//${window.location.host}/ws`;
+    const host = window.location.host;
+    const wsUrl = `${protocol}//${host}/ws`;
+    
+    console.log('Connecting to WebSocket at:', wsUrl);
     
     // Create WebSocket connection
     const socket = new WebSocket(wsUrl);
@@ -101,11 +104,23 @@ export function useWebSocket({ videoId, onNewComment, onTypingIndicator }: UseWe
   
   // Function to send messages
   const sendMessage = useCallback((message: WebSocketMessage) => {
-    if (socketRef.current && socketRef.current.readyState === WebSocket.OPEN) {
-      socketRef.current.send(JSON.stringify(message));
-      return true;
+    if (!socketRef.current) {
+      console.warn('WebSocket not initialized');
+      return false;
     }
-    return false;
+    
+    if (socketRef.current.readyState === WebSocket.OPEN) {
+      try {
+        socketRef.current.send(JSON.stringify(message));
+        return true;
+      } catch (error) {
+        console.error('Error sending WebSocket message:', error);
+        return false;
+      }
+    } else {
+      console.warn('WebSocket not open, current state:', socketRef.current.readyState);
+      return false;
+    }
   }, []);
   
   // Function to send new comment notification
