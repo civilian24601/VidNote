@@ -20,7 +20,7 @@ export default function Shared() {
       
       <main className="flex-grow max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="flex justify-between items-center mb-8">
-          <h1 className="text-3xl font-bold text-white">Shared with me</h1>
+          <h1 className="text-3xl font-bold text-white">Teacher Feedback</h1>
         </div>
 
         {isLoading ? (
@@ -72,7 +72,7 @@ export default function Shared() {
                       {video.createdAt ? formatDate(video.createdAt) : ""}
                     </p>
                     <span className="text-xs bg-primary/20 text-primary px-2 py-0.5 rounded-full">
-                      Shared
+                      Feedback
                     </span>
                   </div>
                 </CardContent>
@@ -84,9 +84,9 @@ export default function Shared() {
             <div className="w-20 h-20 rounded-full bg-primary/20 flex items-center justify-center mx-auto mb-6">
               <i className="ri-share-line text-4xl text-primary"></i>
             </div>
-            <h3 className="text-2xl font-bold text-white mb-3">No shared videos</h3>
+            <h3 className="text-2xl font-bold text-white mb-3">No feedback yet</h3>
             <p className="text-lg text-gray-300 mb-8">
-              Videos shared with you by your teachers will appear here.
+              Videos that have received teacher feedback will appear here.
             </p>
           </div>
         )}
