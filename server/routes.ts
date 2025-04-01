@@ -73,6 +73,25 @@ if (supabaseUrl && !supabaseUrl.startsWith('https://')) {
 
 // Interface for Supabase client
 interface SupabaseClient {
+  auth: {
+    getSession: () => Promise<{
+      data: { 
+        session: { 
+          user?: { 
+            email?: string;
+            user_metadata?: any;
+          } 
+        } | null 
+      };
+      error: any | null;
+    }>;
+    signInWithPassword: (credentials: { email: string; password: string }) => Promise<{
+      data: { 
+        user: any | null;
+      };
+      error: any | null;
+    }>;
+  };
   storage: {
     from: (bucket: string) => {
       upload: (path: string, buffer: Buffer, options: any) => Promise<{
@@ -134,6 +153,16 @@ try {
   // Create mock clients as fallback
   console.warn("Server: Creating mock Supabase clients as fallback");
   const createMockClient = () => ({
+    auth: {
+      getSession: async () => ({
+        data: { session: null },
+        error: null
+      }),
+      signInWithPassword: async (credentials: { email: string; password: string }) => ({
+        data: { user: null },
+        error: { message: "Mock auth not implemented" }
+      })
+    },
     storage: {
       from: (bucket: string) => ({
         upload: async (path: string, buffer: Buffer, options: any) => {
@@ -325,11 +354,95 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       console.log("Looking up user with ID:", parsedUserId);
-      const user = await storage.getUser(parsedUserId);
       
+      // Look up user in storage
+      let user = await storage.getUser(parsedUserId);
+      
+      // If user not found directly, try to recover
       if (!user) {
-        console.log("Auth failed: User not found with ID:", parsedUserId);
-        return res.status(401).json({ message: "User not found" });
+        console.log("User not found with ID:", parsedUserId);
+        
+        // Check for query param with email to try recovery
+        if (req.query.email) {
+          const emailStr = req.query.email as string;
+          console.log("Attempting recovery using email query param:", emailStr);
+          // Check if user exists by email
+          const userByEmail = await storage.getUserByEmail(emailStr);
+          
+          if (userByEmail) {
+            console.log("Found user by email recovery, ID:", userByEmail.id);
+            user = userByEmail;
+          }
+        }
+        
+        // Check request body for email
+        if (!user && req.body && req.body.email) {
+          console.log("Attempting recovery using email from request body:", req.body.email);
+          const userByBodyEmail = await storage.getUserByEmail(req.body.email);
+          
+          if (userByBodyEmail) {
+            console.log("Found user by email (body) recovery, ID:", userByBodyEmail.id);
+            user = userByBodyEmail;
+          }
+        }
+        
+        // Check cookies for email
+        if (!user && req.cookies && req.cookies.userEmail) {
+          console.log("Attempting recovery using email from cookies:", req.cookies.userEmail);
+          const userByCookieEmail = await storage.getUserByEmail(req.cookies.userEmail);
+          
+          if (userByCookieEmail) {
+            console.log("Found user by email (cookie) recovery, ID:", userByCookieEmail.id);
+            user = userByCookieEmail;
+          }
+        }
+        
+        // Still no user - check Supabase
+        if (!user && supabase) {
+          try {
+            // Attempt to get current Supabase session
+            const { data: sessionData } = await supabase.auth.getSession();
+            if (sessionData?.session?.user?.email) {
+              const email = sessionData.session.user.email;
+              console.log("Attempting recovery using Supabase session email:", email);
+              
+              const userBySupabaseEmail = await storage.getUserByEmail(email);
+              if (userBySupabaseEmail) {
+                console.log("Found user by Supabase session email recovery, ID:", userBySupabaseEmail.id);
+                user = userBySupabaseEmail;
+              } else if (sessionData.session?.user) {
+                // Try to create user on-the-fly
+                console.log("Creating new user from Supabase session");
+                try {
+                  const supabaseUser = sessionData.session.user;
+                  const newUser = await storage.createUser({
+                    email: supabaseUser.email || '',
+                    password: Math.random().toString(36).substring(2, 10), // random password
+                    username: (supabaseUser.email || '').split('@')[0],
+                    fullName: supabaseUser.user_metadata?.full_name || (supabaseUser.email || '').split('@')[0],
+                    role: supabaseUser.user_metadata?.role || 'student'
+                  });
+                  
+                  user = newUser;
+                  console.log("Created new user from Supabase session, ID:", newUser.id);
+                } catch (createError) {
+                  console.error("Failed to create user from Supabase session:", createError);
+                }
+              }
+            }
+          } catch (supabaseError) {
+            console.error("Failed to check Supabase session:", supabaseError);
+          }
+        }
+        
+        // If no recovery methods worked
+        if (!user) {
+          console.log("Auth failed: User not found with ID:", parsedUserId);
+          return res.status(401).json({ 
+            message: "User not found", 
+            details: "Your user account might need to be recreated. Please try logging out and back in."
+          });
+        }
       }
       
       console.log("User authenticated successfully:", user.id, user.username);
@@ -387,12 +500,66 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { email, password } = req.body;
       
+      console.log(`Login attempt for email: ${email}`);
+      
       if (!email || !password) {
+        console.log("Login failed: Email and password are required");
         return res.status(400).json({ message: "Email and password are required" });
       }
       
+      // Find user by email
       const user = await storage.getUserByEmail(email);
-      if (!user || user.password !== password) {
+      
+      if (!user) {
+        console.log(`Login failed: No user found with email: ${email}`);
+        
+        // Check if this might be a new Supabase user without a local account
+        // This handles the edge case of a user authenticating with Supabase directly
+        // but not yet having a local account in our storage
+        if (supabase && supabaseUrl && supabaseAnonKey) {
+          try {
+            console.log("Attempting to create new local user based on Supabase credentials");
+            
+            // We'll try to sign in with Supabase to verify credentials
+            const { data: supabaseData, error: supabaseError } = await supabase.auth.signInWithPassword({
+              email,
+              password
+            });
+            
+            if (supabaseError) {
+              console.log("Supabase authentication failed:", supabaseError.message);
+              return res.status(401).json({ message: "Invalid credentials" });
+            }
+            
+            if (supabaseData?.user) {
+              // This is a valid Supabase user, let's create a local account
+              const newUser = await storage.createUser({
+                email,
+                password,
+                username: email.split('@')[0],
+                fullName: supabaseData.user.user_metadata?.full_name || email.split('@')[0],
+                role: supabaseData.user.user_metadata?.role || 'student'
+              });
+              
+              // Update last login timestamp
+              await storage.updateLastLogin(newUser.id);
+              
+              // Return user without password
+              const { password: _, ...userWithoutPassword } = newUser;
+              console.log("Created and logged in new user with internal ID:", newUser.id);
+              return res.json(userWithoutPassword);
+            }
+          } catch (supabaseInnerErr) {
+            console.error("Error creating local user from Supabase:", supabaseInnerErr);
+          }
+        }
+        
+        return res.status(401).json({ message: "Invalid credentials" });
+      }
+      
+      // Verify password
+      if (user.password !== password) {
+        console.log(`Login failed: Invalid password for user: ${email}`);
         return res.status(401).json({ message: "Invalid credentials" });
       }
       
@@ -404,6 +571,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log("User logged in with internal ID:", user.id);
       res.json(userWithoutPassword);
     } catch (err) {
+      console.error("Login error:", err);
       handleError(err, res);
     }
   });

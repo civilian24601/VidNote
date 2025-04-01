@@ -97,15 +97,64 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             
             // Verify this user exists in our server storage
             try {
-              const verifyResponse = await fetch(`/api/users/${parsedUser.id}`);
+              console.log("Attempting to verify stored user with ID:", parsedUser.id);
+              
+              // Add the email parameter to help server recover in case user ID has changed
+              const verifyResponse = await fetch(`/api/users/${parsedUser.id}?email=${encodeURIComponent(parsedUser.email)}`);
               
               if (verifyResponse.ok) {
                 // Server confirms user exists, we can safely use the stored user
-                setUser(parsedUser);
-                console.log("Restored session for user ID:", parsedUser.id);
+                // Get the latest user data from server
+                const userData = await verifyResponse.json();
+                
+                // Update the user data in localStorage with latest from server
+                const updatedUser = {
+                  ...parsedUser,
+                  ...userData
+                };
+                localStorage.setItem("user", JSON.stringify(updatedUser));
+                
+                setUser(updatedUser);
+                console.log("Restored session for user ID:", updatedUser.id);
+              } else if (verifyResponse.status === 404) {
+                // Server doesn't recognize this user ID - try to recover with email
+                console.warn("Stored user not found in server with ID:", parsedUser.id);
+                
+                try {
+                  // Try to look up user by email as a fallback
+                  const lookupResponse = await fetch('/api/users/lookup', {
+                    method: 'POST',
+                    headers: {
+                      'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ email: parsedUser.email }),
+                  });
+                  
+                  if (lookupResponse.ok) {
+                    // Found user by email
+                    const serverUser = await lookupResponse.json();
+                    
+                    // Update stored user with correct ID
+                    const recoveredUser = {
+                      ...parsedUser,
+                      id: serverUser.id, // Use correct server ID
+                    };
+                    
+                    localStorage.setItem("user", JSON.stringify(recoveredUser));
+                    setUser(recoveredUser);
+                    console.log("Recovered user session via email lookup, new ID:", serverUser.id);
+                  } else {
+                    // Couldn't recover - will try Supabase instead
+                    console.warn("Failed to recover user by email:", parsedUser.email);
+                    localStorage.removeItem("user");
+                  }
+                } catch (lookupError) {
+                  console.error("Error looking up user by email:", lookupError);
+                  localStorage.removeItem("user");
+                }
               } else {
-                // Server doesn't recognize this user - will try Supabase instead
-                console.warn("Stored user not found in server:", parsedUser.id);
+                // Other error, not a 404 - will try Supabase instead
+                console.warn("Error verifying stored user:", verifyResponse.status);
                 localStorage.removeItem("user");
               }
             } catch (verifyError) {
