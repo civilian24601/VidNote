@@ -439,13 +439,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
         
         // Upload to Supabase Storage
         const fileExt = path.extname(req.file.originalname);
-        const fileName = `${userId}-${Date.now()}${fileExt}`;
         
-        console.log(`Uploading video to Supabase: ${fileName}`);
+        // Structure the path to match Supabase RLS policies
+        // We need to use the userId as a folder to match the RLS policy
+        // This matches the RLS structure of (storage.foldername(name))[1] = auth.uid()::text
+        const filePath = `${userId}/${Date.now()}${fileExt}`;
+        
+        console.log(`Uploading video to Supabase: ${filePath}`);
         
         const { data, error } = await supabase.storage
           .from("videos")
-          .upload(fileName, req.file.buffer, {
+          .upload(filePath, req.file.buffer, {
             contentType: req.file.mimetype,
           });
         
@@ -471,10 +475,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
           }
         }
         
-        // Get public URL
+        // Get public URL - make sure to use filePath, not fileName
         const { data: urlData } = supabase.storage
           .from("videos")
-          .getPublicUrl(fileName);
+          .getPublicUrl(filePath);
           
         videoUrl = urlData.publicUrl;
         console.log("Supabase storage upload successful");
