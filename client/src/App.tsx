@@ -68,8 +68,10 @@ function Router() {
       <Route path="/shared" component={(props) => <ProtectedRoute component={Shared} {...props} />} />
       <Route path="/profile" component={(props) => <ProtectedRoute component={Profile} {...props} />} />
       
+      {/* Dashboard is accessible by all users */}
+      <Route path="/dashboard" component={(props) => <ProtectedRoute component={Dashboard} {...props} />} />
+      
       {/* Teacher-only routes */}
-      <Route path="/dashboard" component={(props) => <TeacherRoute component={Dashboard} {...props} />} />
       <Route path="/students" component={(props) => <TeacherRoute component={Students} {...props} />} />
       <Route path="/students/:id" component={(props) => <TeacherRoute component={StudentDetail} {...props} />} />
       <Route path="/analytics" component={(props) => <TeacherRoute component={Analytics} {...props} />} />

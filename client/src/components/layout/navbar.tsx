@@ -85,7 +85,7 @@ export function Navbar() {
                       ? "border-primary text-white" 
                       : "border-transparent text-gray-200 hover:text-white hover:border-white/30"
                   }`}>
-                    <i className="ri-feedback-line mr-1.5"></i>Shared with me
+                    <i className="ri-feedback-line mr-1.5"></i>Teacher Feedback
                   </Link>
                   <Link href="/dashboard" className={`inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium ${
                     location === "/dashboard" 

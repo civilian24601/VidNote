@@ -37,7 +37,7 @@ export function MobileNav() {
                 location === "/shared" ? "text-primary" : "text-gray-300"
               }`}>
                 <i className="ri-feedback-line text-xl"></i>
-                <span className="text-xs mt-1">Shared</span>
+                <span className="text-xs mt-1">Feedback</span>
             </Link>
             <Dialog open={uploadDialogOpen} onOpenChange={setUploadDialogOpen}>
               <DialogTrigger asChild>

@@ -48,8 +48,8 @@ export default function Dashboard() {
           )}
         </div>
         
-        {user?.role === "teacher" ? (
-          // Teacher Dashboard
+        {user?.role === "teacher" || user?.role === "admin" ? (
+          // Teacher/Admin Dashboard
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
             <TabsList className="grid w-full max-w-md grid-cols-3 mb-6 bg-gray-900/50">
               <TabsTrigger value="overview">Overview</TabsTrigger>
