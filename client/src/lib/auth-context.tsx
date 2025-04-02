@@ -131,6 +131,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   async function signUp(email: string, password: string, metadata: UserMetadata) {
     setLoading(true);
     try {
+      // First check if the email already exists
+      const { data: existingUser } = await supabase
+        .from('users')
+        .select('email')
+        .eq('email', email)
+        .single();
+      
+      if (existingUser) {
+        throw new Error('This email address is already registered. Please use a different email or try logging in.');
+      }
+        
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
@@ -139,7 +150,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
       });
 
-      if (error) throw error;
+      if (error) {
+        // Handle specific error cases
+        if (error.message.includes('already registered')) {
+          throw new Error('This email address is already registered. Please use a different email or try logging in.');
+        }
+        throw error;
+      }
 
       // After signup, we need to store the user profile in the users table
       if (data.user) {
@@ -159,9 +176,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
         if (profileError) {
           console.error('Error creating user profile:', profileError);
+          
+          // Check for specific profile creation errors
+          if (profileError.code === '23505') { // Postgres unique violation code
+            if (profileError.message.includes('email')) {
+              throw new Error('This email address is already registered. Please use a different email.');
+            } else if (profileError.message.includes('username')) {
+              throw new Error('This username is already taken. Please choose a different username.');
+            }
+          }
+          
           // If profile creation fails, we should log the user out
           await supabase.auth.signOut();
-          throw new Error('Failed to create user profile');
+          throw new Error('Failed to create user profile: ' + profileError.message);
         }
       }
     } catch (error: any) {
