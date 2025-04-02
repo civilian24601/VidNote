@@ -243,17 +243,50 @@ async function ensureStorageBucketsExist() {
 
     console.log("Checking Supabase storage buckets...");
     
-    // List existing buckets
+    // First try to verify buckets individually since listBuckets sometimes has permission issues
+    let bucketsVerified = true;
+    for (const bucket of requiredBuckets) {
+      try {
+        // Check if bucket contents can be listed (which confirms it exists)
+        const { data, error } = await supabase.storage.from(bucket.name).list('');
+        
+        if (error) {
+          if (error.message?.includes('does not exist')) {
+            console.log(`Bucket '${bucket.name}' does not exist`);
+            bucketsVerified = false;
+          } else {
+            console.log(`Could not verify bucket '${bucket.name}': ${error.message}`);
+            // Don't fail verification just because of permission issues
+          }
+        } else {
+          console.log(`✓ Verified bucket '${bucket.name}' exists`);
+        }
+      } catch (bucketError) {
+        console.error(`Error checking bucket '${bucket.name}':`, bucketError);
+        bucketsVerified = false;
+      }
+    }
+    
+    // If all buckets have been individually verified, we can skip the full check
+    if (bucketsVerified) {
+      console.log("All required storage buckets exist and are accessible.");
+      return;
+    }
+    
+    // Otherwise, try the traditional listBuckets approach
     const { data: buckets, error: listError } = await supabase.storage.listBuckets();
     
     if (listError) {
+      // Handle API permission errors by checking individual buckets
       if (listError.message?.includes('permission')) {
-        console.warn("Storage permission issue: Your Supabase user doesn't have permission to list buckets. " +
-          "Please create the 'videos' and 'thumbnails' buckets manually in the Supabase dashboard.");
+        console.warn("Storage permission issue: Your Supabase user doesn't have permission to list buckets.");
+        console.warn("Trying to check buckets individually via the validate-supabase.js script instead.");
+        console.warn("If you haven't created these buckets yet, please run: node scripts/validate-supabase.js");
+        return;
       } else {
         console.error("Failed to list storage buckets:", listError);
+        return;
       }
-      return;
     }
     
     const existingBucketNames = new Set(buckets?.map(b => b.name) || []);
@@ -304,6 +337,7 @@ USING (bucket_id IN ('videos', 'thumbnails')
     }
   } catch (error) {
     console.error("Error while checking storage buckets:", error);
+    console.log("If you're seeing bucket errors, please run: node scripts/validate-supabase.js");
   }
 }
 
