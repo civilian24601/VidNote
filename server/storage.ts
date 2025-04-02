@@ -1,4 +1,5 @@
 import * as crypto from 'crypto';
+import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import {
   users, User, InsertUser,
   videos, Video, InsertVideo,
@@ -8,7 +9,7 @@ import {
   notifications, Notification, InsertNotification,
   guestInvitations, GuestInvitation, InsertGuestInvitation
 } from "@shared/schema";
-
+import { SupabaseStorage } from './lib/supabaseStorage';
 export interface IStorage {
   // User operations
   getUser(id: number): Promise<User | undefined>;
@@ -267,7 +268,7 @@ export class MemStorage implements IStorage {
       if (Array.isArray(insertUser.instruments)) {
         instruments = insertUser.instruments;
       } else if (typeof insertUser.instruments === 'object') {
-        instruments = Array.from(Object.values(insertUser.instruments) as string[]);
+        instruments = [...Object.values(insertUser.instruments)] as string[];
       }
     }
     
@@ -279,6 +280,7 @@ export class MemStorage implements IStorage {
       active: true,
       lastLogin: null,
       instruments,
+      role: insertUser.role || 'student', // Default to student if role is not provided
       experienceLevel: insertUser.experienceLevel || null,
       bio: insertUser.bio || null
     };
@@ -300,7 +302,7 @@ export class MemStorage implements IStorage {
       if (Array.isArray(userData.instruments)) {
         instruments = userData.instruments;
       } else if (typeof userData.instruments === 'object') {
-        instruments = Array.from(Object.values(userData.instruments) as string[]);
+        instruments = [...Object.values(userData.instruments)] as string[];
       }
       
       processedUserData = {
@@ -695,4 +697,62 @@ export class MemStorage implements IStorage {
   }
 }
 
-export const storage = new MemStorage();
+// Helper function to determine if we should use Supabase or MemStorage
+// This checks for presence of required environment variables
+function shouldUseSupabase(): boolean {
+  const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
+  const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  
+  if (!supabaseUrl || !supabaseKey) {
+    console.warn('Missing Supabase credentials, falling back to MemStorage');
+    return false;
+  }
+  
+  return true;
+}
+
+// Helper function to create Supabase clients
+function createSupabaseClients(): { supabase: SupabaseClient, supabaseAdmin: SupabaseClient } | null {
+  try {
+    const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
+    const supabaseAnonKey = process.env.SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY;
+    const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+    
+    if (!supabaseUrl || !supabaseAnonKey || !supabaseServiceKey) {
+      console.warn('Missing Supabase credentials, cannot create clients');
+      return null;
+    }
+    
+    const supabase = createClient(supabaseUrl, supabaseAnonKey);
+    const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey, {
+      auth: {
+        autoRefreshToken: false,
+        persistSession: false
+      }
+    });
+    
+    return { supabase, supabaseAdmin };
+  } catch (error) {
+    console.error('Error creating Supabase clients:', error);
+    return null;
+  }
+}
+
+// Determine which storage implementation to use
+let storage: IStorage;
+
+if (shouldUseSupabase()) {
+  const clients = createSupabaseClients();
+  if (clients) {
+    console.log('Using SupabaseStorage for database operations');
+    storage = new SupabaseStorage(clients.supabase, clients.supabaseAdmin);
+  } else {
+    console.warn('Failed to create Supabase clients, falling back to MemStorage');
+    storage = new MemStorage();
+  }
+} else {
+  console.log('Using MemStorage for database operations');
+  storage = new MemStorage();
+}
+
+export { storage };

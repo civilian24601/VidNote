@@ -24,8 +24,7 @@ import path from "path";
 import fs from "fs";
 
 import { createClient } from '@supabase/supabase-js';
-import logger from './lib/logger';
-import SupabaseStorageHelper from './lib/supabaseStorage';
+import { logger } from './lib/logger';
 
 // Initialize Supabase clients with environment variables
 // Use only the SUPABASE environment variables (not VITE prefixed ones)
@@ -230,7 +229,7 @@ const upload = multer({
 // Helper function to ensure required storage buckets exist
 async function ensureStorageBucketsExist() {
   if (!supabaseUrl || !supabaseAnonKey) {
-    logger.warn("Missing Supabase credentials, skipping bucket setup check", {
+    logger.supabase.warn("Missing Supabase credentials, skipping bucket setup check", {
       context: 'storage-setup',
       data: { missingVars: ['SUPABASE_URL', 'SUPABASE_ANON_KEY'] }
     });
@@ -740,7 +739,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "No video file uploaded" });
       }
       
-      logger.info(`Processing video upload: ${req.file.originalname}, size: ${(req.file.size / (1024 * 1024)).toFixed(2)}MB`, {
+      logger.video.info(`Processing video upload: ${req.file.originalname}, size: ${(req.file.size / (1024 * 1024)).toFixed(2)}MB`, {
         context: 'video-upload',
         data: {
           userId: userId,
@@ -754,7 +753,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Check for required Supabase buckets before uploading
       if (!supabaseUrl || !supabaseAnonKey) {
-        logger.error("Supabase storage not configured for video upload", {
+        logger.supabase.error("Supabase storage not configured for video upload", {
           context: 'video-upload',
           data: { missingVars: ['SUPABASE_URL', 'SUPABASE_ANON_KEY'] }
         });
@@ -781,7 +780,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const timestamp = Date.now();
         const filePath = `public/videos_${timestamp}_user${userId}${fileExt}`;
         
-        logger.info(`Uploading video to Supabase: ${filePath}`, {
+        logger.video.info(`Uploading video to Supabase: ${filePath}`, {
           context: 'video-upload',
           data: { 
             userId, 
@@ -795,7 +794,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
         
         // Log Supabase client status
-        logger.info(`Supabase client status check before upload`, {
+        logger.supabase.info(`Supabase client status check before upload`, {
           context: 'video-upload',
           data: { 
             supabaseAvailable: !!supabase,
@@ -807,7 +806,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
         
         // Use supabaseAdmin to bypass RLS policies
-        logger.info(`Starting Supabase upload operation`, { 
+        logger.supabase.info(`Starting Supabase upload operation`, { 
           context: 'video-upload',
           data: { operationStart: new Date().toISOString() }
         });
@@ -819,7 +818,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           });
         
         if (error) {
-          logger.error("Supabase storage upload error", {
+          logger.supabase.error("Supabase storage upload error", {
             context: 'video-upload',
             data: { 
               error: {
@@ -854,7 +853,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
         
         // Get public URL - make sure to use filePath, not fileName
-        logger.info("Upload successful, now generating public URL", {
+        logger.supabase.info("Upload successful, now generating public URL", {
           context: 'video-upload',
           data: { uploadData: data, path: filePath }
         });
@@ -866,7 +865,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         videoUrl = urlData.publicUrl;
         
         // Verify the URL structure and accessibility
-        logger.info("Public URL generated for video", {
+        logger.supabase.info("Public URL generated for video", {
           context: 'video-upload',
           data: { 
             userId, 
@@ -884,7 +883,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Test URL accessibility with a HEAD request
         try {
           const urlCheckResponse = await fetch(videoUrl, { method: 'HEAD' });
-          logger.info("URL accessibility check result", {
+          logger.supabase.info("URL accessibility check result", {
             context: 'video-upload',
             data: { 
               status: urlCheckResponse.status,
@@ -894,7 +893,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             }
           });
         } catch (urlCheckError) {
-          logger.warn("URL accessibility check failed", {
+          logger.supabase.warn("URL accessibility check failed", {
             context: 'video-upload',
             data: { error: urlCheckError instanceof Error ? urlCheckError.message : 'Unknown error' }
           });
@@ -926,7 +925,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const parsedVideoData = insertVideoSchema.parse(videoData);
       const video = await storage.createVideo(parsedVideoData);
       
-      logger.info(`Video record created with ID: ${video.id} and is ready for playback`, {
+      logger.video.info(`Video record created with ID: ${video.id} and is ready for playback`, {
         context: 'video-upload',
         data: { videoId: video.id, title: video.title, userId }
       });
@@ -936,7 +935,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         message: "Video uploaded successfully to Supabase storage"
       });
     } catch (err) {
-      logger.error("Video upload error", {
+      logger.video.error("Video upload error", {
         context: 'video-upload',
         data: { error: err }
       });
@@ -1476,7 +1475,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const timestamp = Date.now();
       const testFilePath = `public/test-${timestamp}.png`;
       
-      logger.info(`Testing upload to Supabase: ${testFilePath}`, {
+      logger.supabase.info(`Testing upload to Supabase: ${testFilePath}`, {
         context: 'test-upload',
         data: { bucket: bucketName, path: testFilePath }
       });
@@ -1523,18 +1522,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
         if (urlData && urlData.publicUrl) {
           result.publicUrl = urlData.publicUrl;
           
-          logger.info(`Test upload successful: ${result.publicUrl}`, {
+          logger.supabase.info(`Test upload successful: ${result.publicUrl}`, {
             context: 'test-upload',
             data: { bucket: bucketName, path: testFilePath }
           });
         } else {
-          logger.info(`Test upload succeeded but no public URL was returned`, {
+          logger.supabase.info(`Test upload succeeded but no public URL was returned`, {
             context: 'test-upload',
             data: { bucket: bucketName, path: testFilePath }
           });
         }
       } else {
-        logger.error(`Test upload failed: ${adminError.message}`, {
+        logger.supabase.error(`Test upload failed: ${adminError.message}`, {
           context: 'test-upload',
           data: { bucket: bucketName, path: testFilePath }
         });
@@ -1548,7 +1547,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         result
       });
     } catch (err: any) {
-      logger.error(`Test upload error: ${err.message}`, {
+      logger.supabase.error(`Test upload error: ${err.message}`, {
         context: 'test-upload'
       });
       
