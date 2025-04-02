@@ -1,5 +1,3 @@
-#!/usr/bin/env node
-
 /**
  * Environment Variable Check Script
  * 
@@ -8,131 +6,169 @@
  * 
  * Run this script with: node scripts/check-env.js
  */
-
-import fs from 'fs';
+import 'dotenv/config';
 import path from 'path';
-import { fileURLToPath } from 'url';
-import dotenv from 'dotenv';
-import { dirname } from 'path';
+import fs from 'fs';
 
-// Load environment variables from .env file if present
-const envPath = path.resolve(process.cwd(), '.env');
-if (fs.existsSync(envPath)) {
-  console.log('📁 Found .env file, loading variables...');
-  dotenv.config({ path: envPath });
-} else {
-  console.warn('⚠️ No .env file found in project root. Creating template file...');
-  
-  // Create a template .env file
-  const templateContent = `# Supabase Configuration
-# IMPORTANT: Replace these placeholder values with your actual credentials
+// List of environment variables to check and their descriptions
+const serverVars = [
+  { name: 'SUPABASE_URL', desc: 'URL of your Supabase project (required for storage)' },
+  { name: 'SUPABASE_ANON_KEY', desc: 'Public API key for Supabase' },
+  { name: 'SUPABASE_SERVICE_ROLE_KEY', desc: 'Service role key for admin operations (required for storage setup)' },
+  { name: 'SESSION_SECRET', desc: 'Secret for Express sessions' },
+  { name: 'NODE_ENV', desc: 'Environment (development, production, etc.)' },
+];
 
-# Server-side variables (not exposed to the browser)
-SUPABASE_URL=
-SUPABASE_ANON_KEY=
-SUPABASE_SERVICE_ROLE_KEY=
+const clientVars = [
+  { name: 'VITE_SUPABASE_URL', desc: 'URL of your Supabase project (frontend access)' },
+  { name: 'VITE_SUPABASE_ANON_KEY', desc: 'Public API key for Supabase (frontend access)' },
+];
 
-# Client-side variables (accessible in browser)
-# These must be prefixed with VITE_ to be exposed to the client
-VITE_SUPABASE_URL=
-VITE_SUPABASE_ANON_KEY=
-
-# NOTE: For development, the URL and anon key values should be the same in both sections
-# In production, you would never expose the service role key to the client
-`;
-  
-  fs.writeFileSync(envPath, templateContent);
-  console.log('✅ Created template .env file at project root');
-  console.log('   Please edit this file and add your Supabase credentials');
-}
-
-// Required environment variables
-const requiredVars = {
-  server: ['SUPABASE_URL', 'SUPABASE_ANON_KEY', 'SUPABASE_SERVICE_ROLE_KEY'],
-  client: ['VITE_SUPABASE_URL', 'VITE_SUPABASE_ANON_KEY']
+// Colors for terminal output
+const colors = {
+  reset: '\x1b[0m',
+  red: '\x1b[31m',
+  green: '\x1b[32m',
+  yellow: '\x1b[33m',
+  blue: '\x1b[34m',
+  magenta: '\x1b[35m',
+  cyan: '\x1b[36m',
+  white: '\x1b[37m',
 };
 
-// Helper function to check environment variables
+// Function to check environment variables
 function checkEnvVars(type, varList) {
-  console.log(`\n🔍 Checking ${type}-side environment variables:`);
+  console.log(`\n${colors.cyan}Checking ${type} Environment Variables:${colors.reset}`);
+  console.log(`${colors.magenta}==================================${colors.reset}`);
   
-  const missing = [];
-  const present = [];
+  let missingCount = 0;
+  let presentCount = 0;
   
-  varList.forEach(varName => {
-    if (!process.env[varName]) {
-      missing.push(varName);
-      console.log(`  ❌ ${varName}: Missing`);
-    } else {
-      present.push(varName);
-      // For security, don't show actual values
-      const truncatedValue = process.env[varName].length > 10 
-        ? process.env[varName].substring(0, 5) + '...' + process.env[varName].substring(process.env[varName].length - 5) 
-        : '[value too short to display safely]';
+  varList.forEach(({ name, desc }) => {
+    if (process.env[name]) {
+      presentCount++;
+      const valuePreview = process.env[name].startsWith('ey') ? 
+        `${process.env[name].substring(0, 6)}...` : 
+        '<value set>';
       
-      console.log(`  ✅ ${varName}: Present (${truncatedValue})`);
+      console.log(`${colors.green}✓ ${name}${colors.reset}: ${valuePreview}`);
+    } else {
+      missingCount++;
+      console.log(`${colors.red}✕ ${name}${colors.reset}: MISSING - ${desc}`);
     }
   });
   
-  return { missing, present };
+  return { missingCount, presentCount };
 }
 
-// Check server-side variables
-const serverCheck = checkEnvVars('Server', requiredVars.server);
+// Try to read .env file for reference
+const rootDir = path.resolve(__dirname, '..');
+const envPath = path.join(rootDir, '.env');
+let envFileExists = false;
+let envContents = '';
 
-// Check client-side variables
-const clientCheck = checkEnvVars('Client', requiredVars.client);
+try {
+  if (fs.existsSync(envPath)) {
+    envFileExists = true;
+    envContents = fs.readFileSync(envPath, 'utf8');
+  }
+} catch (err) {
+  console.error('Error reading .env file:', err);
+}
 
-// Verify if server variables match client variables where they should
-if (serverCheck.present.includes('SUPABASE_URL') && clientCheck.present.includes('VITE_SUPABASE_URL')) {
-  if (process.env.SUPABASE_URL !== process.env.VITE_SUPABASE_URL) {
-    console.log('\n⚠️ Warning: SUPABASE_URL and VITE_SUPABASE_URL have different values!');
-    console.log('   For this application, they should be identical.');
+// Main function
+function main() {
+  console.log(`
+${colors.blue}========================================================
+  ENVIRONMENT VARIABLE CHECKER
+========================================================${colors.reset}
+`);
+  
+  const serverVarResults = checkEnvVars('Server', serverVars);
+  const clientVarResults = checkEnvVars('Client', clientVars);
+  
+  // Check for server-client variable sync
+  console.log(`\n${colors.cyan}Checking Client-Server Variable Consistency:${colors.reset}`);
+  console.log(`${colors.magenta}==================================${colors.reset}`);
+  
+  const checkPairs = [
+    { server: 'SUPABASE_URL', client: 'VITE_SUPABASE_URL' },
+    { server: 'SUPABASE_ANON_KEY', client: 'VITE_SUPABASE_ANON_KEY' },
+  ];
+  
+  let pairMismatches = 0;
+  
+  checkPairs.forEach(pair => {
+    const serverValue = process.env[pair.server];
+    const clientValue = process.env[pair.client];
+    
+    if (serverValue && clientValue) {
+      if (serverValue === clientValue) {
+        console.log(`${colors.green}✓ ${pair.server} matches ${pair.client}${colors.reset}`);
+      } else {
+        pairMismatches++;
+        console.log(`${colors.red}✕ MISMATCH: ${pair.server} !== ${pair.client}${colors.reset}`);
+      }
+    } else if (serverValue) {
+      console.log(`${colors.yellow}⚠ ${pair.server} is set but ${pair.client} is missing${colors.reset}`);
+    } else if (clientValue) {
+      console.log(`${colors.yellow}⚠ ${pair.client} is set but ${pair.server} is missing${colors.reset}`);
+    } else {
+      console.log(`${colors.yellow}⚠ Both ${pair.server} and ${pair.client} are missing${colors.reset}`);
+    }
+  });
+  
+  // Summary and recommendations
+  console.log(`\n${colors.blue}========================================================
+  SUMMARY
+========================================================${colors.reset}`);
+  
+  const totalMissing = serverVarResults.missingCount + clientVarResults.missingCount;
+  const totalPresent = serverVarResults.presentCount + clientVarResults.presentCount;
+  const totalVars = serverVars.length + clientVars.length;
+  
+  console.log(`${colors.cyan}Total variables checked:${colors.reset} ${totalVars}`);
+  console.log(`${colors.green}Present:${colors.reset} ${totalPresent}`);
+  console.log(`${colors.red}Missing:${colors.reset} ${totalMissing}`);
+  
+  if (pairMismatches > 0) {
+    console.log(`${colors.red}Client-Server Mismatches:${colors.reset} ${pairMismatches}`);
+  }
+  
+  // Recommendations
+  if (totalMissing > 0 || pairMismatches > 0) {
+    console.log(`\n${colors.yellow}RECOMMENDATIONS:${colors.reset}`);
+    
+    if (!envFileExists) {
+      console.log(`${colors.yellow}1. Create a .env file in the root directory with the missing variables.${colors.reset}`);
+    } else {
+      console.log(`${colors.yellow}1. Update your .env file with the missing variables.${colors.reset}`);
+    }
+    
+    if (pairMismatches > 0) {
+      console.log(`${colors.yellow}2. Make sure client and server Supabase variables have matching values.${colors.reset}`);
+    }
+    
+    console.log(`${colors.yellow}3. Remember to restart your application after updating environment variables.${colors.reset}`);
+    
+    // Provide .env template
+    if (totalMissing > 0) {
+      const missingServerVars = serverVars.filter(v => !process.env[v.name]);
+      const missingClientVars = clientVars.filter(v => !process.env[v.name]);
+      
+      if (missingServerVars.length > 0 || missingClientVars.length > 0) {
+        console.log(`\n${colors.magenta}Template for missing variables:${colors.reset}`);
+        console.log(`${colors.cyan}# Add these to your .env file:${colors.reset}`);
+        
+        [...missingServerVars, ...missingClientVars].forEach(v => {
+          console.log(`${v.name}=YOUR_${v.name}_HERE  # ${v.desc}`);
+        });
+      }
+    }
+  } else {
+    console.log(`\n${colors.green}All environment variables are properly set! 🎉${colors.reset}`);
   }
 }
 
-if (serverCheck.present.includes('SUPABASE_ANON_KEY') && clientCheck.present.includes('VITE_SUPABASE_ANON_KEY')) {
-  if (process.env.SUPABASE_ANON_KEY !== process.env.VITE_SUPABASE_ANON_KEY) {
-    console.log('\n⚠️ Warning: SUPABASE_ANON_KEY and VITE_SUPABASE_ANON_KEY have different values!');
-    console.log('   For this application, they should be identical.');
-  }
-}
-
-// Check URL format
-if (process.env.SUPABASE_URL) {
-  const url = process.env.SUPABASE_URL;
-  const isValidFormat = url.startsWith('https://') && url.includes('.supabase.co');
-  
-  if (!isValidFormat) {
-    console.log('\n⚠️ Warning: SUPABASE_URL format may be incorrect');
-    console.log('   Expected format: https://your-project-id.supabase.co');
-    console.log(`   Current value: ${url}`);
-  }
-}
-
-// Summary and remediation steps
-if (serverCheck.missing.length > 0 || clientCheck.missing.length > 0) {
-  console.log('\n❌ Some required environment variables are missing!');
-  console.log('\n📋 Remediation Steps:');
-  console.log('  1. Edit your .env file at the project root');
-  console.log('  2. Add values for the missing variables');
-  console.log('  3. Restart your application');
-  console.log('\n💡 Where to find these values:');
-  console.log('  • Log in to your Supabase dashboard at https://app.supabase.com');
-  console.log('  • Select your project');
-  console.log('  • Go to Project Settings > API');
-  console.log('  • Copy the "URL", "anon public" and "service_role" keys');
-  
-  process.exit(1);
-} else {
-  console.log('\n✅ All required environment variables are present!');
-  
-  // Supabase Storage Bucket Check
-  console.log('\n📦 Supabase Storage Buckets:');
-  console.log('  Make sure you have created the following storage buckets in your Supabase project:');
-  console.log('  • videos');
-  console.log('  • thumbnails');
-  console.log('\n  You can set these up in the Supabase dashboard under Storage.');
-  
-  process.exit(0);
-}
+// Run the main function
+main();

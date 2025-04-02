@@ -1,0 +1,93 @@
+> rest-express@1.0.0 dev
+> tsx server/index.ts
+
+2025-04-02T01:47:25.070Z info [supabase]: Supabase URL check: https://xr...xryyraxjizhssyrifksx.supabase.co
+2025-04-02T01:47:25.070Z info [supabase]: Supabase config check
+{
+  "urlExists": true,
+  "urlLength": 40,
+  "urlStartsWithHttps": true,
+  "urlEndsWithSupabaseCo": true,
+  "urlContainsValidDomain": true,
+  "anonKeyExists": true,
+  "serviceKeyExists": true
+}
+2025-04-02T01:47:25.086Z info [supabase]: Supabase client initialized successfully
+2025-04-02T01:47:25.087Z info [supabase]: Supabase admin client initialized successfully
+Checking Supabase storage buckets...
+✓ Verified bucket 'videos' exists
+✓ Verified bucket 'thumbnails' exists
+All required storage buckets exist and are accessible.
+1:47:26 AM [express] serving on port 5000
+Browserslist: browsers data (caniuse-lite) is 6 months old. Please run:
+  npx update-browserslist-db@latest
+  Why you should do it regularly: https://github.com/browserslist/update-db#readme
+1:48:24 AM [express] GET /api/users/3 404 in 3ms :: {"message":"User not found"}
+1:48:24 AM [express] POST /api/users/lookup 404 in 1ms :: {"message":"User not found"}
+Login attempt for email: alex.richard.hayes@gmail.com
+Login failed: No user found with email: alex.richard.hayes@gmail.com
+Attempting to create new local user based on Supabase credentials
+Created and logged in new user with internal ID: 3
+1:55:33 AM [express] POST /api/users/login 200 in 483ms :: {"email":"alex.richard.hayes@gmail.com","…
+Authentication headers: 3
+Looking up user with ID: 3
+User authenticated successfully: 3 alex.richard.hayes
+1:55:33 AM [express] GET /api/videos 304 in 2ms :: []
+Authentication headers: 3
+Looking up user with ID: 3
+User authenticated successfully: 3 alex.richard.hayes
+2025-04-02T01:56:16.707Z info [video-upload]: Processing video upload: Giant Steps (NYO Jazz Audition).mp4, size: 21.43MB
+{
+  "userId": 3,
+  "filename": "Giant Steps (NYO Jazz Audition).mp4",
+  "fileSize": 22473830,
+  "mimetype": "video/mp4"
+}
+2025-04-02T01:56:16.707Z info [video-upload]: Uploading video to Supabase: 3/1743558976707.mp4
+{
+  "userId": 3,
+  "bucket": "videos",
+  "path": "3/1743558976707.mp4"
+}
+2025-04-02T01:56:22.836Z info [video-upload]: Supabase storage upload successful
+{
+  "userId": 3,
+  "bucket": "videos",
+  "path": "3/1743558976707.mp4",
+  "publicUrl": "https://xryyraxjizhssyrifksx.supabase.co/storage/v1/object/public/videos/3/1743558976707.mp4"
+}
+2025-04-02T01:56:22.838Z info [video-upload]: Video record created with ID: 3 and is ready for playback
+{
+  "videoId": 3,
+  "title": "NYO Jazz Audition",
+  "userId": 3
+}
+1:56:22 AM [express] POST /api/videos 201 in 10888ms :: {"title":"NYO Jazz Audition","description":"…
+Authentication headers: 3
+Looking up user with ID: 3
+User authenticated successfully: 3 alex.richard.hayes
+1:56:22 AM [express] GET /api/videos 200 in 1ms :: [{"title":"NYO Jazz Audition","description":"gian…
+Authentication headers: 3
+Looking up user with ID: 3
+User authenticated successfully: 3 alex.richard.hayes
+1:56:23 AM [express] GET /api/videos 304 in 1ms :: [{"title":"NYO Jazz Audition","description":"gian…
+Authentication headers: 3
+Looking up user with ID: 3
+User authenticated successfully: 3 alex.richard.hayes
+1:56:35 AM [express] GET /api/videos/3 200 in 2ms :: {"title":"NYO Jazz Audition","description":"gia…
+Authentication headers: 3
+Looking up user with ID: 3
+User authenticated successfully: 3 alex.richard.hayes
+1:56:35 AM [express] GET /api/videos/3/comments 304 in 2ms :: []
+Authentication headers: 3
+Looking up user with ID: 3
+User authenticated successfully: 3 alex.richard.hayes
+1:56:35 AM [express] GET /api/videos/3/sharing 304 in 1ms :: []
+Authentication headers: undefined
+Auth failed: No userId provided in authorization header
+1:56:35 AM [express] GET /api/videos/3/comments 401 in 1ms :: {"message":"Unauthorized - No user ID …
+Authentication headers: 3
+Looking up user with ID: 3
+User authenticated successfully: 3 alex.richard.hayes
+1:56:56 AM [express] GET /api/videos/shared 304 in 1ms :: []
+^C

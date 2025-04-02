@@ -764,10 +764,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Upload to Supabase Storage
         const fileExt = path.extname(req.file.originalname);
         
-        // Structure the path to match Supabase RLS policies
-        // We need to use the userId as a folder to match the RLS policy
-        // This matches the RLS structure of (storage.foldername(name))[1] = auth.uid()::text
-        const filePath = `${userId}/${Date.now()}${fileExt}`;
+        // Use a simpler file structure that doesn't rely on Supabase auth UUID format
+        // Since we're having permission issues with numeric user IDs vs Supabase UUIDs
+        // We'll use a flat structure with a unique timestamp-based name
+        const filePath = `public/videos_${Date.now()}_user${userId}${fileExt}`;
         
         logger.info(`Uploading video to Supabase: ${filePath}`, {
           context: 'video-upload',
