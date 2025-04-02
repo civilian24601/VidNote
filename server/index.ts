@@ -41,13 +41,27 @@ app.use((req, res, next) => {
 const logger = createCustomLogger();
 
 (async () => {
-  // Run Supabase diagnostics at startup
+  // Test local PostgreSQL database connection
+  const { testDatabaseConnection } = await import('./lib/drizzleDb');
+  
+  logger.general.info('Testing PostgreSQL database connection...');
+  const databaseConnected = await testDatabaseConnection();
+  
+  if (databaseConnected) {
+    logger.general.info('✅ PostgreSQL database connection successful!');
+  } else {
+    logger.general.error('❌ PostgreSQL database connection failed. The application may not work correctly.');
+    process.exit(1);
+  }
+  
+  // For backward compatibility, still run Supabase diagnostics 
   logger.general.info('Running Supabase diagnostics before starting server...');
   const diagnosticsResult = await runSupabaseDiagnostics();
   if (diagnosticsResult) {
     logger.general.info('✅ Supabase diagnostics passed successfully!');
   } else {
-    logger.general.warn('⚠️ Supabase diagnostics failed. Some features may not work correctly.');
+    logger.general.warn('⚠️ Supabase diagnostics failed. Some Supabase features may not work correctly.');
+    logger.general.info('The application will continue using the local PostgreSQL database.');
   }
   
   const server = await registerRoutes(app);

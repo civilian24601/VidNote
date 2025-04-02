@@ -15,6 +15,10 @@ import { IStorage } from '../storage';
 import { createCustomLogger } from './logger';
 const logger = createCustomLogger();
 
+// Debug imports
+console.log('Debug users import:', users);
+console.log('Debug videos import:', videos);
+
 export class SupabaseStorage implements IStorage {
   private supabase: SupabaseClient;
   private supabaseAdmin: SupabaseClient;
@@ -58,8 +62,10 @@ export class SupabaseStorage implements IStorage {
   async getUserByUsername(username: string): Promise<User | undefined> {
     try {
       logger.supabase.debug(`Getting user with username: ${username}`);
+      // Use the table name directly without quotes
+      const tableName = 'users';
       const { data, error } = await this.supabase
-        .from(users._.name)
+        .from(tableName)
         .select('*')
         .eq('username', username)
         .single();
@@ -84,8 +90,10 @@ export class SupabaseStorage implements IStorage {
   async getUserByEmail(email: string): Promise<User | undefined> {
     try {
       logger.supabase.debug(`Getting user with email: ${email}`);
+      // Use the table name directly without quotes
+      const tableName = 'users';
       const { data, error } = await this.supabase
-        .from(users._.name)
+        .from(tableName)
         .select('*')
         .eq('email', email)
         .single();
@@ -110,8 +118,10 @@ export class SupabaseStorage implements IStorage {
   async createUser(user: InsertUser): Promise<User> {
     try {
       logger.supabase.debug(`Creating new user with email: ${user.email}`);
+      // Use the table name directly without quotes
+      const tableName = 'users';
       const { data, error } = await this.supabase
-        .from(users._.name)
+        .from(tableName)
         .insert(user)
         .select()
         .single();

@@ -10,6 +10,8 @@ import {
   guestInvitations, GuestInvitation, InsertGuestInvitation
 } from "@shared/schema";
 import { SupabaseStorage } from './lib/supabaseStorage';
+// Import DrizzleStorage implementation
+import DrizzleStorage from './lib/drizzleStorage';
 export interface IStorage {
   // User operations
   getUser(id: number): Promise<User | undefined>;
@@ -738,10 +740,18 @@ function createSupabaseClients(): { supabase: SupabaseClient, supabaseAdmin: Sup
   }
 }
 
+
+
 // Determine which storage implementation to use
 let storage: IStorage;
 
-if (shouldUseSupabase()) {
+// Check if we should use DrizzleStorage with PostgreSQL
+const shouldUsePostgres = process.env.DATABASE_URL !== undefined;
+
+if (shouldUsePostgres) {
+  console.log('Using DrizzleStorage with PostgreSQL for database operations');
+  storage = new DrizzleStorage();
+} else if (shouldUseSupabase()) {
   const clients = createSupabaseClients();
   if (clients) {
     console.log('Using SupabaseStorage for database operations');

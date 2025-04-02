@@ -15,6 +15,7 @@ export interface CustomLogger {
   auth: Logger;
   video: Logger;
   general: Logger;
+  drizzle: Logger;
 }
 
 /**
@@ -69,7 +70,8 @@ export function createCustomLogger(): CustomLogger {
     supabase: createLogger('supabase'),
     auth: createLogger('auth'),
     video: createLogger('video'),
-    general: createLogger('general')
+    general: createLogger('general'),
+    drizzle: createLogger('drizzle')
   };
 }
 
