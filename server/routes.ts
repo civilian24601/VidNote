@@ -527,6 +527,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
             }
             
             if (supabaseData?.user) {
+              // Check if there's another existing account with this email
+              // This can happen if the user has multiple Supabase identities
+              const existingUser = await storage.getUserByEmail(email);
+              
+              if (existingUser) {
+                // User exists but wasn't found in the first lookup for some reason
+                // Update last login timestamp
+                await storage.updateLastLogin(existingUser.id);
+                
+                // Return user without password
+                const { password: _, ...userWithoutPassword } = existingUser;
+                console.log("Found existing user by secondary email lookup, ID:", existingUser.id);
+                
+                // Set a cookie to help with session recovery
+                res.cookie('userEmail', email, { 
+                  httpOnly: true, 
+                  maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
+                  sameSite: 'strict'
+                });
+                
+                return res.json(userWithoutPassword);
+              }
+            
               // This is a valid Supabase user, let's create a local account
               const newUser = await storage.createUser({
                 email,
@@ -538,6 +561,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
               
               // Update last login timestamp
               await storage.updateLastLogin(newUser.id);
+              
+              // Set a cookie to help with session recovery
+              res.cookie('userEmail', email, { 
+                httpOnly: true, 
+                maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
+                sameSite: 'strict'
+              });
               
               // Return user without password
               const { password: _, ...userWithoutPassword } = newUser;

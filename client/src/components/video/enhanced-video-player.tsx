@@ -54,49 +54,97 @@ export default function EnhancedVideoPlayer({
   const [duration, setDuration] = useState(0);
   const [isReady, setIsReady] = useState(false);
   const [markers, setMarkers] = useState<VideoMarker[]>([]);
+  const [videoError, setVideoError] = useState<string | null>(null);
+  const [loadAttempts, setLoadAttempts] = useState(0);
   
   // Initialize Plyr
   useEffect(() => {
-    if (!videoRef.current) return;
+    if (!videoRef.current || !videoUrl) return;
+    
+    // Reset error state when video URL changes
+    setVideoError(null);
     
     if (playerRef.current) {
       playerRef.current.destroy();
     }
     
-    const player = new Plyr(videoRef.current, {
-      controls: [
-        'play-large', 'play', 'progress', 'current-time', 
-        'mute', 'volume', 'settings', 'fullscreen'
-      ],
-      autoplay: false,
-      muted: false,
-      seekTime: 5,
-      keyboard: { focused: true, global: false },
-    });
+    // Log video URL for debugging
+    console.log(`Setting up video player with URL: ${videoUrl}`);
     
-    player.on('ready', () => {
-      setIsReady(true);
-      setDuration(player.duration || 0);
-    });
-    
-    player.on('timeupdate', () => {
-      setCurrentTime(player.currentTime || 0);
-      if (onTimeUpdate) {
-        onTimeUpdate(player.currentTime || 0);
+    // Check if video URL is valid before initializing player
+    fetch(videoUrl, { method: 'HEAD' })
+      .then(response => {
+        if (!response.ok) {
+          console.error(`Video URL check failed with status: ${response.status}`);
+          setVideoError(`Video file not accessible (HTTP ${response.status})`);
+          return;
+        }
+        
+        // URL is valid, initialize player
+        initializePlayer();
+      })
+      .catch(error => {
+        console.error(`Error checking video URL: ${error.message}`);
+        setVideoError(`Error accessing video: ${error.message}`);
+      });
+      
+    function initializePlayer() {
+      try {
+        const player = new Plyr(videoRef.current!, {
+          controls: [
+            'play-large', 'play', 'progress', 'current-time', 
+            'mute', 'volume', 'settings', 'fullscreen'
+          ],
+          autoplay: false,
+          muted: false,
+          seekTime: 5,
+          keyboard: { focused: true, global: false },
+          debug: true
+        });
+        
+        player.on('ready', () => {
+          console.log('Plyr is ready, duration:', player.duration);
+          setIsReady(true);
+          setDuration(player.duration || 0);
+        });
+        
+        player.on('loadedmetadata', () => {
+          console.log('Video metadata loaded, duration:', player.duration);
+          setDuration(player.duration || 0);
+        });
+        
+        player.on('timeupdate', () => {
+          setCurrentTime(player.currentTime || 0);
+          if (onTimeUpdate) {
+            onTimeUpdate(player.currentTime || 0);
+          }
+        });
+        
+        // Listen for duration changes 
+        player.on('loadedmetadata', () => {
+          console.log('Duration updated on metadata load:', player.duration);
+          setDuration(player.duration || 0);
+        });
+        
+        player.on('error', (event) => {
+          console.error('Plyr error event:', event);
+          setVideoError('Error loading video. Please try again later.');
+        });
+        
+        playerRef.current = player;
+      } catch (error) {
+        console.error('Error initializing Plyr:', error);
+        setVideoError(`Player initialization error: ${error instanceof Error ? error.message : 'Unknown error'}`);
       }
-    });
-    
-    player.on('durationchange', () => {
-      setDuration(player.duration || 0);
-    });
-    
-    playerRef.current = player;
+    }
     
     return () => {
-      player.destroy();
-      playerRef.current = null;
+      if (playerRef.current) {
+        playerRef.current.destroy();
+        playerRef.current = null;
+      }
     };
-  }, [onTimeUpdate, videoUrl]);
+  }, [onTimeUpdate, videoUrl, loadAttempts]);
   
   // Create markers from comments with timestamps
   useEffect(() => {
@@ -150,6 +198,50 @@ export default function EnhancedVideoPlayer({
     return undefined;
   };
   
+  // Handle retry for video loading
+  const handleRetry = () => {
+    setLoadAttempts(prev => prev + 1);
+  };
+
+  if (videoError) {
+    return (
+      <div className="relative glassmorphism border border-gray-700 rounded-md overflow-hidden">
+        <div className="h-[400px] flex items-center justify-center bg-gray-900">
+          <div className="text-center p-6">
+            <div className="mx-auto mb-6 w-16 h-16 rounded-full bg-red-500/20 flex items-center justify-center">
+              <i className="ri-error-warning-line text-3xl text-red-300"></i>
+            </div>
+            <h3 className="text-xl font-semibold text-white mb-3">Video Error</h3>
+            <p className="text-gray-300 max-w-md mb-6">
+              {videoError}
+            </p>
+            <div className="flex space-x-4 justify-center">
+              <button 
+                className="px-4 py-2 bg-primary hover:bg-primary/80 text-white rounded-md"
+                onClick={handleRetry}
+              >
+                <i className="ri-refresh-line mr-1.5"></i>
+                Retry
+              </button>
+              <a 
+                href={videoUrl} 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-md"
+              >
+                <i className="ri-external-link-line mr-1.5"></i>
+                Open Directly
+              </a>
+            </div>
+            <p className="text-gray-400 text-sm mt-4">
+              Debug info: URL: {videoUrl.substring(0, 50)}...
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="relative glassmorphism border border-gray-700 rounded-md overflow-hidden">
       <div ref={containerRef} className="relative group">
@@ -158,8 +250,11 @@ export default function EnhancedVideoPlayer({
           className="plyr-video" 
           poster={getPosterUrl()}
           preload="metadata"
+          onError={() => setVideoError("Video cannot be played. The file might be corrupted or in an unsupported format.")}
         >
           <source src={videoUrl} type="video/mp4" />
+          <source src={videoUrl} type="video/webm" />
+          <source src={videoUrl} type="video/ogg" />
           Your browser does not support HTML5 video.
         </video>
         
