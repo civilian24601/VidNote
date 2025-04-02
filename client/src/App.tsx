@@ -9,7 +9,7 @@ import Watch from "./pages/watch";
 import Shared from "./pages/shared";
 import Login from "./pages/login";
 import Register from "./pages/register";
-import { AuthProvider, useAuth } from "./lib/auth";
+import { AuthProvider, useAuth } from "./lib/auth-context";
 import Dashboard from "./pages/dashboard";
 import Profile from "./pages/profile";
 import Students from "./pages/students";

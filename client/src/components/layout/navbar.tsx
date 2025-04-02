@@ -1,5 +1,5 @@
 import { Link, useLocation } from "wouter";
-import { useAuth } from "@/lib/auth";
+import { useAuth } from "@/lib/auth-context";
 import { getInitials } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import {

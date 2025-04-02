@@ -4,7 +4,7 @@ import { LoginForm } from "@/components/auth/login-form";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { motion } from "framer-motion";
 import { Music } from "lucide-react";
-import { useAuth } from "@/lib/auth";
+import { useAuth } from "@/lib/auth-context";
 import { useEffect } from "react";
 
 export default function Login() {

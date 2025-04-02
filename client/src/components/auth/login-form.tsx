@@ -3,7 +3,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useLocation } from "wouter";
-import { useAuth } from "@/lib/auth";
+import { useAuth } from "@/lib/auth-context";
 import { Button } from "@/components/ui/button";
 import {
   Form,
@@ -25,7 +25,7 @@ type LoginValues = z.infer<typeof loginSchema>;
 
 export function LoginForm() {
   const [_, navigate] = useLocation();
-  const { login } = useAuth();
+  const { signIn, user } = useAuth();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
 
@@ -40,7 +40,7 @@ export function LoginForm() {
   const onSubmit = async (values: LoginValues) => {
     setIsLoading(true);
     try {
-      const user = await login(values.email, values.password);
+      await signIn(values.email, values.password);
       toast({
         title: "Login successful",
         description: "You have been successfully logged in.",
@@ -48,8 +48,7 @@ export function LoginForm() {
       
       // Redirect based on user role with a small delay to ensure state updates
       setTimeout(() => {
-        console.log("Redirecting user with role:", user.role);
-        if (user.role === 'teacher') {
+        if (user?.role === 'teacher') {
           navigate("/dashboard");
         } else {
           navigate("/videos");

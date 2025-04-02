@@ -1,4 +1,4 @@
-import { useAuth } from "@/lib/auth";
+import { useAuth } from "@/lib/auth-context";
 import { useLocation } from "wouter";
 import { useEffect } from "react";
 import { Navbar } from "@/components/layout/navbar";

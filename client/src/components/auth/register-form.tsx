@@ -3,7 +3,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useLocation } from "wouter";
-import { useAuth } from "@/lib/auth";
+import { useAuth } from "@/lib/auth-context";
 import { Button } from "@/components/ui/button";
 import {
   Form,
@@ -37,7 +37,7 @@ type RegisterValues = z.infer<typeof registerSchema>;
 
 export function RegisterForm() {
   const [_, navigate] = useLocation();
-  const { register } = useAuth();
+  const { signUp } = useAuth();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
 
@@ -55,12 +55,24 @@ export function RegisterForm() {
   const onSubmit = async (values: RegisterValues) => {
     setIsLoading(true);
     try {
-      await register(values);
+      // Map form values to metadata format expected by Supabase
+      const metadata = {
+        username: values.username,
+        full_name: values.fullName,
+        role: values.role,
+        instruments: [],
+        experience_level: "Beginner"
+      };
+      
+      await signUp(values.email, values.password, metadata);
+      
       toast({
         title: "Registration successful",
         description: "Your account has been created successfully.",
       });
-      navigate("/videos");
+      
+      // For new registrations, send them to complete their profile
+      navigate("/profile");
     } catch (error) {
       toast({
         title: "Registration failed",
