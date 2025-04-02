@@ -31,8 +31,9 @@ export class SupabaseStorage implements IStorage {
   async getUser(id: number): Promise<User | undefined> {
     try {
       logger.supabase.debug(`Getting user with ID: ${id}`);
+      // Use Drizzle schema to ensure correct table names
       const { data, error } = await this.supabase
-        .from('users')
+        .from(users._.name) // 'users'
         .select('*')
         .eq('id', id)
         .single();
@@ -58,7 +59,7 @@ export class SupabaseStorage implements IStorage {
     try {
       logger.supabase.debug(`Getting user with username: ${username}`);
       const { data, error } = await this.supabase
-        .from('users')
+        .from(users._.name)
         .select('*')
         .eq('username', username)
         .single();
@@ -84,7 +85,7 @@ export class SupabaseStorage implements IStorage {
     try {
       logger.supabase.debug(`Getting user with email: ${email}`);
       const { data, error } = await this.supabase
-        .from('users')
+        .from(users._.name)
         .select('*')
         .eq('email', email)
         .single();
@@ -110,7 +111,7 @@ export class SupabaseStorage implements IStorage {
     try {
       logger.supabase.debug(`Creating new user with email: ${user.email}`);
       const { data, error } = await this.supabase
-        .from('users')
+        .from(users._.name)
         .insert(user)
         .select()
         .single();
@@ -137,7 +138,7 @@ export class SupabaseStorage implements IStorage {
     try {
       logger.supabase.debug(`Updating user with ID: ${id}`);
       const { data, error } = await this.supabase
-        .from('users')
+        .from(users._.name)
         .update(userData)
         .eq('id', id)
         .select()
@@ -165,7 +166,7 @@ export class SupabaseStorage implements IStorage {
     try {
       logger.supabase.debug(`Verifying user with ID: ${id}`);
       const { error } = await this.supabase
-        .from('users')
+        .from(users._.name)
         .update({ verified: true })
         .eq('id', id);
 
@@ -186,7 +187,7 @@ export class SupabaseStorage implements IStorage {
     try {
       logger.supabase.debug(`Updating last login for user with ID: ${id}`);
       const { error } = await this.supabase
-        .from('users')
+        .from(users._.name)
         .update({ lastLogin: new Date() })
         .eq('id', id);
 
@@ -210,7 +211,7 @@ export class SupabaseStorage implements IStorage {
     try {
       logger.supabase.debug(`Getting video with ID: ${id}`);
       const { data, error } = await this.supabase
-        .from('videos')
+        .from(videos._.name)
         .select('*')
         .eq('id', id)
         .single();
@@ -236,7 +237,7 @@ export class SupabaseStorage implements IStorage {
     try {
       logger.supabase.debug(`Getting videos for user with ID: ${userId}`);
       const { data, error } = await this.supabase
-        .from('videos')
+        .from(videos._.name)
         .select('*')
         .eq('userId', userId)
         .order('createdAt', { ascending: false });
