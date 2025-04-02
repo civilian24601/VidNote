@@ -24,6 +24,8 @@ import path from "path";
 import fs from "fs";
 
 import { createClient } from '@supabase/supabase-js';
+import logger from './lib/logger';
+import SupabaseStorageHelper from './lib/supabaseStorage';
 
 // Initialize Supabase clients with environment variables
 // Use only the SUPABASE environment variables (not VITE prefixed ones)
@@ -50,20 +52,21 @@ const safeUrlLogging = (url: string): string => {
   }
 };
 
-console.log('Server: Supabase URL check:', safeUrlLogging(supabaseUrl));
-console.log('Server: Supabase URL format check:', {
-  exists: !!supabaseUrl,
-  length: supabaseUrl?.length || 0,
-  startsWithHttps: supabaseUrl?.startsWith('https://') || false,
-  endsWithSupabaseIo: supabaseUrl?.includes('.supabase.co') || false,
-  containsValidDomain: !!(supabaseUrl?.includes('.') || false)
+logger.supabase.info(`Supabase URL check: ${safeUrlLogging(supabaseUrl)}`);
+logger.supabase.info('Supabase config check', {
+  urlExists: !!supabaseUrl,
+  urlLength: supabaseUrl?.length || 0,
+  urlStartsWithHttps: supabaseUrl?.startsWith('https://') || false,
+  urlEndsWithSupabaseCo: supabaseUrl?.includes('.supabase.co') || false,
+  urlContainsValidDomain: !!(supabaseUrl?.includes('.') || false),
+  anonKeyExists: !!supabaseAnonKey,
+  serviceKeyExists: !!supabaseServiceKey
 });
-console.log('Server: Supabase Anon Key:', supabaseAnonKey ? 'Exists (value hidden)' : 'Missing');
-console.log('Server: Supabase Service Key:', supabaseServiceKey ? 'Exists (value hidden)' : 'Missing');
 
 // Ensure URL has https:// prefix
 if (supabaseUrl && !supabaseUrl.startsWith('https://')) {
   supabaseUrl = `https://${supabaseUrl}`;
+  logger.supabase.info('Added https:// prefix to Supabase URL');
 }
 
 // Interface for Supabase client
@@ -124,7 +127,7 @@ try {
   // Create regular client with anon key
   if (supabaseUrl && supabaseAnonKey) {
     supabase = createClient(supabaseUrl, supabaseAnonKey);
-    console.log("Server: Supabase client initialized successfully");
+    logger.supabase.info("Supabase client initialized successfully");
   } else {
     throw new Error("Missing Supabase URL or anon key");
   }
@@ -137,16 +140,16 @@ try {
         persistSession: false
       }
     });
-    console.log("Server: Supabase admin client initialized successfully");
+    logger.supabase.info("Supabase admin client initialized successfully");
   } else {
-    console.warn("Server: Missing Supabase service key, admin client will be same as regular client");
+    logger.supabase.warn("Missing Supabase service key, admin client will be same as regular client");
     supabaseAdmin = supabase;
   }
 } catch (error) {
-  console.error("Server: Error initializing Supabase:", error);
+  logger.supabase.error("Error initializing Supabase clients", { error });
   
   // Create mock clients as fallback
-  console.warn("Server: Creating mock Supabase clients as fallback");
+  logger.supabase.warn("Creating mock Supabase clients as fallback");
   const createMockClient = () => ({
     auth: {
       getSession: async () => ({
@@ -216,7 +219,10 @@ const upload = multer({
 // Helper function to ensure required storage buckets exist
 async function ensureStorageBucketsExist() {
   if (!supabaseUrl || !supabaseAnonKey) {
-    console.log("Missing Supabase credentials, skipping bucket setup check");
+    logger.warn("Missing Supabase credentials, skipping bucket setup check", {
+      context: 'storage-setup',
+      data: { missingVars: ['SUPABASE_URL', 'SUPABASE_ANON_KEY'] }
+    });
     return;
   }
 
@@ -723,12 +729,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "No video file uploaded" });
       }
       
-      console.log(`Processing video upload: ${req.file.originalname}, size: ${(req.file.size / (1024 * 1024)).toFixed(2)}MB`);
+      logger.info(`Processing video upload: ${req.file.originalname}, size: ${(req.file.size / (1024 * 1024)).toFixed(2)}MB`, {
+        context: 'video-upload',
+        data: {
+          userId: userId,
+          filename: req.file.originalname,
+          fileSize: req.file.size,
+          mimetype: req.file.mimetype
+        }
+      });
       
       let videoUrl: string;
       
       // Check for required Supabase buckets before uploading
       if (!supabaseUrl || !supabaseAnonKey) {
+        logger.error("Supabase storage not configured for video upload", {
+          context: 'video-upload',
+          data: { missingVars: ['SUPABASE_URL', 'SUPABASE_ANON_KEY'] }
+        });
         return res.status(500).json({ 
           message: "Supabase storage not configured. Please check your environment variables (SUPABASE_URL and SUPABASE_ANON_KEY)." 
         });
@@ -751,7 +769,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // This matches the RLS structure of (storage.foldername(name))[1] = auth.uid()::text
         const filePath = `${userId}/${Date.now()}${fileExt}`;
         
-        console.log(`Uploading video to Supabase: ${filePath}`);
+        logger.info(`Uploading video to Supabase: ${filePath}`, {
+          context: 'video-upload',
+          data: { userId, bucket: 'videos', path: filePath }
+        });
         
         // Use supabaseAdmin to bypass RLS policies
         const { data, error } = await supabaseAdmin.storage
@@ -761,7 +782,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
           });
         
         if (error) {
-          console.error("Supabase storage upload error:", error);
+          logger.error("Supabase storage upload error", {
+            context: 'video-upload',
+            data: { error, bucket: 'videos', path: filePath }
+          });
           
           if (error.message.includes('Bucket not found')) {
             return res.status(500).json({ 
@@ -788,7 +812,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
           .getPublicUrl(filePath);
           
         videoUrl = urlData.publicUrl;
-        console.log("Supabase storage upload successful");
+        logger.info("Supabase storage upload successful", {
+          context: 'video-upload',
+          data: { userId, bucket: 'videos', path: filePath, publicUrl: videoUrl }
+        });
       }
       catch (error) {
         console.error("Supabase storage upload error:", error);
@@ -816,14 +843,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const parsedVideoData = insertVideoSchema.parse(videoData);
       const video = await storage.createVideo(parsedVideoData);
       
-      console.log(`Video record created with ID: ${video.id} and is ready for playback`);
+      logger.info(`Video record created with ID: ${video.id} and is ready for playback`, {
+        context: 'video-upload',
+        data: { videoId: video.id, title: video.title, userId }
+      });
       
       res.status(201).json({
         ...video,
         message: "Video uploaded successfully to Supabase storage"
       });
     } catch (err) {
-      console.error("Video upload error:", err);
+      logger.error("Video upload error", {
+        context: 'video-upload',
+        data: { error: err }
+      });
       handleError(err, res);
     }
   });
