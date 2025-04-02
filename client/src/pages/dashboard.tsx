@@ -11,6 +11,7 @@ import { MOCK_USERS } from "@/lib/mockData";
 import { StudentGroups } from "@/components/dashboard/student-groups";
 import { StudentProgress } from "@/components/dashboard/student-progress";
 import { TeacherNotes } from "@/components/dashboard/teacher-notes";
+import { Link } from "wouter";
 
 export default function Dashboard() {
   const { user } = useAuth();
@@ -131,6 +132,14 @@ export default function Dashboard() {
                         <i className="ri-file-chart-line mr-1.5"></i>
                         View Reports
                       </Button>
+                      <Link href="/admin/diagnostics">
+                        <Button 
+                          className="w-full flex justify-start bg-gray-800 hover:bg-gray-700"
+                        >
+                          <i className="ri-settings-line mr-1.5"></i>
+                          System Diagnostics
+                        </Button>
+                      </Link>
                     </div>
                   </CardContent>
                 </Card>

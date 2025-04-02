@@ -18,6 +18,7 @@ import Analytics from "./pages/analytics";
 import TestSupabase from "./pages/test-supabase";
 import TestSupabaseAPI from "./pages/test-supabase-api";
 import WebSocketDemo from "./pages/websocket-demo";
+import DiagnosticsPage from "./pages/admin/diagnostics";
 import { useEffect } from "react";
 
 // Protected route component that redirects to login if not authenticated
@@ -83,6 +84,9 @@ function Router() {
       <Route path="/test-supabase" component={TestSupabase} />
       <Route path="/test-supabase-api" component={TestSupabaseAPI} />
       <Route path="/websocket-demo" component={WebSocketDemo} />
+      
+      {/* Admin routes */}
+      <Route path="/admin/diagnostics" component={(props) => <TeacherRoute component={DiagnosticsPage} {...props} />} />
       
       <Route component={NotFound} />
     </Switch>
