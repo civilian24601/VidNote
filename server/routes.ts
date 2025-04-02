@@ -778,14 +778,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Use a simpler file structure that doesn't rely on Supabase auth UUID format
         // Since we're having permission issues with numeric user IDs vs Supabase UUIDs
         // We'll use a flat structure with a unique timestamp-based name
-        const filePath = `public/videos_${Date.now()}_user${userId}${fileExt}`;
+        const timestamp = Date.now();
+        const filePath = `public/videos_${timestamp}_user${userId}${fileExt}`;
         
         logger.info(`Uploading video to Supabase: ${filePath}`, {
           context: 'video-upload',
-          data: { userId, bucket: 'videos', path: filePath }
+          data: { 
+            userId, 
+            bucket: 'videos', 
+            path: filePath,
+            timestamp,
+            fileExtension: fileExt,
+            contentType: req.file.mimetype,
+            fileSize: req.file.size
+          }
+        });
+        
+        // Log Supabase client status
+        logger.info(`Supabase client status check before upload`, {
+          context: 'video-upload',
+          data: { 
+            supabaseAvailable: !!supabase,
+            supabaseAdminAvailable: !!supabaseAdmin,
+            supabaseUrlConfigured: !!supabaseUrl,
+            supabaseAnonKeyConfigured: !!supabaseAnonKey,
+            supabaseServiceKeyConfigured: !!supabaseServiceKey
+          }
         });
         
         // Use supabaseAdmin to bypass RLS policies
+        logger.info(`Starting Supabase upload operation`, { 
+          context: 'video-upload',
+          data: { operationStart: new Date().toISOString() }
+        });
+        
         const { data, error } = await supabaseAdmin.storage
           .from("videos")
           .upload(filePath, req.file.buffer, {
@@ -795,7 +821,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
         if (error) {
           logger.error("Supabase storage upload error", {
             context: 'video-upload',
-            data: { error, bucket: 'videos', path: filePath }
+            data: { 
+              error: {
+                message: error.message,
+                name: error.name,
+                statusCode: error.statusCode,
+                details: error.details,
+                fullError: JSON.stringify(error)
+              }, 
+              bucket: 'videos', 
+              path: filePath 
+            }
           });
           
           if (error.message.includes('Bucket not found')) {
@@ -818,15 +854,51 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
         
         // Get public URL - make sure to use filePath, not fileName
+        logger.info("Upload successful, now generating public URL", {
+          context: 'video-upload',
+          data: { uploadData: data, path: filePath }
+        });
+        
         const { data: urlData } = supabase.storage
           .from("videos")
           .getPublicUrl(filePath);
           
         videoUrl = urlData.publicUrl;
-        logger.info("Supabase storage upload successful", {
+        
+        // Verify the URL structure and accessibility
+        logger.info("Public URL generated for video", {
           context: 'video-upload',
-          data: { userId, bucket: 'videos', path: filePath, publicUrl: videoUrl }
+          data: { 
+            userId, 
+            bucket: 'videos', 
+            path: filePath, 
+            publicUrl: videoUrl,
+            urlLength: videoUrl?.length,
+            urlIncludesPath: videoUrl?.includes(filePath),
+            urlIncludesBucket: videoUrl?.includes('videos'),
+            urlStartsWithHttps: videoUrl?.startsWith('https://'),
+            urlData: JSON.stringify(urlData)
+          }
         });
+        
+        // Test URL accessibility with a HEAD request
+        try {
+          const urlCheckResponse = await fetch(videoUrl, { method: 'HEAD' });
+          logger.info("URL accessibility check result", {
+            context: 'video-upload',
+            data: { 
+              status: urlCheckResponse.status,
+              ok: urlCheckResponse.ok,
+              statusText: urlCheckResponse.statusText,
+              headers: Object.fromEntries([...urlCheckResponse.headers.entries()])
+            }
+          });
+        } catch (urlCheckError) {
+          logger.warn("URL accessibility check failed", {
+            context: 'video-upload',
+            data: { error: urlCheckError instanceof Error ? urlCheckError.message : 'Unknown error' }
+          });
+        }
       }
       catch (error) {
         console.error("Supabase storage upload error:", error);

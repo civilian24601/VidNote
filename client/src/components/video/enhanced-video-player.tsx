@@ -68,23 +68,55 @@ export default function EnhancedVideoPlayer({
       playerRef.current.destroy();
     }
     
-    // Log video URL for debugging
-    console.log(`Setting up video player with URL: ${videoUrl}`);
+    // Enhanced logging for video URL debugging
+    console.log(`[EnhancedVideoPlayer] Setting up video player with URL: ${videoUrl}`);
+    console.log(`[EnhancedVideoPlayer] URL analysis:`, {
+      urlLength: videoUrl?.length || 0,
+      urlStartsWithHttps: videoUrl?.startsWith('https://'),
+      containsSupabaseHost: videoUrl?.includes('supabase'),
+      containsVideosBucket: videoUrl?.includes('videos'),
+      urlEndsWithValidExt: /\.(mp4|webm|mov|avi)$/i.test(videoUrl || ''),
+      timestamp: new Date().toISOString()
+    });
     
-    // Check if video URL is valid before initializing player
-    fetch(videoUrl, { method: 'HEAD' })
+    // Comprehensive URL validation before initializing player
+    console.log(`[EnhancedVideoPlayer] Checking if video URL is accessible with HEAD request`);
+    
+    fetch(videoUrl, { 
+      method: 'HEAD',
+      headers: {
+        'Cache-Control': 'no-cache'
+      }
+    })
       .then(response => {
+        console.log(`[EnhancedVideoPlayer] URL HEAD check response:`, {
+          status: response.status,
+          ok: response.ok,
+          statusText: response.statusText,
+          contentType: response.headers.get('content-type'),
+          contentLength: response.headers.get('content-length'),
+          cacheControl: response.headers.get('cache-control'),
+          timestamp: new Date().toISOString()
+        });
+        
         if (!response.ok) {
-          console.error(`Video URL check failed with status: ${response.status}`);
-          setVideoError(`Video file not accessible (HTTP ${response.status})`);
+          console.error(`[EnhancedVideoPlayer] Video URL check failed with status: ${response.status}`);
+          setVideoError(`Video file not accessible (HTTP ${response.status}): ${response.statusText}`);
           return;
         }
         
         // URL is valid, initialize player
+        console.log(`[EnhancedVideoPlayer] URL check successful, initializing player`);
         initializePlayer();
       })
       .catch(error => {
-        console.error(`Error checking video URL: ${error.message}`);
+        console.error(`[EnhancedVideoPlayer] Error checking video URL:`, error);
+        console.error(`[EnhancedVideoPlayer] Error details:`, {
+          name: error.name,
+          message: error.message,
+          stack: error.stack,
+          timestamp: new Date().toISOString()
+        });
         setVideoError(`Error accessing video: ${error.message}`);
       });
       
@@ -103,14 +135,37 @@ export default function EnhancedVideoPlayer({
         });
         
         player.on('ready', () => {
-          console.log('Plyr is ready, duration:', player.duration);
+          console.log('[EnhancedVideoPlayer] Plyr player ready event fired', {
+            duration: player.duration,
+            currentTime: player.currentTime,
+            muted: player.muted,
+            volume: player.volume,
+            playing: player.playing,
+            timestamp: new Date().toISOString()
+          });
           setIsReady(true);
           setDuration(player.duration || 0);
         });
         
         player.on('loadedmetadata', () => {
-          console.log('Video metadata loaded, duration:', player.duration);
+          console.log('[EnhancedVideoPlayer] Video metadata loaded', {
+            duration: player.duration,
+            videoWidth: videoRef.current?.videoWidth,
+            videoHeight: videoRef.current?.videoHeight,
+            readyState: videoRef.current?.readyState,
+            timestamp: new Date().toISOString()
+          });
           setDuration(player.duration || 0);
+        });
+        
+        player.on('loadeddata', () => {
+          console.log('[EnhancedVideoPlayer] Video data loaded', {
+            duration: player.duration,
+            buffered: videoRef.current?.buffered.length > 0 ? 
+              `${videoRef.current?.buffered.start(0)} - ${videoRef.current?.buffered.end(0)}` : 'none',
+            networkState: videoRef.current?.networkState,
+            timestamp: new Date().toISOString()
+          });
         });
         
         player.on('timeupdate', () => {
@@ -120,15 +175,48 @@ export default function EnhancedVideoPlayer({
           }
         });
         
-        // Listen for duration changes 
-        player.on('loadedmetadata', () => {
-          console.log('Duration updated on metadata load:', player.duration);
-          setDuration(player.duration || 0);
-        });
-        
         player.on('error', (event) => {
-          console.error('Plyr error event:', event);
-          setVideoError('Error loading video. Please try again later.');
+          console.error('[EnhancedVideoPlayer] Plyr error event:', event);
+          
+          // Analyze video element errors
+          if (videoRef.current) {
+            const videoError = videoRef.current.error;
+            console.error('[EnhancedVideoPlayer] Video element error details:', {
+              code: videoError?.code,
+              message: videoError?.message,
+              MEDIA_ERR_ABORTED: (videoError?.code === 1) ? 'Yes' : 'No',
+              MEDIA_ERR_NETWORK: (videoError?.code === 2) ? 'Yes' : 'No',
+              MEDIA_ERR_DECODE: (videoError?.code === 3) ? 'Yes' : 'No',
+              MEDIA_ERR_SRC_NOT_SUPPORTED: (videoError?.code === 4) ? 'Yes' : 'No',
+              networkState: videoRef.current.networkState,
+              readyState: videoRef.current.readyState,
+              timestamp: new Date().toISOString()
+            });
+            
+            // Provide more helpful error message based on error code
+            if (videoError) {
+              switch(videoError.code) {
+                case 1:
+                  setVideoError('Video playback was aborted. Please try again.');
+                  break;
+                case 2:
+                  setVideoError('Network error. Please check your connection and try again.');
+                  break;
+                case 3:
+                  setVideoError('Video decoding failed. The file might be corrupted.');
+                  break;
+                case 4:
+                  setVideoError('Video format not supported by your browser or the file is invalid.');
+                  break;
+                default:
+                  setVideoError('Error loading video. Please try again later.');
+              }
+            } else {
+              setVideoError('Error loading video. Please try again later.');
+            }
+          } else {
+            setVideoError('Error loading video. Please try again later.');
+          }
         });
         
         playerRef.current = player;

@@ -174,6 +174,49 @@ If videos fail to upload:
 3. Ensure you're authenticated when attempting to upload
 4. Look for CORS-related errors in the browser console
 
+### Video Playback Issues
+
+If you can upload videos but they don't play correctly:
+
+1. Check if the video URL is accessible by running:
+   ```bash
+   node scripts/diagnose-supabase-url.js
+   ```
+   This script will diagnose Supabase URL access issues by:
+   - Checking environment variables
+   - Validating Supabase URL format
+   - Testing direct access to the URL
+   - Checking CORS headers
+   - Verifying public bucket permissions
+
+2. Test video playback in isolation:
+   ```bash
+   # To test a specific video URL
+   node scripts/test-video-playback.js "https://your-supabase-url/storage/v1/object/public/videos/path/to/video.mp4"
+   
+   # Or to test with the first available video in your bucket
+   node scripts/test-video-playback.js
+   ```
+   This will create a standalone HTML player page to test your video without the complexity of the full application.
+
+3. Diagnose bucket permissions:
+   ```bash
+   node scripts/check-buckets.js
+   ```
+   This will verify your bucket permissions and test file access from both server and client perspectives.
+
+4. If issues persist, use the enhanced logging built into the platform:
+   - Check server logs during upload for detailed Supabase storage interaction
+   - Check browser console for video player initialization and loading states
+   - Look for status code errors or CORS-related failures in network requests
+
+5. For a comprehensive troubleshooting guide, refer to [docs/TROUBLESHOOTING_SUPABASE.md](docs/TROUBLESHOOTING_SUPABASE.md) which includes:
+   - Detailed error diagnosis procedures
+   - Common RLS policy configurations
+   - CORS setup instructions
+   - Advanced diagnostic techniques
+   - Browser-specific troubleshooting
+
 ## License
 
 This project is licensed under the MIT License - see the LICENSE file for details.
