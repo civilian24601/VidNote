@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
-import { supabase } from "@/supabase/client";
+import { supabase } from "../../../supabase/client";
 import { Session, User as SupabaseUser } from "@supabase/supabase-js";
 
 // Define our app's user type
@@ -202,14 +202,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // Sign in an existing user
   async function signIn(email: string, password: string) {
     setLoading(true);
+    console.log('Sign-in attempt for:', email);
     try {
+      console.log('Calling supabase.auth.signInWithPassword...');
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password
       });
-
-      if (error) throw error;
       
+      console.log('Sign-in response received:', error ? 'Error' : 'Success');
+
+      if (error) {
+        console.error('Login error details:', error);
+        throw error;
+      }
+      
+      console.log('Sign-in successful, user:', data.user?.id);
       // We don't need to manually set user and session here as onAuthStateChange will handle it
     } catch (error: any) {
       console.error('Login error:', error);

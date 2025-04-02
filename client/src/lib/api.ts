@@ -2,7 +2,8 @@ import { apiRequest } from "./queryClient";
 import { queryClient } from "./queryClient";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Video, Comment, User } from "@shared/schema";
-import { supabase, uploadToStorage, getPublicUrl } from "./supabase";
+import { supabase } from "../../../supabase/client";
+import { uploadToStorage, getPublicUrl } from "./supabase";
 
 // Auth header utility
 export const getAuthHeader = (): Headers => {
@@ -284,14 +285,53 @@ export const useComments = (videoId: string | number) => {
   return useQuery<(Comment & { user: Omit<User, 'password'> })[]>({
     queryKey: [`/api/videos/${videoId}/comments`],
     enabled: !!videoId,
+    queryFn: async () => {
+      // Get comments directly from Supabase
+      const { data, error } = await supabase
+        .from('comments')
+        .select('*, users(*)')
+        .eq('videoId', Number(videoId))
+        .order('createdAt', { ascending: false });
+      
+      if (error) {
+        console.error(`Error fetching comments for video ${videoId}:`, error);
+        throw new Error(`Failed to fetch comments: ${error.message}`);
+      }
+      
+      return data || [];
+    }
   });
 };
 
 export const useAddComment = (videoId: string | number) => {
   return useMutation({
     mutationFn: async (data: { content: string; timestamp: number; category?: string }) => {
-      const response = await apiRequest('POST', `/api/videos/${videoId}/comments`, data);
-      return response.json();
+      // Get current user
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) {
+        throw new Error('Authentication required');
+      }
+      
+      // Insert comment directly into Supabase
+      const { data: commentData, error } = await supabase
+        .from('comments')
+        .insert({
+          videoId: Number(videoId),
+          userId: user.id,
+          content: data.content,
+          timestamp: data.timestamp,
+          category: data.category || 'general'
+        })
+        .select('*, users(*)')
+        .single();
+      
+      if (error) {
+        console.error('Error adding comment:', error);
+        throw new Error(`Failed to add comment: ${error.message}`);
+      }
+      
+      return commentData;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [`/api/videos/${videoId}/comments`] });
@@ -302,7 +342,17 @@ export const useAddComment = (videoId: string | number) => {
 export const useDeleteComment = () => {
   return useMutation({
     mutationFn: async ({ commentId, videoId }: { commentId: number; videoId: number }) => {
-      await apiRequest('DELETE', `/api/comments/${commentId}`);
+      // Delete comment directly from Supabase
+      const { error } = await supabase
+        .from('comments')
+        .delete()
+        .eq('id', commentId);
+      
+      if (error) {
+        console.error(`Error deleting comment ${commentId}:`, error);
+        throw new Error(`Failed to delete comment: ${error.message}`);
+      }
+      
       return commentId;
     },
     onSuccess: (_data, variables) => {
@@ -316,14 +366,42 @@ export const useVideoSharing = (videoId: string | number) => {
   return useQuery<any[]>({
     queryKey: [`/api/videos/${videoId}/sharing`],
     enabled: !!videoId,
+    queryFn: async () => {
+      // Get video sharing records directly from Supabase
+      const { data, error } = await supabase
+        .from('video_sharing')
+        .select('*, users(*)')
+        .eq('videoId', Number(videoId));
+      
+      if (error) {
+        console.error(`Error fetching video sharing for video ${videoId}:`, error);
+        throw new Error(`Failed to fetch video sharing: ${error.message}`);
+      }
+      
+      return data || [];
+    }
   });
 };
 
 export const useShareVideo = (videoId: string | number) => {
   return useMutation({
-    mutationFn: async (userId: number) => {
-      const response = await apiRequest('POST', `/api/videos/${videoId}/share`, { userId });
-      return response.json();
+    mutationFn: async (userId: string) => {
+      // Insert sharing record directly into Supabase
+      const { data, error } = await supabase
+        .from('video_sharing')
+        .insert({
+          videoId: Number(videoId),
+          userId: userId
+        })
+        .select()
+        .single();
+      
+      if (error) {
+        console.error('Error sharing video:', error);
+        throw new Error(`Failed to share video: ${error.message}`);
+      }
+      
+      return data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [`/api/videos/${videoId}/sharing`] });
@@ -333,8 +411,19 @@ export const useShareVideo = (videoId: string | number) => {
 
 export const useUnshareVideo = (videoId: string | number) => {
   return useMutation({
-    mutationFn: async (userId: number) => {
-      await apiRequest('DELETE', `/api/videos/${videoId}/share/${userId}`);
+    mutationFn: async (userId: string) => {
+      // Delete sharing record directly from Supabase
+      const { error } = await supabase
+        .from('video_sharing')
+        .delete()
+        .eq('videoId', Number(videoId))
+        .eq('userId', userId);
+      
+      if (error) {
+        console.error('Error unsharing video:', error);
+        throw new Error(`Failed to unshare video: ${error.message}`);
+      }
+      
       return userId;
     },
     onSuccess: () => {
