@@ -17,14 +17,36 @@ interface ApiSuccessResponse {
 }
 
 export async function apiRequest(
-  method: string,
-  url: string,
-  data?: unknown | undefined,
-): Promise<Response> {
+  urlOrOptions: string | { url: string, method?: string, data?: any, headers?: Record<string, string> },
+  optionalData?: unknown
+): Promise<any> {
+  let url: string;
+  let method = 'GET';
+  let data = undefined;
+  let customHeaders: Record<string, string> = {};
+  
+  if (typeof urlOrOptions === 'string') {
+    url = urlOrOptions;
+    if (optionalData) {
+      method = 'POST';
+      data = optionalData;
+    }
+  } else {
+    url = urlOrOptions.url;
+    method = urlOrOptions.method || 'GET';
+    data = urlOrOptions.data;
+    customHeaders = urlOrOptions.headers || {};
+  }
+  
   console.log(`API request: ${method} ${url}`, data ? 'with data' : '');
   
   const headers = getAuthHeader();
   headers.append('Content-Type', 'application/json');
+  
+  // Add any custom headers
+  Object.entries(customHeaders).forEach(([key, value]) => {
+    headers.append(key, value);
+  });
   
   const options: RequestInit = {
     method,
@@ -44,9 +66,12 @@ export async function apiRequest(
     if (!response.ok) {
       const errorText = await response.text();
       console.error(`API error: ${method} ${url} - ${response.status}`, errorText);
+      throw new Error(`API Error (${response.status}): ${errorText || response.statusText}`);
     }
     
-    return response;
+    // Parse JSON response
+    const responseData = await response.json();
+    return responseData;
   } catch (error) {
     console.error(`API request failed: ${method} ${url}`, error);
     throw error;

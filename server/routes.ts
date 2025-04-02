@@ -103,6 +103,10 @@ interface SupabaseClient {
         data: Array<{ name: string, id: string, metadata?: any }> | null;
         error: any | null;
       }>;
+      remove: (paths: string[]) => Promise<{
+        data: { path: string }[] | null;
+        error: any | null;
+      }>;
     };
     getBucket: (name: string) => Promise<{
       data: { name: string } | null;
@@ -183,6 +187,13 @@ try {
             };
           }
           return { data: [], error: { message: "Bucket not found" } };
+        },
+        remove: async (paths: string[]) => {
+          console.log(`Mock remove operation for ${bucket}/${paths.join(', ')}`);
+          return {
+            data: paths.map(path => ({ path })),
+            error: null
+          };
         }
       }),
       getBucket: async (name: string) => ({
@@ -1234,6 +1245,244 @@ export async function registerRoutes(app: Express): Promise<Server> {
       return res.status(500).json({ 
         message: `Server error: ${err.message || "Unknown error"}`,
         exists: false
+      });
+    }
+  });
+
+  // Test endpoint to check file accessibility
+  router.get("/test-file-access", async (req, res) => {
+    try {
+      const bucketName = req.query.bucket as string;
+      const filePath = req.query.path as string;
+      
+      if (!bucketName || !filePath) {
+        return res.status(400).json({ 
+          message: "Both bucket name and file path are required",
+          success: false
+        });
+      }
+      
+      // Comprehensive diagnostic information
+      const result: any = {
+        success: false,
+        bucket: bucketName,
+        path: filePath,
+        diagnostics: {},
+        urls: {}
+      };
+      
+      // 1. Check if the bucket exists
+      try {
+        const { data: bucket, error: bucketError } = await supabaseAdmin.storage.getBucket(bucketName);
+        
+        if (bucketError) {
+          result.diagnostics.bucketExists = false;
+          result.diagnostics.bucketError = bucketError.message;
+        } else if (bucket) {
+          result.diagnostics.bucketExists = true;
+          result.diagnostics.isPublic = 'public' in bucket ? bucket.public : false;
+        }
+      } catch (error: any) {
+        result.diagnostics.bucketCheckError = error.message;
+      }
+      
+      // 2. Try to get file with admin client
+      try {
+        // First try to get with admin client
+        const adminUrl = supabaseAdmin.storage.from(bucketName).getPublicUrl(filePath);
+        result.urls.adminUrl = adminUrl.data.publicUrl;
+        
+        // Check if the file exists using admin client
+        const { data: fileExists, error: fileExistsError } = await supabaseAdmin.storage
+          .from(bucketName)
+          .list(filePath.split('/').slice(0, -1).join('/') || '', {
+            search: filePath.split('/').pop() || ''
+          });
+        
+        if (fileExistsError) {
+          result.diagnostics.fileExistsAdmin = false;
+          result.diagnostics.fileExistsAdminError = fileExistsError.message;
+        } else if (fileExists && Array.isArray(fileExists)) {
+          const fileName = filePath.split('/').pop() || '';
+          result.diagnostics.fileExistsAdmin = fileExists.some(f => f.name === fileName);
+          result.diagnostics.fileListAdmin = fileExists.map(f => f.name);
+        } else {
+          result.diagnostics.fileExistsAdmin = false;
+          result.diagnostics.fileExistsAdminError = 'No file data returned';
+        }
+      } catch (error: any) {
+        result.diagnostics.adminUrlError = error.message;
+      }
+      
+      // 3. Try to get file with anon client
+      try {
+        const anonUrl = supabase.storage.from(bucketName).getPublicUrl(filePath);
+        result.urls.anonUrl = anonUrl.data.publicUrl;
+        
+        // Check if the file exists using anon client
+        const { data: fileExists, error: fileExistsError } = await supabase.storage
+          .from(bucketName)
+          .list(filePath.split('/').slice(0, -1).join('/') || '', {
+            search: filePath.split('/').pop() || ''
+          });
+        
+        if (fileExistsError) {
+          result.diagnostics.fileExistsAnon = false;
+          result.diagnostics.fileExistsAnonError = fileExistsError.message;
+        } else if (fileExists && Array.isArray(fileExists)) {
+          const fileName = filePath.split('/').pop() || '';
+          result.diagnostics.fileExistsAnon = fileExists.some(f => f.name === fileName);
+          result.diagnostics.fileListAnon = fileExists.map(f => f.name);
+        } else {
+          result.diagnostics.fileExistsAnon = false;
+          result.diagnostics.fileExistsAnonError = 'No file data returned';
+        }
+      } catch (error: any) {
+        result.diagnostics.anonUrlError = error.message;
+      }
+      
+      // 4. Try to create a test file to check permissions
+      try {
+        const testContent = Buffer.from('Test file for permissions check');
+        const testPath = `test-permissions-${Date.now()}.txt`;
+        
+        // Try with admin client
+        const { data: uploadDataAdmin, error: uploadErrorAdmin } = await supabaseAdmin.storage
+          .from(bucketName)
+          .upload(testPath, testContent, {
+            contentType: 'text/plain'
+          });
+        
+        if (uploadErrorAdmin) {
+          result.diagnostics.canUploadAdmin = false;
+          result.diagnostics.uploadAdminError = uploadErrorAdmin.message;
+        } else {
+          result.diagnostics.canUploadAdmin = true;
+          result.diagnostics.testFilePathAdmin = testPath;
+          
+          try {
+            // Clean up the test file (if method exists)
+            if (typeof supabaseAdmin.storage.from(bucketName).remove === 'function') {
+              await supabaseAdmin.storage.from(bucketName).remove([testPath]);
+            } else {
+              result.diagnostics.cleanupNote = 'Remove method not found on storage client';
+            }
+          } catch (cleanupError: any) {
+            result.diagnostics.cleanupError = cleanupError.message;
+          }
+        }
+      } catch (error: any) {
+        result.diagnostics.uploadTestError = error.message;
+      }
+      
+      // 5. Test RLS policies
+      result.diagnostics.rlsPolicies = 'Cannot check directly from server, suggest running SQL in Supabase dashboard';
+      
+      // Set success flag if we have URLs
+      result.success = !!(result.urls.adminUrl || result.urls.anonUrl);
+      
+      return res.status(200).json(result);
+    } catch (err: any) {
+      console.error("Error testing file access:", err);
+      return res.status(500).json({ 
+        message: `Error testing file access: ${err.message}`,
+        success: false
+      });
+    }
+  });
+  
+  // Test uploading a sample file to diagnose storage issues
+  router.post("/test-upload", async (req, res) => {
+    try {
+      const bucketName = req.body.bucket || 'videos';
+      
+      // Create a small test file (a 1x1 transparent pixel as base64)
+      const base64Data = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=';
+      const buffer = Buffer.from(base64Data, 'base64');
+      
+      // Generate a unique path
+      const timestamp = Date.now();
+      const testFilePath = `public/test-${timestamp}.png`;
+      
+      logger.info(`Testing upload to Supabase: ${testFilePath}`, {
+        context: 'test-upload',
+        data: { bucket: bucketName, path: testFilePath }
+      });
+      
+      // Try with admin client first
+      const { data: adminData, error: adminError } = await supabaseAdmin.storage
+        .from(bucketName)
+        .upload(testFilePath, buffer, {
+          contentType: 'image/png',
+        });
+      
+      // Get results for both clients
+      const result: {
+        adminClient: {
+          success: boolean;
+          error?: string;
+          path?: string;
+        };
+        publicUrl: string | null;
+        isAccessible: boolean;
+        diagnostics: Record<string, any>;
+      } = {
+        adminClient: {
+          success: !adminError,
+          error: adminError?.message,
+          path: adminData?.path
+        },
+        publicUrl: null,
+        isAccessible: false,
+        diagnostics: {
+          bucketName,
+          testFilePath,
+          timestamp
+        }
+      };
+      
+      // If admin upload succeeded, try to get URL
+      if (!adminError) {
+        // Get public URL
+        const urlData = supabaseAdmin.storage
+          .from(bucketName)
+          .getPublicUrl(testFilePath).data;
+        
+        if (urlData && urlData.publicUrl) {
+          result.publicUrl = urlData.publicUrl;
+          
+          logger.info(`Test upload successful: ${result.publicUrl}`, {
+            context: 'test-upload',
+            data: { bucket: bucketName, path: testFilePath }
+          });
+        } else {
+          logger.info(`Test upload succeeded but no public URL was returned`, {
+            context: 'test-upload',
+            data: { bucket: bucketName, path: testFilePath }
+          });
+        }
+      } else {
+        logger.error(`Test upload failed: ${adminError.message}`, {
+          context: 'test-upload',
+          data: { bucket: bucketName, path: testFilePath }
+        });
+      }
+      
+      res.status(200).json({ 
+        success: result.adminClient.success,
+        message: result.adminClient.success 
+          ? "Test upload successful" 
+          : `Test upload failed: ${result.adminClient.error}`,
+        result
+      });
+    } catch (err: any) {
+      logger.error(`Test upload error: ${err.message}`, {
+        context: 'test-upload'
+      });
+      
+      res.status(500).json({ 
+        success: false,
+        message: `Test upload error: ${err.message}`
       });
     }
   });
