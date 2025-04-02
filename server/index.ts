@@ -1,6 +1,8 @@
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
+import { runSupabaseDiagnostics } from "./lib/supabaseHelper";
+import { createCustomLogger } from "./lib/logger";
 
 const app = express();
 app.use(express.json({ limit: '50mb' }));
@@ -36,7 +38,18 @@ app.use((req, res, next) => {
   next();
 });
 
+const logger = createCustomLogger();
+
 (async () => {
+  // Run Supabase diagnostics at startup
+  logger.general.info('Running Supabase diagnostics before starting server...');
+  const diagnosticsResult = await runSupabaseDiagnostics();
+  if (diagnosticsResult) {
+    logger.general.info('✅ Supabase diagnostics passed successfully!');
+  } else {
+    logger.general.warn('⚠️ Supabase diagnostics failed. Some features may not work correctly.');
+  }
+  
   const server = await registerRoutes(app);
 
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
