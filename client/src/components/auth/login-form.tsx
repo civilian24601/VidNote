@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -25,7 +25,7 @@ type LoginValues = z.infer<typeof loginSchema>;
 
 export function LoginForm() {
   const [_, navigate] = useLocation();
-  const { signIn, user } = useAuth();
+  const { signIn, user, isAuthenticated, loading } = useAuth();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
 
@@ -37,29 +37,39 @@ export function LoginForm() {
     },
   });
 
+  // Monitor auth state changes
+  useEffect(() => {
+    console.log("Auth state updated - isAuthenticated:", isAuthenticated, "loading:", loading);
+    
+    if (isAuthenticated && !loading) {
+      console.log("User is authenticated, redirecting...");
+      console.log("Current user:", user);
+      
+      if (user?.role === 'teacher') {
+        console.log("Redirecting to teacher dashboard");
+        navigate("/dashboard");
+      } else {
+        console.log("Redirecting to videos page");
+        navigate("/videos");
+      }
+    }
+  }, [isAuthenticated, loading, user, navigate]);
+
   const onSubmit = async (values: LoginValues) => {
     setIsLoading(true);
     console.log("Login form submitted with email:", values.email);
+    
     try {
       console.log("Attempting sign in with auth context signIn method");
       await signIn(values.email, values.password);
-      console.log("Sign in successful");
+      console.log("Sign in successful, auth context updated");
+      console.log("isAuthenticated:", isAuthenticated);
+      
       toast({
         title: "Login successful",
         description: "You have been successfully logged in.",
       });
       
-      // Redirect based on user role with a small delay to ensure state updates
-      setTimeout(() => {
-        console.log("Current user role:", user?.role);
-        if (user?.role === 'teacher') {
-          console.log("Redirecting to teacher dashboard");
-          navigate("/dashboard");
-        } else {
-          console.log("Redirecting to videos page");
-          navigate("/videos");
-        }
-      }, 50);
     } catch (error) {
       console.error("Login error:", error);
       toast({

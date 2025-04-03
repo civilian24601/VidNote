@@ -201,31 +201,33 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   // Sign in an existing user
   async function signIn(email: string, password: string) {
-    setLoading(true);
-    console.log('Sign-in attempt for:', email);
+    setLoading(true)
+    console.log('🔐 Sign-in attempt for:', email)
     try {
-      console.log('Calling supabase.auth.signInWithPassword...');
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password
-      });
-      
-      console.log('Sign-in response received:', error ? 'Error' : 'Success');
+      const { data, error } = await supabase.auth.signInWithPassword({ email, password })
+      console.log('📬 Supabase auth result:', { data, error })
 
       if (error) {
-        console.error('Login error details:', error);
-        throw error;
+        console.error('❌ Login error:', error)
+        throw new Error(error.message || 'Invalid credentials')
       }
-      
-      console.log('Sign-in successful, user:', data.user?.id);
-      // We don't need to manually set user and session here as onAuthStateChange will handle it
-    } catch (error: any) {
-      console.error('Login error:', error);
-      throw new Error(error.message || 'Invalid credentials');
+
+      if (!data.user) {
+        console.warn('⚠️ Login succeeded but no user returned — refreshing session manually...')
+        const { data: refreshed } = await supabase.auth.getSession()
+        console.log('🧠 Refreshed session:', refreshed)
+      } else {
+        console.log('✅ Login successful for user:', data.user.id)
+      }
+    } catch (err: any) {
+      console.error('🔥 Unexpected login error:', err)
+      throw new Error(err.message || 'Unknown error occurred during login')
     } finally {
-      setLoading(false);
+      console.log('🔄 Resetting loading state')
+      setLoading(false)
     }
   }
+
 
   // Sign out
   async function signOut() {
