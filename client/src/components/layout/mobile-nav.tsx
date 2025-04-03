@@ -1,5 +1,5 @@
 import { Link, useLocation } from "wouter";
-import { useAuth } from "@/lib/auth-context";
+import { useAuth } from "@/auth/auth-context";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,

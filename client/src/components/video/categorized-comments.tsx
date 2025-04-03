@@ -11,7 +11,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { getInitials, getAvatarColor, formatDateTime } from "@/lib/utils";
-import { useAuth } from "@/lib/auth-context";
+import { useAuth } from "@/auth/auth-context";
 import { useToast } from "@/hooks/use-toast";
 import { Comment, User } from "@/shared/schema";
 

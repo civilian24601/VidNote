@@ -5,17 +5,12 @@ import { Toaster } from "@/components/ui/toaster";
 import NotFound from "./pages/not-found";
 import Home from "./pages/home";
 import Videos from "./pages/videos";
-import Watch from "./pages/watch";
 import Shared from "./pages/shared";
 import Login from "./pages/login";
 import Register from "./pages/register";
-import { AuthProvider, useAuth } from "./lib/auth-context";
-import Dashboard from "./pages/dashboard";
+import { AuthProvider, useAuth } from "./auth/auth-context";
 import Profile from "./pages/profile";
-import Students from "./pages/students";
-import StudentDetail from "./pages/student-detail";
 import Analytics from "./pages/analytics";
-import TestSupabase from "./pages/test-supabase";
 import TestSupabaseAPI from "./pages/test-supabase-api";
 import WebSocketDemo from "./pages/websocket-demo";
 import DiagnosticsPage from "./pages/admin/diagnostics";
@@ -68,20 +63,13 @@ function Router() {
       
       {/* Protected routes */}
       <Route path="/videos" component={(props) => <ProtectedRoute component={Videos} {...props} />} />
-      <Route path="/watch/:id" component={(props) => <ProtectedRoute component={Watch} {...props} />} />
       <Route path="/shared" component={(props) => <ProtectedRoute component={Shared} {...props} />} />
       <Route path="/profile" component={(props) => <ProtectedRoute component={Profile} {...props} />} />
       
-      {/* Dashboard is accessible by all users */}
-      <Route path="/dashboard" component={(props) => <ProtectedRoute component={Dashboard} {...props} />} />
-      
       {/* Teacher-only routes */}
-      <Route path="/students" component={(props) => <TeacherRoute component={Students} {...props} />} />
-      <Route path="/students/:id" component={(props) => <TeacherRoute component={StudentDetail} {...props} />} />
       <Route path="/analytics" component={(props) => <TeacherRoute component={Analytics} {...props} />} />
       
       {/* Test routes */}
-      <Route path="/test-supabase" component={TestSupabase} />
       <Route path="/test-supabase-api" component={TestSupabaseAPI} />
       <Route path="/websocket-demo" component={WebSocketDemo} />
       

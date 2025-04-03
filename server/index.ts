@@ -1,8 +1,8 @@
 import express, { type Request, Response, NextFunction } from "express";
-import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
-import { runSupabaseDiagnostics } from "./lib/supabaseHelper";
 import { createCustomLogger } from "./lib/logger";
+import { createServer } from "http";
+import { supabase } from "../supabase/client";
 
 const app = express();
 app.use(express.json({ limit: '50mb' }));
@@ -41,16 +41,21 @@ app.use((req, res, next) => {
 const logger = createCustomLogger();
 
 (async () => {
-  // Run Supabase diagnostics at startup
-  logger.general.info('Running Supabase diagnostics before starting server...');
-  const diagnosticsResult = await runSupabaseDiagnostics();
-  if (diagnosticsResult) {
-    logger.general.info('✅ Supabase diagnostics passed successfully!');
-  } else {
-    logger.general.warn('⚠️ Supabase diagnostics failed. Some features may not work correctly.');
+  // Run Supabase connection check at startup
+  logger.general.info('Checking Supabase connection before starting server...');
+  try {
+    const { data, error } = await supabase.auth.getSession();
+    if (error) {
+      logger.general.warn(`⚠️ Supabase connection check: ${error.message}`);
+    } else {
+      logger.general.info('✅ Supabase connection check successful');
+    }
+  } catch (err) {
+    logger.general.error('❌ Error connecting to Supabase:', err);
   }
   
-  const server = await registerRoutes(app);
+  // Create HTTP server
+  const server = createServer(app);
 
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
     const status = err.status || err.statusCode || 500;

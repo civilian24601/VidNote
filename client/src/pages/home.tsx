@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import { useLocation } from "wouter";
-import { useAuth } from "@/lib/auth-context";
+import { useAuth } from "@/auth/auth-context";
 import { Navbar } from "@/components/layout/navbar";
 import useEmblaCarousel from 'embla-carousel-react';
 import { 
