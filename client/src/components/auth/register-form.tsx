@@ -54,6 +54,7 @@ export function RegisterForm() {
 
   const onSubmit = async (values: RegisterValues) => {
     setIsLoading(true);
+    console.log("Register form submitted with email:", values.email, "username:", values.username, "role:", values.role);
     try {
       // Map form values to metadata format expected by Supabase
       const metadata = {
@@ -64,7 +65,9 @@ export function RegisterForm() {
         experience_level: "Beginner"
       };
       
+      console.log("Calling signUp with metadata:", JSON.stringify(metadata));
       await signUp(values.email, values.password, metadata);
+      console.log("Registration successful");
       
       toast({
         title: "Registration successful",
@@ -72,8 +75,10 @@ export function RegisterForm() {
       });
       
       // For new registrations, send them to complete their profile
+      console.log("Redirecting to profile page");
       navigate("/profile");
     } catch (error) {
+      console.error("Registration error:", error);
       toast({
         title: "Registration failed",
         description: error instanceof Error ? error.message : "Please check your information and try again.",

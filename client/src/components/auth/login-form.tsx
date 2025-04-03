@@ -39,8 +39,11 @@ export function LoginForm() {
 
   const onSubmit = async (values: LoginValues) => {
     setIsLoading(true);
+    console.log("Login form submitted with email:", values.email);
     try {
+      console.log("Attempting sign in with auth context signIn method");
       await signIn(values.email, values.password);
+      console.log("Sign in successful");
       toast({
         title: "Login successful",
         description: "You have been successfully logged in.",
@@ -48,13 +51,17 @@ export function LoginForm() {
       
       // Redirect based on user role with a small delay to ensure state updates
       setTimeout(() => {
+        console.log("Current user role:", user?.role);
         if (user?.role === 'teacher') {
+          console.log("Redirecting to teacher dashboard");
           navigate("/dashboard");
         } else {
+          console.log("Redirecting to videos page");
           navigate("/videos");
         }
       }, 50);
     } catch (error) {
+      console.error("Login error:", error);
       toast({
         title: "Login failed",
         description: error instanceof Error ? error.message : "Please check your credentials and try again.",
