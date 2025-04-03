@@ -37,41 +37,34 @@ export function LoginForm() {
     },
   });
 
-  // Monitor auth state changes
-  useEffect(() => {
-    console.log("Auth state updated - isAuthenticated:", isAuthenticated, "loading:", loading);
-    
-    if (isAuthenticated && !loading) {
-      console.log("User is authenticated, redirecting...");
-      console.log("Current user:", user);
-      
-      if (user?.role === 'teacher') {
-        console.log("Redirecting to teacher dashboard");
-        navigate("/dashboard");
-      } else {
-        console.log("Redirecting to videos page");
-        navigate("/videos");
-      }
-    }
-  }, [isAuthenticated, loading, user, navigate]);
 
   const onSubmit = async (values: LoginValues) => {
     setIsLoading(true);
-    console.log("Login form submitted with email:", values.email);
-    
+    console.log("🧠 Login form submitted with email:", values.email);
+
     try {
-      console.log("Attempting sign in with auth context signIn method");
       await signIn(values.email, values.password);
-      console.log("Sign in successful, auth context updated");
-      console.log("isAuthenticated:", isAuthenticated);
-      
+      console.log("✅ signIn completed, checking user...");
+
+      // Use the most up-to-date user from the auth context
+      setTimeout(() => {
+        const currentUser = user; // should now be updated by onAuthStateChange
+        console.log("👤 Current user after delay:", currentUser);
+
+        if (currentUser?.role === "teacher") {
+          navigate("/dashboard");
+        } else {
+          navigate("/videos");
+        }
+      }, 300); // give it just enough time to hydrate user state
+
       toast({
         title: "Login successful",
         description: "You have been successfully logged in.",
       });
-      
+
     } catch (error) {
-      console.error("Login error:", error);
+      console.error("❌ Login error:", error);
       toast({
         title: "Login failed",
         description: error instanceof Error ? error.message : "Please check your credentials and try again.",
@@ -81,6 +74,7 @@ export function LoginForm() {
       setIsLoading(false);
     }
   };
+
 
   return (
     <Form {...form}>

@@ -16,41 +16,36 @@ import WebSocketDemo from "./pages/websocket-demo";
 import DiagnosticsPage from "./pages/admin/diagnostics";
 import { useEffect } from "react";
 
-// Protected route component that redirects to login if not authenticated
+// 👇 Dev tool import
+import { AuthDebugPanel } from "@/components/dev/auth-debug-panel";
+
 function ProtectedRoute({ component: Component, ...rest }: { component: React.ComponentType<any>, path?: string }) {
   const { isAuthenticated, loading } = useAuth();
   const [, navigate] = useLocation();
-  
+
   useEffect(() => {
     if (!loading && !isAuthenticated) {
       navigate("/login");
     }
   }, [isAuthenticated, loading, navigate]);
 
-  // If still loading or authenticated, render the component
   return loading ? null : isAuthenticated ? <Component {...rest} /> : null;
 }
 
-// Teacher-only route that checks if the user is a teacher
 function TeacherRoute({ component: Component, ...rest }: { component: React.ComponentType<any>, path?: string }) {
   const { isAuthenticated, loading, user } = useAuth();
   const [, navigate] = useLocation();
-  
+
   useEffect(() => {
     if (!loading) {
       if (!isAuthenticated) {
         navigate("/login");
       } else if (user?.role !== "teacher") {
-        // Use history to handle back button properly when redirecting
-        console.log("Non-teacher attempted to access teacher route", rest);
-        // Instead of redirecting to /videos which causes navigation issues,
-        // redirect to the appropriate role-based page
         navigate(user?.role === "student" ? "/videos" : "/");
       }
     }
   }, [isAuthenticated, loading, navigate, user, rest]);
 
-  // If still loading or is a teacher, render the component
   return loading ? null : (isAuthenticated && user?.role === "teacher") ? <Component {...rest} /> : null;
 }
 
@@ -60,22 +55,16 @@ function Router() {
       <Route path="/" component={Home} />
       <Route path="/login" component={Login} />
       <Route path="/register" component={Register} />
-      
-      {/* Protected routes */}
+
       <Route path="/videos" component={(props) => <ProtectedRoute component={Videos} {...props} />} />
       <Route path="/shared" component={(props) => <ProtectedRoute component={Shared} {...props} />} />
       <Route path="/profile" component={(props) => <ProtectedRoute component={Profile} {...props} />} />
-      
-      {/* Teacher-only routes */}
+
       <Route path="/analytics" component={(props) => <TeacherRoute component={Analytics} {...props} />} />
-      
-      {/* Test routes */}
       <Route path="/test-supabase-api" component={TestSupabaseAPI} />
       <Route path="/websocket-demo" component={WebSocketDemo} />
-      
-      {/* Admin routes */}
       <Route path="/admin/diagnostics" component={(props) => <TeacherRoute component={DiagnosticsPage} {...props} />} />
-      
+
       <Route component={NotFound} />
     </Switch>
   );
@@ -86,6 +75,7 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <Router />
+        <AuthDebugPanel /> {/* ✅ Add it here */}
         <Toaster />
       </AuthProvider>
     </QueryClientProvider>
