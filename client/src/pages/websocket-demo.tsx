@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { useAuth } from '@/lib/auth-context';
+import { useAuth } from '@/auth/auth-context';
 import { useWebSocket, getWebSocketUrl } from '@/hooks/useWebSocket';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';

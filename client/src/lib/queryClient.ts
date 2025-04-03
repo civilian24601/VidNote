@@ -1,6 +1,5 @@
 import { QueryClient, QueryFunction } from "@tanstack/react-query";
 import { Video, Comment, VideoSharing } from "@shared/schema";
-import { getAuthHeader } from "./api";
 
 // Real API implementation with Supabase backend
 
@@ -40,8 +39,22 @@ export async function apiRequest(
   
   console.log(`API request: ${method} ${url}`, data ? 'with data' : '');
   
-  const headers = getAuthHeader();
+  // Create headers object manually instead of using getAuthHeader
+  const headers = new Headers();
   headers.append('Content-Type', 'application/json');
+  
+  // Add auth token if available from localStorage
+  const token = localStorage.getItem('supabase.auth.token');
+  if (token) {
+    try {
+      const parsedToken = JSON.parse(token);
+      if (parsedToken?.currentSession?.access_token) {
+        headers.append('Authorization', `Bearer ${parsedToken.currentSession.access_token}`);
+      }
+    } catch (e) {
+      console.error('Error parsing auth token:', e);
+    }
+  }
   
   // Add any custom headers
   Object.entries(customHeaders).forEach(([key, value]) => {
@@ -90,7 +103,22 @@ export function getQueryFn<T>(options: {
     console.log(`API fetch: ${path}`);
     
     try {
-      const headers = getAuthHeader();
+      // Create headers object manually
+      const headers = new Headers();
+      
+      // Add auth token if available from localStorage
+      const token = localStorage.getItem('supabase.auth.token');
+      if (token) {
+        try {
+          const parsedToken = JSON.parse(token);
+          if (parsedToken?.currentSession?.access_token) {
+            headers.append('Authorization', `Bearer ${parsedToken.currentSession.access_token}`);
+          }
+        } catch (e) {
+          console.error('Error parsing auth token:', e);
+        }
+      }
+      
       console.log('Using auth headers:', headers.has('Authorization') ? 'Auth header present' : 'No auth header');
       
       const response = await fetch(path, { headers });

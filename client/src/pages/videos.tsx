@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { useLocation } from "wouter";
 import { useAuth } from "@/auth/auth-context";
-import { useVideos, useUploadVideo } from "@/lib/api";
 import { Navbar } from "@/components/layout/navbar";
 import { MobileNav } from "@/components/layout/mobile-nav";
 import { Button } from "@/components/ui/button";
@@ -41,8 +40,16 @@ type UploadValues = z.infer<typeof uploadSchema>;
 export default function Videos() {
   const [_, navigate] = useLocation();
   const { isAuthenticated, user } = useAuth();
-  const { data: videos, isLoading, refetch } = useVideos();
-  const { mutateAsync: uploadVideo, isPending: isUploading } = useUploadVideo();
+  const videos = [] as any[];
+  const isLoading = false;
+  const refetch = async () => {};
+  const uploadVideo = async (_formData: FormData) => {
+    // Placeholder function that will be implemented later
+    return {
+      storedLocally: false
+    }; 
+  };
+  const isUploading = false;
   const { toast } = useToast();
   const [uploadDialogOpen, setUploadDialogOpen] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);

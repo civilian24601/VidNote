@@ -1,11 +1,19 @@
 import { useLocation } from "wouter";
 import { useAuth } from "@/auth/auth-context";
-import { useSharedVideos } from "@/lib/api";
 import { Navbar } from "@/components/layout/navbar";
+import { useState } from "react";
 import { MobileNav } from "@/components/layout/mobile-nav";
 import { Card, CardContent } from "@/components/ui/card";
 import { formatDate } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
+
+// Temporary mock hook
+const useSharedVideos = () => {
+  return {
+    data: [] as any[],
+    isLoading: false
+  };
+};
 
 export default function Shared() {
   const [_, navigate] = useLocation();
