@@ -204,33 +204,57 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (signUpError) throw new Error(signUpError.message || "Sign-up failed");
 
       const user = signUpData?.user;
-      if (!user) {
-        console.warn("⚠️ No user returned after sign-up");
+      if (!user?.id) {
+        console.error("❌ No valid user ID returned after sign-up");
+        toast({
+          title: "Registration Error",
+          description: "Failed to create user profile. Please contact support.",
+          variant: "destructive",
+        });
         return;
       }
 
-      const { error: insertError } = await supabase.from("users").insert([
-        {
-          id: user.id,
-          email: user.email,
-          username: metadata.username,
-          full_name: metadata.full_name,
-          role: metadata.role,
-          instruments: metadata.instruments || [],
-          experience_level: metadata.experience_level || null,
-          bio: metadata.bio || null,
-          avatar_url: metadata.avatar_url || null,
-        },
-      ]);
+      const userProfile = {
+        id: user.id, // Ensuring this matches auth.uid()
+        email: user.email,
+        username: metadata.username,
+        full_name: metadata.full_name,
+        role: metadata.role,
+        instruments: metadata.instruments || [],
+        experience_level: metadata.experience_level || null,
+        bio: metadata.bio || null,
+        avatar_url: metadata.avatar_url || null,
+      };
+
+      console.log("📝 Inserting user profile:", userProfile);
+
+      const { error: insertError } = await supabase
+        .from("users")
+        .insert([userProfile])
+        .select();
 
       if (insertError) {
-        console.error("❌ Failed to insert profile:", insertError);
+        console.error("❌ Insert error:", insertError);
+        toast({
+          title: "Profile Creation Failed",
+          description: "Failed to create user profile. Please contact support.",
+          variant: "destructive",
+        });
         throw new Error("Error creating user profile");
       }
 
       console.log("✅ Registered and profile saved");
+      toast({
+        title: "Success",
+        description: "Registration successful!",
+      });
     } catch (err: any) {
       console.error("🔥 signUp error:", err);
+      toast({
+        title: "Registration Error",
+        description: err.message || "An unexpected error occurred",
+        variant: "destructive",
+      });
       throw new Error(err.message || "Unexpected error");
     } finally {
       setLoading(false);
