@@ -256,9 +256,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     metadata: UserMetadata
   ) {
     setLoading(true);
-    console.log("📝 Registering with:", email, metadata);
+    console.log("📝 Starting registration for:", email);
+
     try {
-      // Step 1: Create auth user
+      // Step 1: Create auth user and wait for session
       const { data: signUpData, error: signUpError } =
         await supabase.auth.signUp({
           email,
@@ -269,8 +270,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           },
         });
 
-      console.log("✅ Auth signup result:", {
-        success: !!signUpData?.user,
+      console.log("✅ Auth signup response:", {
+        hasUser: !!signUpData?.user,
+        hasSession: !!signUpData?.session,
         error: signUpError
       });
 
@@ -281,9 +283,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         throw new Error("No valid user ID returned after sign-up");
       }
 
-      // Step 2: Create user profile
+      // Wait for auth state to propagate
+      console.log("⏳ Waiting for auth state to propagate...");
+      await new Promise(resolve => setTimeout(resolve, 1000));
+
+      // Verify session is active
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      console.log("🔍 Session check:", { hasSession: !!session, error: sessionError });
+      
+      if (!session) {
+        throw new Error("No active session after signup");
+      }
+
+      // Step 2: Create user profile with basic insert
       const userProfile = {
-        id: user.id, // UUID string from auth
+        id: user.id,
         email: user.email,
         username: metadata.username,
         full_name: metadata.full_name,
@@ -294,51 +308,56 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         avatar_url: metadata.avatar_url || null,
       };
 
-      console.log("📝 Creating user profile with ID:", user.id);
+      console.log("📝 Inserting user profile:", userProfile);
 
-      // Single insert attempt with upsert
+      // Simple insert without upsert logic
       const { data: profileData, error: profileError } = await supabase
         .from("users")
-        .upsert([userProfile], { 
-          onConflict: 'id',
-          ignoreDuplicates: false
-        })
+        .insert([userProfile])
         .select()
         .single();
 
-      // Log result regardless of success/failure
-      console.log("📝 Profile creation result:", {
-        success: !!profileData,
-        error: profileError,
-        data: profileData
-      });
-
+      // Detailed error logging
       if (profileError) {
+        console.error("❌ Profile creation failed:", {
+          error: profileError,
+          code: profileError.code,
+          details: profileError.details,
+          hint: profileError.hint
+        });
         throw new Error(`Failed to create user profile: ${profileError.message}`);
       }
 
+      console.log("✅ Profile creation succeeded:", profileData);
+
       if (!profileData) {
-        throw new Error("Profile created but no data returned");
+        throw new Error("Profile insert succeeded but returned no data");
       }
 
-      console.log("✅ Registration complete - profile saved");
+      // Update local state
+      setSession(session);
+      setUser(mapSupabaseUser(user, profileData));
+
+      console.log("✅ Registration complete - auth and profile confirmed");
       toast({
         title: "Success",
         description: "Registration successful!",
       });
 
-      // Manually update auth context state to avoid race condition
-      setSession(signUpData.session);
-      setUser(mapSupabaseUser(user, profileData));
-      
     } catch (err: any) {
-      console.error("🔥 Registration failed:", err);
+      console.error("🔥 Registration failed:", {
+        error: err,
+        message: err.message,
+        code: err.code,
+        details: err?.details
+      });
+      
       toast({
         title: "Registration Error",
         description: err.message || "An unexpected error occurred",
         variant: "destructive",
       });
-      throw err; // Re-throw to be handled by the form
+      throw err;
     } finally {
       setLoading(false);
     }
