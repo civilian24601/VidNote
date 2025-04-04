@@ -195,19 +195,36 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   async function signIn(email: string, password: string) {
     setLoading(true);
     try {
+      console.log("🔄 SignIn: Starting authentication process");
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
 
       if (error) throw new Error(error.message || "Login failed");
+      console.log("✅ SignIn: Authentication successful");
 
       const user = data?.user;
       if (user) {
-        await forceHydrateUser(user);
+        console.log("🔄 SignIn: Fetching user profile");
+        // Instead of using forceHydrateUser which might cause issues,
+        // directly fetch profile and update state
+        const profile = await fetchUserProfile(user.id);
+        console.log("✅ SignIn: Profile fetched", !!profile);
+        
+        // Update session
+        const refreshed = await supabase.auth.getSession();
+        console.log("✅ SignIn: Session refreshed");
+        
+        // Set state directly without waiting for onAuthStateChange
+        setSession(refreshed.data.session);
+        setUser(mapSupabaseUser(user, profile));
+        
+        toast.success("Signed in successfully");
+      } else {
+        console.warn("⚠️ SignIn: No user returned after successful authentication");
+        toast.error("Login succeeded but user data was not found");
       }
-
-      toast.success("Signed in successfully");
     } catch (err: any) {
       console.error("🔥 signIn error:", err);
       toast.error(err.message || "Login failed");

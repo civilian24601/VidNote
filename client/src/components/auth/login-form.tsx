@@ -43,19 +43,11 @@ export function LoginForm() {
 
     try {
       await signIn(values.email, values.password);
-      toast({
-        title: "Login successful",
-        description: "Welcome back!",
-      });
-
-      // Defer navigation slightly to allow state to hydrate
-      setTimeout(() => {
-        if (user?.role === "teacher") {
-          navigate("/dashboard");
-        } else {
-          navigate("/videos");
-        }
-      }, 100);
+      // The toast is now handled inside signIn function
+      
+      // Add a more robust check to ensure we have a user before navigation
+      // Use the useEffect in Login.tsx component to handle the redirection
+      // instead of directly navigating here
     } catch (error) {
       console.error("❌ Login error:", error);
       toast({
