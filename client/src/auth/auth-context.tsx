@@ -278,7 +278,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       if (signUpError) throw new Error(signUpError.message || "Sign-up failed");
 
-      const user = signUpData?.user;
+      let user = signUpData?.user;
       if (!user?.id) {
         throw new Error("No valid user ID returned after sign-up");
       }
