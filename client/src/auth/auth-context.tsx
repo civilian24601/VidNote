@@ -256,9 +256,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     metadata: UserMetadata
   ) {
     setLoading(true);
-    try {
-      console.log("📝 Starting registration for:", email);
+    console.log("📝 Starting registration for:", email);
 
+    try {
       // Step 1: Create auth user and wait for session
       const { data: signUpData, error: signUpError } =
         await supabase.auth.signUp({
@@ -399,6 +399,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         title: "Success",
         description: "Registration successful!",
       });
+    } catch (err: any) {
+      console.error("🔥 Registration failed:", {
+        error: err,
+        message: err.message,
+        code: err.code,
+        details: err?.details
+      });
+      
+      toast({
+        title: "Registration Error",
+        description: err.message || "An unexpected error occurred",
+        variant: "destructive",
+      });
+      throw err;
+    } finally {
+      setLoading(false);
+    }
     } catch (err: any) {
       console.error("🔥 Registration failed:", {
         error: err,
