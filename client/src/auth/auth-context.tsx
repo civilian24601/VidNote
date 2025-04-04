@@ -296,6 +296,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
 
       // Step 2: Create user profile with basic insert
+      console.log("🔍 Pre-insert checks:", {
+        hasUserId: !!user?.id,
+        userId: user?.id,
+        userEmail: user?.email,
+        sessionActive: !!session
+      });
+
+      if (!user?.id) {
+        throw new Error("Cannot create profile - missing user ID");
+      }
+
       const userProfile = {
         id: user.id,
         email: user.email,
@@ -308,27 +319,58 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         avatar_url: metadata.avatar_url || null,
       };
 
-      console.log("📝 Inserting user profile:", userProfile);
+      console.log("📝 About to insert user profile:", userProfile);
 
-      // Simple insert without upsert logic
-      const { data: profileData, error: profileError } = await supabase
+      // Capture exact time of insert attempt
+      const insertStartTime = new Date().toISOString();
+      console.log(`⏱️ Starting insert at ${insertStartTime}`);
+
+      // Simple insert with detailed logging
+      const insertResult = await supabase
         .from("users")
         .insert([userProfile])
         .select()
         .single();
 
-      // Detailed error logging
+      console.log("📊 Insert operation complete:", {
+        success: !insertResult.error && !!insertResult.data,
+        error: insertResult.error ? {
+          message: insertResult.error.message,
+          code: insertResult.error.code,
+          details: insertResult.error.details,
+          hint: insertResult.error.hint
+        } : null,
+        data: insertResult.data,
+        duration: `${Date.now() - new Date(insertStartTime).getTime()}ms`
+      });
+
+      const { data: profileData, error: profileError } = insertResult;
+
+      // Enhanced error handling and validation
       if (profileError) {
         console.error("❌ Profile creation failed:", {
           error: profileError,
           code: profileError.code,
           details: profileError.details,
-          hint: profileError.hint
+          hint: profileError.hint,
+          requestPayload: userProfile
         });
         throw new Error(`Failed to create user profile: ${profileError.message}`);
       }
 
-      console.log("✅ Profile creation succeeded:", profileData);
+      if (!profileData) {
+        console.error("❌ No profile data returned despite successful insert");
+        throw new Error("Profile insert succeeded but returned no data");
+      }
+
+      console.log("✅ Profile creation succeeded:", {
+        profile: profileData,
+        matches: {
+          id: profileData.id === user.id,
+          email: profileData.email === user.email,
+          username: profileData.username === metadata.username
+        }
+      });
 
       if (!profileData) {
         throw new Error("Profile insert succeeded but returned no data");
