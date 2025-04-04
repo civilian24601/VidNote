@@ -258,6 +258,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setLoading(true);
     console.log("📝 Registering with:", email, metadata);
     try {
+      // Step 1: Create auth user
       const { data: signUpData, error: signUpError } =
         await supabase.auth.signUp({
           email,
@@ -268,26 +269,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           },
         });
 
-      console.log("✅ Supabase signUpData:", signUpData);
+      console.log("✅ Auth signup result:", {
+        success: !!signUpData?.user,
+        error: signUpError
+      });
 
       if (signUpError) throw new Error(signUpError.message || "Sign-up failed");
 
       const user = signUpData?.user;
       if (!user?.id) {
-        console.error("❌ No valid user ID returned after sign-up");
-        toast({
-          title: "Registration Error",
-          description: "Failed to create user profile. Please contact support.",
-          variant: "destructive",
-        });
-        return;
+        throw new Error("No valid user ID returned after sign-up");
       }
 
-      // Wait a short moment to ensure auth is fully propagated
-      await new Promise(resolve => setTimeout(resolve, 1000));
-
+      // Step 2: Create user profile
       const userProfile = {
-        id: user.id,
+        id: user.id, // UUID string from auth
         email: user.email,
         username: metadata.username,
         full_name: metadata.full_name,
@@ -298,76 +294,51 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         avatar_url: metadata.avatar_url || null,
       };
 
-      console.log("📝 Attempting to insert user profile:", userProfile);
+      console.log("📝 Creating user profile with ID:", user.id);
 
-      // First insert attempt
-      let { data: insertData, error: insertError } = await supabase
+      // Single insert attempt with upsert
+      const { data: profileData, error: profileError } = await supabase
         .from("users")
-        .insert([userProfile])
+        .upsert([userProfile], { 
+          onConflict: 'id',
+          ignoreDuplicates: false
+        })
         .select()
         .single();
 
-      console.log("📝 First insert attempt result:", {
-        success: !insertError,
-        data: insertData,
-        error: insertError,
-        insertedId: user.id,
+      // Log result regardless of success/failure
+      console.log("📝 Profile creation result:", {
+        success: !!profileData,
+        error: profileError,
+        data: profileData
       });
 
-      // If first attempt fails, try again with upsert
-      if (insertError) {
-        console.log("⚠️ First insert failed, attempting upsert...");
-        ({ data: insertData, error: insertError } = await supabase
-          .from("users")
-          .upsert([userProfile], { onConflict: 'id' })
-          .select()
-          .single());
-
-        console.log("📝 Upsert attempt result:", {
-          success: !insertError,
-          data: insertData,
-          error: insertError,
-        });
+      if (profileError) {
+        throw new Error(`Failed to create user profile: ${profileError.message}`);
       }
 
-      // Verify the profile exists
-      const { data: verifyData, error: verifyError } = await supabase
-        .from("users")
-        .select()
-        .eq("id", user.id)
-        .single();
-
-      console.log("🔍 Profile verification after insert:", {
-        exists: !!verifyData,
-        data: verifyData,
-        error: verifyError
-      });
-
-      if (!verifyData || verifyError) {
-        console.error("❌ Profile verification failed:", { verifyError, verifyData });
-        toast({
-          title: "Profile Creation Failed",
-          description: "Failed to verify user profile. Please contact support.",
-          variant: "destructive",
-        });
-        throw new Error("Failed to verify user profile creation");
+      if (!profileData) {
+        throw new Error("Profile created but no data returned");
       }
 
-      // Use existing verifyData variable
-
-      console.log("✅ Registered and profile saved");
+      console.log("✅ Registration complete - profile saved");
       toast({
         title: "Success",
         description: "Registration successful!",
       });
+
+      // Manually update auth context state to avoid race condition
+      setSession(signUpData.session);
+      setUser(mapSupabaseUser(user, profileData));
+      
     } catch (err: any) {
-      console.error("🔥 signUp error:", err);
+      console.error("🔥 Registration failed:", err);
       toast({
         title: "Registration Error",
         description: err.message || "An unexpected error occurred",
         variant: "destructive",
       });
-      throw new Error(err.message || "Unexpected error");
+      throw err; // Re-throw to be handled by the form
     } finally {
       setLoading(false);
     }
