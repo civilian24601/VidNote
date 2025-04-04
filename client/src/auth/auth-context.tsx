@@ -283,6 +283,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return;
       }
 
+      // Wait a short moment to ensure auth is fully propagated
+      await new Promise(resolve => setTimeout(resolve, 1000));
+
       const userProfile = {
         id: user.id,
         email: user.email,
@@ -295,29 +298,59 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         avatar_url: metadata.avatar_url || null,
       };
 
-      console.log("📝 Inserting user profile:", userProfile);
+      console.log("📝 Attempting to insert user profile:", userProfile);
 
-      const { data: insertData, error: insertError } = await supabase
+      // First insert attempt
+      let { data: insertData, error: insertError } = await supabase
         .from("users")
         .insert([userProfile])
-        .select();
+        .select()
+        .single();
 
-      console.log("📝 Insert attempt result:", {
+      console.log("📝 First insert attempt result:", {
         success: !insertError,
         data: insertData,
         error: insertError,
         insertedId: user.id,
-        authUserId: user.id,
       });
 
+      // If first attempt fails, try again with upsert
       if (insertError) {
-        console.error("❌ Insert error:", insertError);
+        console.log("⚠️ First insert failed, attempting upsert...");
+        ({ data: insertData, error: insertError } = await supabase
+          .from("users")
+          .upsert([userProfile], { onConflict: 'id' })
+          .select()
+          .single());
+
+        console.log("📝 Upsert attempt result:", {
+          success: !insertError,
+          data: insertData,
+          error: insertError,
+        });
+      }
+
+      // Verify the profile exists
+      const { data: verifyData, error: verifyError } = await supabase
+        .from("users")
+        .select()
+        .eq("id", user.id)
+        .single();
+
+      console.log("🔍 Profile verification after insert:", {
+        exists: !!verifyData,
+        data: verifyData,
+        error: verifyError
+      });
+
+      if (!verifyData || verifyError) {
+        console.error("❌ Profile verification failed:", { verifyError, verifyData });
         toast({
           title: "Profile Creation Failed",
-          description: "Failed to create user profile. Please contact support.",
+          description: "Failed to verify user profile. Please contact support.",
           variant: "destructive",
         });
-        throw new Error("Error creating user profile");
+        throw new Error("Failed to verify user profile creation");
       }
 
       const { data: verifyData, error: verifyError } = await supabase
