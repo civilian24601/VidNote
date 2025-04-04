@@ -124,18 +124,34 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   useEffect(() => {
+    let isMounted = true;
+    
     async function getInitialSession() {
+      console.log("🔄 Getting initial session");
       try {
-        const {
-          data: { session },
-        } = await supabase.auth.getSession();
+        const { data: { session }, error } = await supabase.auth.getSession();
+        
+        if (error) throw error;
+        if (!isMounted) {
+          console.log("⚠️ Component unmounted, skipping state updates");
+          return;
+        }
+
+        console.log("🔍 Initial session:", { hasSession: !!session });
+        
         setSession(session);
         if (session?.user) {
           const profile = await fetchUserProfile(session.user.id);
-          setUser(mapSupabaseUser(session.user, profile));
+          if (isMounted) {
+            setUser(mapSupabaseUser(session.user, profile));
+          }
         }
       } catch (error) {
-        console.error("Error getting initial session:", error);
+        console.error("❌ Error getting initial session:", error);
+        if (isMounted) {
+          setUser(null);
+          setSession(null);
+        }
       }
     }
 
@@ -160,7 +176,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setLoading(false);
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      subscription.unsubscribe();
+      isMounted = false;
+      console.log("🧹 Auth context cleanup: unsubscribed and marked unmounted");
+    };
   }, []);
 
   async function signUp(
@@ -261,14 +281,34 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   async function signOut() {
     try {
+      console.log("🔁 Starting signOut process");
       setLoading(true);
-      await supabase.auth.signOut();
+
+      // 1. Sign out from Supabase first
+      const { error: signOutError } = await supabase.auth.signOut();
+      if (signOutError) throw signOutError;
+      console.log("✅ Supabase signOut completed");
+
+      // 2. Verify session is cleared
+      const { data: { session: postLogoutSession } } = await supabase.auth.getSession();
+      console.log("🧹 Post-signOut session check:", { hasSession: !!postLogoutSession });
+
+      if (postLogoutSession) {
+        console.warn("⚠️ Found lingering session after signOut");
+        await supabase.auth.setSession({ access_token: '', refresh_token: '' });
+        console.log("🧹 Forced session clear");
+      }
+
+      // 3. Clear local state only after network operations
       setUser(null);
       setSession(null);
-      console.log("✅ Successfully signed out");
+      console.log("✅ Auth state cleared");
     } catch (err) {
-      console.error("Error signing out:", err);
-      throw new Error("Error signing out");
+      console.error("❌ Error during signOut:", err);
+      // Still clear state on error for safety
+      setUser(null);
+      setSession(null);
+      throw new Error("Failed to sign out cleanly");
     } finally {
       setLoading(false);
     }
