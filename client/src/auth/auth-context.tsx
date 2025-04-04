@@ -268,18 +268,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           },
         });
 
-      console.log("🔍 SignUp Response:", {
-        hasData: !!signUpData,
-        user: signUpData?.user,
-        session: signUpData?.session,
-        error: signUpError
-      });
+      console.log("✅ Supabase signUpData:", signUpData);
 
       if (signUpError) throw new Error(signUpError.message || "Sign-up failed");
 
       const user = signUpData?.user;
-      console.log("🔍 Extracted user:", user);
-      
       if (!user?.id) {
         console.error("❌ No valid user ID returned after sign-up");
         toast({
@@ -302,6 +295,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         avatar_url: metadata.avatar_url || null,
       };
 
+      const userProfile = {
+        id: user.id,
+        email: user.email,
+        username: metadata.username,
+        full_name: metadata.full_name,
+        role: metadata.role,
+        instruments: metadata.instruments || [],
+        experience_level: metadata.experience_level || null,
+        bio: metadata.bio || null,
+        avatar_url: metadata.avatar_url || null,
+      };
+
       console.log("📝 Inserting user profile:", userProfile);
 
       const { data: insertData, error: insertError } = await supabase
@@ -313,8 +318,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         success: !insertError,
         data: insertData,
         error: insertError,
-        insertedId: userProfile.id,
-        authUserId: user.id
+        insertedId: user.id,
+        authUserId: user.id,
       });
 
       if (insertError) {
@@ -327,7 +332,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         throw new Error("Error creating user profile");
       }
 
-      // Verify profile was created
       const { data: verifyData, error: verifyError } = await supabase
         .from("users")
         .select()
