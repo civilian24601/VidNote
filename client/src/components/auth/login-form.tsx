@@ -1,4 +1,5 @@
-import { useState } from "react";
+
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -23,11 +24,15 @@ const loginSchema = z.object({
 
 type LoginValues = z.infer<typeof loginSchema>;
 
+const MAX_AUTH_WAIT_TIME = 10000; // 10 seconds maximum wait
+const AUTH_CHECK_INTERVAL = 100; // Check every 100ms
+
 export function LoginForm() {
   const [_, navigate] = useLocation();
   const { signIn, user, isAuthenticated, loading } = useAuth();
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [authStarted, setAuthStarted] = useState(false);
 
   const form = useForm<LoginValues>({
     resolver: zodResolver(loginSchema),
@@ -37,19 +42,79 @@ export function LoginForm() {
     },
   });
 
+  // Handle auth state changes and navigation
+  useEffect(() => {
+    let timeout: NodeJS.Timeout;
+    let startTime: number;
+
+    const checkAuthAndNavigate = async () => {
+      if (!authStarted || !isAuthenticated || !user) return;
+
+      console.log("🔍 Auth state check:", {
+        isAuthenticated,
+        user,
+        loading,
+        authStarted
+      });
+
+      if (user.role) {
+        setAuthStarted(false);
+        setIsSubmitting(false);
+        
+        const destination = user.role === "teacher" ? "/dashboard" : "/videos";
+        console.log("✅ Login successful, navigating to:", destination);
+        
+        toast({
+          title: "Welcome back!",
+          description: `Logged in as ${user.fullName}`,
+        });
+        
+        navigate(destination);
+        return;
+      }
+
+      // Check if we've exceeded maximum wait time
+      if (startTime && Date.now() - startTime > MAX_AUTH_WAIT_TIME) {
+        setAuthStarted(false);
+        setIsSubmitting(false);
+        console.error("❌ Auth state timeout - user data not received in time");
+        toast({
+          title: "Login failed",
+          description: "Could not complete login process. Please try again.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Continue checking
+      timeout = setTimeout(checkAuthAndNavigate, AUTH_CHECK_INTERVAL);
+    };
+
+    if (authStarted) {
+      startTime = Date.now();
+      checkAuthAndNavigate();
+    }
+
+    return () => {
+      if (timeout) clearTimeout(timeout);
+    };
+  }, [authStarted, isAuthenticated, user, loading, navigate, toast]);
+
   const onSubmit = async (values: LoginValues) => {
+    if (isSubmitting) return;
+    
     setIsSubmitting(true);
     console.log("🧠 Login form submitted with email:", values.email);
 
     try {
       await signIn(values.email, values.password);
-      // The toast is now handled inside signIn function
+      setAuthStarted(true);
       
-      // Add a more robust check to ensure we have a user before navigation
-      // Use the useEffect in Login.tsx component to handle the redirection
-      // instead of directly navigating here
     } catch (error) {
       console.error("❌ Login error:", error);
+      setIsSubmitting(false);
+      setAuthStarted(false);
+      
       toast({
         title: "Login failed",
         description:
@@ -58,8 +123,6 @@ export function LoginForm() {
             : "Please check your credentials and try again.",
         variant: "destructive",
       });
-    } finally {
-      setIsSubmitting(false);
     }
   };
 
