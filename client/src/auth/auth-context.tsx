@@ -304,10 +304,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       console.log("📝 Inserting user profile:", userProfile);
 
-      const { error: insertError } = await supabase
+      const { data: insertData, error: insertError } = await supabase
         .from("users")
         .insert([userProfile])
         .select();
+
+      console.log("📝 Insert attempt result:", {
+        success: !insertError,
+        data: insertData,
+        error: insertError,
+        insertedId: userProfile.id,
+        authUserId: user.id
+      });
 
       if (insertError) {
         console.error("❌ Insert error:", insertError);
@@ -318,6 +326,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         });
         throw new Error("Error creating user profile");
       }
+
+      // Verify profile was created
+      const { data: verifyData, error: verifyError } = await supabase
+        .from("users")
+        .select()
+        .eq("id", user.id)
+        .single();
+
+      console.log("🔍 Profile verification after insert:", {
+        data: verifyData,
+        error: verifyError
+      });
 
       console.log("✅ Registered and profile saved");
       toast({
