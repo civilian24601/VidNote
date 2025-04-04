@@ -80,12 +80,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   async function fetchUserProfile(userId: string) {
+    console.log("🔍 fetchUserProfile called with userId:", userId);
     try {
       const { data, error } = await supabase
         .from("users")
         .select("*")
         .eq("id", userId)
         .single();
+      console.log("🔍 Profile query result:", { data, error });
       if (error || !data) {
         console.error("❌ fetchUserProfile failed:", error);
         return null;
@@ -125,11 +127,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (_event, session) => {
+      console.log("🔍 Auth State Change fired:", { event: _event, session });
       setSession(session);
       if (session?.user) {
+        console.log("🔍 Fetching profile for user:", session.user.id);
         const profile = await fetchUserProfile(session.user.id);
-        setUser(mapSupabaseUser(session.user, profile));
+        console.log("🔍 Profile fetch result:", { profile });
+        const mappedUser = mapSupabaseUser(session.user, profile);
+        console.log("🔍 Setting user state to:", mappedUser);
+        setUser(mappedUser);
       } else {
+        console.log("🔍 No session user, setting user state to null");
         setUser(null);
       }
       setLoading(false);
