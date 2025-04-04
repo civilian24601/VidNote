@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -27,7 +27,7 @@ export function LoginForm() {
   const [_, navigate] = useLocation();
   const { signIn, user, isAuthenticated, loading } = useAuth();
   const { toast } = useToast();
-  const [isLoading, setIsLoading] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const form = useForm<LoginValues>({
     resolver: zodResolver(loginSchema),
@@ -37,44 +37,39 @@ export function LoginForm() {
     },
   });
 
-
   const onSubmit = async (values: LoginValues) => {
-    setIsLoading(true);
+    setIsSubmitting(true);
     console.log("🧠 Login form submitted with email:", values.email);
 
     try {
       await signIn(values.email, values.password);
-      console.log("✅ signIn completed, checking user...");
+      toast({
+        title: "Login successful",
+        description: "Welcome back!",
+      });
 
-      // Use the most up-to-date user from the auth context
+      // Defer navigation slightly to allow state to hydrate
       setTimeout(() => {
-        const currentUser = user; // should now be updated by onAuthStateChange
-        console.log("👤 Current user after delay:", currentUser);
-
-        if (currentUser?.role === "teacher") {
+        if (user?.role === "teacher") {
           navigate("/dashboard");
         } else {
           navigate("/videos");
         }
-      }, 300); // give it just enough time to hydrate user state
-
-      toast({
-        title: "Login successful",
-        description: "You have been successfully logged in.",
-      });
-
+      }, 100);
     } catch (error) {
       console.error("❌ Login error:", error);
       toast({
         title: "Login failed",
-        description: error instanceof Error ? error.message : "Please check your credentials and try again.",
+        description:
+          error instanceof Error
+            ? error.message
+            : "Please check your credentials and try again.",
         variant: "destructive",
       });
     } finally {
-      setIsLoading(false);
+      setIsSubmitting(false);
     }
   };
-
 
   return (
     <Form {...form}>
@@ -99,14 +94,18 @@ export function LoginForm() {
             <FormItem>
               <FormLabel>Password</FormLabel>
               <FormControl>
-                <Input type="password" placeholder="Enter your password" {...field} />
+                <Input
+                  type="password"
+                  placeholder="Enter your password"
+                  {...field}
+                />
               </FormControl>
               <FormMessage />
             </FormItem>
           )}
         />
-        <Button type="submit" className="w-full" disabled={isLoading}>
-          {isLoading ? "Logging in..." : "Log in"}
+        <Button type="submit" className="w-full" disabled={isSubmitting}>
+          {isSubmitting ? "Logging in..." : "Log in"}
         </Button>
       </form>
     </Form>

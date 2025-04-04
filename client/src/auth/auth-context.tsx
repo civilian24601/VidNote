@@ -7,6 +7,7 @@ import {
 } from "react";
 import { supabase } from "../../../supabase/client";
 import { Session, User as SupabaseUser } from "@supabase/supabase-js";
+import { toast } from "@/hooks/use-toast";
 
 export interface User {
   id: string;
@@ -26,7 +27,7 @@ interface UserMetadata {
   full_name: string;
   role: "student" | "teacher";
   instruments?: string[] | null;
-  experience_level?: string | null;
+  experience_level?: string[] | null;
   bio?: string | null;
   avatar_url?: string | null;
 }
@@ -38,7 +39,7 @@ interface AuthContextType {
   signUp: (
     email: string,
     password: string,
-    metadata: UserMetadata,
+    metadata: UserMetadata
   ) => Promise<void>;
   signIn: (email: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
@@ -96,6 +97,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }
 
+  async function forceHydrateUser(supabaseUser: SupabaseUser) {
+    const profile = await fetchUserProfile(supabaseUser.id);
+    const refreshed = await supabase.auth.getSession();
+    setSession(refreshed.data.session);
+    setUser(mapSupabaseUser(supabaseUser, profile));
+  }
+
   useEffect(() => {
     async function getInitialSession() {
       try {
@@ -133,7 +141,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   async function signUp(
     email: string,
     password: string,
-    metadata: UserMetadata,
+    metadata: UserMetadata
   ) {
     setLoading(true);
     console.log("📝 Registering with:", email, metadata);
@@ -158,7 +166,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       const { error: insertError } = await supabase.from("users").insert([
         {
-          id: user.id, // 🔥 critical for RLS policy
+          id: user.id,
           email: user.email,
           username: metadata.username,
           full_name: metadata.full_name,
@@ -186,45 +194,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   async function signIn(email: string, password: string) {
     setLoading(true);
-    console.log("🔐 Sign-in attempt for:", email);
     try {
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
-      console.log("📬 Supabase response:", { data, error });
+
       if (error) throw new Error(error.message || "Login failed");
 
       const user = data?.user;
-      if (!user) {
-        console.warn("⚠️ Login returned no user");
-        return;
+      if (user) {
+        await forceHydrateUser(user);
       }
 
-      const profile = await fetchUserProfile(user.id);
-      if (!profile) {
-        console.warn("📭 No profile found — creating...");
-        const { error: insertError } = await supabase.from("users").insert([
-          {
-            id: user.id,
-            email: user.email,
-            username: user.user_metadata?.username || "",
-            full_name: user.user_metadata?.full_name || "",
-            role: user.user_metadata?.role || "student",
-            instruments: user.user_metadata?.instruments || [],
-            experience_level: user.user_metadata?.experience_level || null,
-            bio: user.user_metadata?.bio || null,
-            avatar_url: user.user_metadata?.avatar_url || null,
-          },
-        ]);
-        if (insertError)
-          console.error("❌ Failed to insert fallback profile:", insertError);
-      }
-
-      console.log("✅ Sign-in success for:", user.id);
+      toast.success("Signed in successfully");
     } catch (err: any) {
       console.error("🔥 signIn error:", err);
-      throw new Error(err.message || "Unexpected error");
+      toast.error(err.message || "Login failed");
+      throw err;
     } finally {
       setLoading(false);
     }
@@ -232,9 +219,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   async function signOut() {
     try {
+      setLoading(true);
       await supabase.auth.signOut();
+      setUser(null);
+      setSession(null);
+      toast.success("You have been signed out.");
     } catch (err) {
       console.error("Error signing out:", err);
+      toast.error("Error signing out.");
+    } finally {
+      setLoading(false);
     }
   }
 
