@@ -88,7 +88,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         .select("*")
         .eq("id", userId)
         .single();
-      
+
       // Detailed query result logging
       console.log("🔍 Raw Supabase Response:", {
         hasData: !!data,
@@ -130,9 +130,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     async function validateAndCleanSession(session: Session | null) {
       if (!session) return false;
-      
+
       console.log("🔍 Validating session state for user:", session.user.id);
-      
+
       try {
         // Clear any stale localStorage data
         const localStorageSession = localStorage.getItem('supabase.auth.token');
@@ -144,7 +144,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
         const profile = await fetchUserProfile(session.user.id);
         console.log("🔍 Profile fetch result:", { hasProfile: !!profile });
-        
+
         if (!profile) {
           console.warn("⚠️ Session exists but no user profile found - clearing stale state");
           await supabase.auth.signOut();
@@ -155,7 +155,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           }
           return false;
         }
-        
+
         return true;
       } catch (error) {
         console.error("❌ Session validation failed:", error);
@@ -164,7 +164,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return false;
       }
     }
-    
+
     async function getInitialSession() {
       console.log("🔄 Getting initial session");
 
@@ -179,7 +179,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }, 5000);
       try {
         const { data: { session }, error } = await supabase.auth.getSession();
-        
+
         if (error) throw error;
         if (!isMounted) {
           console.log("⚠️ Component unmounted, skipping state updates");
@@ -187,10 +187,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
 
         console.log("🔍 Initial session:", { hasSession: !!session });
-        
+
         // Set initial states
         setSession(session);
-        
+
         if (session?.user) {
           const isValid = await validateAndCleanSession(session);
           if (isValid && isMounted) {
@@ -353,16 +353,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         throw new Error("Failed to verify user profile creation");
       }
 
-      const { data: verifyData, error: verifyError } = await supabase
-        .from("users")
-        .select()
-        .eq("id", user.id)
-        .single();
-
-      console.log("🔍 Profile verification after insert:", {
-        data: verifyData,
-        error: verifyError
-      });
+      // Use existing verifyData variable
 
       console.log("✅ Registered and profile saved");
       toast({
@@ -401,15 +392,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         // directly fetch profile and update state
         const profile = await fetchUserProfile(user.id);
         console.log("✅ SignIn: Profile fetched", !!profile);
-        
+
         // Update session
         const refreshed = await supabase.auth.getSession();
         console.log("✅ SignIn: Session refreshed");
-        
+
         // Set state directly without waiting for onAuthStateChange
         setSession(refreshed.data.session);
         setUser(mapSupabaseUser(user, profile));
-        
+
         // Toast is now handled in the login form component
         console.log("✅ SignIn: Login successful");
       } else {
