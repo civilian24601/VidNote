@@ -201,9 +201,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           },
         });
 
+      console.log("🔍 SignUp Response:", {
+        hasData: !!signUpData,
+        user: signUpData?.user,
+        session: signUpData?.session,
+        error: signUpError
+      });
+
       if (signUpError) throw new Error(signUpError.message || "Sign-up failed");
 
       const user = signUpData?.user;
+      console.log("🔍 Extracted user:", user);
+      
       if (!user?.id) {
         console.error("❌ No valid user ID returned after sign-up");
         toast({
