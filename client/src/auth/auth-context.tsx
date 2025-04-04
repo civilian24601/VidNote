@@ -82,14 +82,31 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   async function fetchUserProfile(userId: string) {
     console.log("🔍 fetchUserProfile called with userId:", userId);
     try {
+      console.log("🔍 Executing Supabase query for user:", userId);
       const { data, error } = await supabase
         .from("users")
         .select("*")
         .eq("id", userId)
         .single();
-      console.log("🔍 Profile query result:", { data, error });
+      
+      // Detailed query result logging
+      console.log("🔍 Raw Supabase Response:", {
+        hasData: !!data,
+        dataFields: data ? Object.keys(data) : null,
+        error: error ? {
+          message: error.message,
+          code: error.code,
+          details: error.details,
+          hint: error.hint
+        } : null
+      });
+
       if (error || !data) {
-        console.error("❌ fetchUserProfile failed:", error);
+        console.error("❌ fetchUserProfile failed:", {
+          error,
+          userId,
+          timestamp: new Date().toISOString()
+        });
         return null;
       }
       return data;
