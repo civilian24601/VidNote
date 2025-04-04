@@ -220,14 +220,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setSession(refreshed.data.session);
         setUser(mapSupabaseUser(user, profile));
         
-        toast.success("Signed in successfully");
+        // Toast is now handled in the login form component
+        console.log("✅ SignIn: Login successful");
       } else {
         console.warn("⚠️ SignIn: No user returned after successful authentication");
-        toast.error("Login succeeded but user data was not found");
+        throw new Error("Login succeeded but user data was not found");
       }
     } catch (err: any) {
       console.error("🔥 signIn error:", err);
-      toast.error(err.message || "Login failed");
       throw err;
     } finally {
       setLoading(false);
@@ -240,10 +240,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       await supabase.auth.signOut();
       setUser(null);
       setSession(null);
-      toast.success("You have been signed out.");
+      console.log("✅ Successfully signed out");
     } catch (err) {
       console.error("Error signing out:", err);
-      toast.error("Error signing out.");
+      throw new Error("Error signing out");
     } finally {
       setLoading(false);
     }
@@ -283,7 +283,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (dbError) throw dbError;
 
       const profile = await fetchUserProfile(user.id);
-      if (profile) setUser(mapSupabaseUser(user, profile));
+      if (profile) setUser(mapSupabaseUser(user as SupabaseUser, profile));
     } catch (err: any) {
       console.error("🔥 updateProfile error:", err);
       throw new Error(err.message || "Failed to update");
