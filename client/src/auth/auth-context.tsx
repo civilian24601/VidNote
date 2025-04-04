@@ -295,18 +295,31 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         throw new Error("No active session after signup");
       }
 
-      // Step 2: Create user profile with basic insert
-      console.log("🔍 Pre-insert checks:", {
-        hasUserId: !!user?.id,
-        userId: user?.id,
-        userEmail: user?.email,
-        sessionActive: !!session
+      // Step 2: Create user profile with basic insert - Debug Block
+      console.log("🔍 Raw signUpData:", {
+        hasData: !!signUpData,
+        user: signUpData?.user,
+        session: signUpData?.session
       });
 
-      if (!user?.id) {
-        throw new Error("Cannot create profile - missing user ID");
+      // Attempt to get user directly if signUpData.user is undefined
+      if (!signUpData?.user) {
+        console.log("⚠️ No user in signUpData, attempting direct fetch");
+        const { data: { user: fetchedUser } } = await supabase.auth.getUser();
+        if (fetchedUser) {
+          console.log("✅ Retrieved user directly:", fetchedUser);
+          user = fetchedUser;
+        }
       }
 
+      // Log raw user object before profile creation
+      console.log("🔍 User object pre-insert:", {
+        rawUser: user,
+        id: user?.id,
+        email: user?.email
+      });
+
+      // Proceed with insert regardless of user.id state
       const userProfile = {
         id: user.id,
         email: user.email,
@@ -319,14 +332,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         avatar_url: metadata.avatar_url || null,
       };
 
-      console.log("📝 About to insert user profile:", userProfile);
+      console.log("📝 Attempting insert with profile:", {
+        profile: userProfile,
+        timestamp: new Date().toISOString()
+      });
 
-      // Capture exact time of insert attempt
-      const insertStartTime = new Date().toISOString();
-      console.log(`⏱️ Starting insert at ${insertStartTime}`);
-
-      // Simple insert with detailed logging
-      const insertResult = await supabase
+      // Force insert attempt regardless of state
+      let insertResult;
+      try {
+        insertResult = await supabase
         .from("users")
         .insert([userProfile])
         .select()
