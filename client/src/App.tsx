@@ -75,7 +75,6 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <Router />
-        <AuthDebugPanel /> {/* ✅ Add it here */}
         <Toaster />
       </AuthProvider>
     </QueryClientProvider>
