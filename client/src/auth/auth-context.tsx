@@ -125,6 +125,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     let isMounted = true;
+    let staleSessionTimeout: NodeJS.Timeout;
+
+    async function validateAndCleanSession(session: Session | null) {
+      if (!session) return false;
+      
+      console.log("🔍 Validating session state");
+      const profile = await fetchUserProfile(session.user.id);
+      
+      if (!profile) {
+        console.warn("⚠️ Session exists but no user profile found - clearing stale state");
+        await supabase.auth.signOut();
+        if (isMounted) {
+          setSession(null);
+          setUser(null);
+        }
+        return false;
+      }
+      
+      return true;
+    }
     
     async function getInitialSession() {
       console.log("🔄 Getting initial session");
@@ -139,13 +159,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
         console.log("🔍 Initial session:", { hasSession: !!session });
         
+        // Set initial states
         setSession(session);
+        
         if (session?.user) {
-          const profile = await fetchUserProfile(session.user.id);
-          if (isMounted) {
+          const isValid = await validateAndCleanSession(session);
+          if (isValid && isMounted) {
+            const profile = await fetchUserProfile(session.user.id);
             setUser(mapSupabaseUser(session.user, profile));
           }
         }
+
+        // Set timeout to detect stale states where loading never completes
+        staleSessionTimeout = setTimeout(() => {
+          if (loading && session && !user) {
+            console.warn("⚠️ Detected stale auth state - forcing cleanup");
+            supabase.auth.signOut();
+            if (isMounted) {
+              setSession(null);
+              setUser(null);
+              setLoading(false);
+            }
+          }
+        }, 5000); // 5 second timeout for loading to complete
       } catch (error) {
         console.error("❌ Error getting initial session:", error);
         if (isMounted) {
@@ -179,6 +215,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => {
       subscription.unsubscribe();
       isMounted = false;
+      if (staleSessionTimeout) clearTimeout(staleSessionTimeout);
       console.log("🧹 Auth context cleanup: unsubscribed and marked unmounted");
     };
   }, []);
