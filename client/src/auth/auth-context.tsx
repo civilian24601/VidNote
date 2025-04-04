@@ -284,18 +284,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
 
       const userProfile = {
-        id: user.id, // Ensuring this matches auth.uid()
-        email: user.email,
-        username: metadata.username,
-        full_name: metadata.full_name,
-        role: metadata.role,
-        instruments: metadata.instruments || [],
-        experience_level: metadata.experience_level || null,
-        bio: metadata.bio || null,
-        avatar_url: metadata.avatar_url || null,
-      };
-
-      const userProfile = {
         id: user.id,
         email: user.email,
         username: metadata.username,
