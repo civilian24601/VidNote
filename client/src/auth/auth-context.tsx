@@ -126,28 +126,57 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     let isMounted = true;
     let staleSessionTimeout: NodeJS.Timeout;
+    let loadingTimeout: NodeJS.Timeout;
 
     async function validateAndCleanSession(session: Session | null) {
       if (!session) return false;
       
-      console.log("🔍 Validating session state");
-      const profile = await fetchUserProfile(session.user.id);
+      console.log("🔍 Validating session state for user:", session.user.id);
       
-      if (!profile) {
-        console.warn("⚠️ Session exists but no user profile found - clearing stale state");
-        await supabase.auth.signOut();
-        if (isMounted) {
-          setSession(null);
-          setUser(null);
+      try {
+        // Clear any stale localStorage data
+        const localStorageSession = localStorage.getItem('supabase.auth.token');
+        if (localStorageSession && !session) {
+          console.warn("🧹 Clearing stale localStorage session");
+          localStorage.removeItem('supabase.auth.token');
+          return false;
         }
+
+        const profile = await fetchUserProfile(session.user.id);
+        console.log("🔍 Profile fetch result:", { hasProfile: !!profile });
+        
+        if (!profile) {
+          console.warn("⚠️ Session exists but no user profile found - clearing stale state");
+          await supabase.auth.signOut();
+          localStorage.removeItem('supabase.auth.token');
+          if (isMounted) {
+            setSession(null);
+            setUser(null);
+          }
+          return false;
+        }
+        
+        return true;
+      } catch (error) {
+        console.error("❌ Session validation failed:", error);
+        await supabase.auth.signOut();
+        localStorage.removeItem('supabase.auth.token');
         return false;
       }
-      
-      return true;
     }
     
     async function getInitialSession() {
       console.log("🔄 Getting initial session");
+
+      // Force loading to resolve within 5 seconds
+      loadingTimeout = setTimeout(() => {
+        if (isMounted && loading) {
+          console.warn("⚠️ Force resolving loading state after timeout");
+          setLoading(false);
+          setUser(null);
+          setSession(null);
+        }
+      }, 5000);
       try {
         const { data: { session }, error } = await supabase.auth.getSession();
         
@@ -216,7 +245,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       subscription.unsubscribe();
       isMounted = false;
       if (staleSessionTimeout) clearTimeout(staleSessionTimeout);
-      console.log("🧹 Auth context cleanup: unsubscribed and marked unmounted");
+      if (loadingTimeout) clearTimeout(loadingTimeout);
+      console.log("🧹 Auth context cleanup: unsubscribed, cleared timeouts and marked unmounted");
     };
   }, []);
 
