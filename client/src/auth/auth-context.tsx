@@ -256,9 +256,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     metadata: UserMetadata
   ) {
     setLoading(true);
-    console.log("📝 Starting registration for:", email);
-
     try {
+      console.log("📝 Starting registration for:", email);
+
       // Step 1: Create auth user and wait for session
       const { data: signUpData, error: signUpError } =
         await supabase.auth.signUp({
@@ -399,7 +399,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         title: "Success",
         description: "Registration successful!",
       });
-
     } catch (err: any) {
       console.error("🔥 Registration failed:", {
         error: err,
