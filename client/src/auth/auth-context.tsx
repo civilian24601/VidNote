@@ -339,6 +339,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUser(mapSupabaseUser(resolvedUser, profileInsertData));
 
       console.log("🎉 Registration and profile creation complete!");
+        success: !insertResult.error && !!insertResult.data,
+        error: insertResult.error ? {
+          message: insertResult.error.message,
+          code: insertResult.error.code,
+          details: insertResult.error.details,
+          hint: insertResult.error.hint
+        } : null,
+        data: insertResult.data,
+        duration: `${Date.now() - new Date(insertStartTime).getTime()}ms`
+      });
 
       const { data: profileData, error: profileError } = insertResult;
       
