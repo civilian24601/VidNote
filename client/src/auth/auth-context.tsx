@@ -303,23 +303,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       });
 
       // Attempt to get user directly if signUpData.user is undefined
-      if (!signUpData?.user) {
+      // Handle potential undefined user case
+      let user = signUpData?.user || null;
+      
+      if (!user) {
         console.log("⚠️ No user in signUpData, attempting direct fetch");
         const { data: { user: fetchedUser } } = await supabase.auth.getUser();
-        if (fetchedUser) {
-          console.log("✅ Retrieved user directly:", fetchedUser);
-          user = fetchedUser;
-        }
+        user = fetchedUser || null;
+        console.log("✅ Retrieved user directly:", fetchedUser);
       }
 
-      // Log raw user object before profile creation
-      console.log("🔍 User object pre-insert:", {
-        rawUser: user,
-        id: user?.id,
-        email: user?.email
-      });
+      if (!user) {
+        throw new Error("Failed to get valid user after signup");
+      }
 
-      // Proceed with insert regardless of user.id state
+      console.log("⚠️ user before insert:", user);
+
+      // Proceed with insert
+      console.log("🚨 Starting insert for profile");
       const userProfile = {
         id: user.id,
         email: user.email,
@@ -359,6 +360,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       });
 
       const { data: profileData, error: profileError } = insertResult;
+      
+      console.log("✅ Insert result:", {
+        data: profileData,
+        error: profileError
+      });
 
       // Enhanced error handling and validation
       if (profileError) {
