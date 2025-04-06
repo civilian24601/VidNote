@@ -278,9 +278,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       if (signUpError) throw new Error(signUpError.message || "Sign-up failed");
 
-      let user = signUpData?.user;
-      if (!user?.id) {
-        throw new Error("No valid user ID returned after sign-up");
+      // 🧠 Attempt to resolve user from signUpData or fallback to getUser
+      let resolvedUser = signUpData?.user || null;
+      if (!resolvedUser) {
+        console.log("⚠️ No user in signUpData — attempting supabase.auth.getUser()");
+        const { data: userFallbackData, error: fallbackError } = await supabase.auth.getUser();
+        resolvedUser = userFallbackData.user;
+        console.log("✅ Fallback user:", resolvedUser);
+      }
+      if (!resolvedUser) {
+        throw new Error("❌ Failed to resolve user ID after sign-up.");
       }
 
       // Wait for auth state to propagate
@@ -295,32 +302,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         throw new Error("No active session after signup");
       }
 
-      // Step 2: Create user profile with basic insert - Debug Block
-      console.log("🔍 Raw signUpData:", {
-        hasData: !!signUpData,
-        user: signUpData?.user,
-        session: signUpData?.session
-      });
-
-      // Attempt to get user directly if signUpData.user is undefined
-      // Handle potential undefined user case
-      let resolvedUser = signUpData?.user || null;
-      
-      if (!resolvedUser) {
-        console.log("⚠️ No user in signUpData, attempting direct fetch");
-        const { data: { user: fetchedUser } } = await supabase.auth.getUser();
-        resolvedUser = fetchedUser || null;
-        console.log("✅ Retrieved user directly:", fetchedUser);
-      }
-
-      if (!resolvedUser) {
-        throw new Error("Failed to get valid user after signup");
-      }
-
-      console.log("⚠️ user before insert:", resolvedUser);
-
-      // Proceed with insert
-      console.log("🚨 Starting insert for profile");
       const userProfile = {
         id: resolvedUser.id,
         email: resolvedUser.email,
@@ -333,21 +314,31 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         avatar_url: metadata.avatar_url || null,
       };
 
-      console.log("📝 Attempting insert with profile:", {
-        profile: userProfile,
-        timestamp: new Date().toISOString()
-      });
+      console.log("📦 Preparing profile insert:", userProfile);
 
-      // Force insert attempt regardless of state
-      let insertResult;
-      try {
-        insertResult = await supabase
+      const { data: profileInsertData, error: profileInsertError } = await supabase
         .from("users")
         .insert([userProfile])
         .select()
         .single();
 
-      console.log("📊 Insert operation complete:", {
+      if (profileInsertError) {
+        console.error("❌ Profile insert failed:", {
+          message: profileInsertError.message,
+          code: profileInsertError.code,
+          details: profileInsertError.details,
+          hint: profileInsertError.hint,
+        });
+        throw new Error("Insert failed: " + profileInsertError.message);
+      } else {
+        console.log("✅ Profile insert success:", profileInsertData);
+      }
+
+      // Update local state with the new profile
+      setSession(session);
+      setUser(mapSupabaseUser(resolvedUser, profileInsertData));
+
+      console.log("🎉 Registration and profile creation complete!");
         success: !insertResult.error && !!insertResult.data,
         error: insertResult.error ? {
           message: insertResult.error.message,
