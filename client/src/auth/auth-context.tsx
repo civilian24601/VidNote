@@ -304,26 +304,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       // Attempt to get user directly if signUpData.user is undefined
       // Handle potential undefined user case
-      let user = signUpData?.user || null;
+      let resolvedUser = signUpData?.user || null;
       
-      if (!user) {
+      if (!resolvedUser) {
         console.log("⚠️ No user in signUpData, attempting direct fetch");
         const { data: { user: fetchedUser } } = await supabase.auth.getUser();
-        user = fetchedUser || null;
+        resolvedUser = fetchedUser || null;
         console.log("✅ Retrieved user directly:", fetchedUser);
       }
 
-      if (!user) {
+      if (!resolvedUser) {
         throw new Error("Failed to get valid user after signup");
       }
 
-      console.log("⚠️ user before insert:", user);
+      console.log("⚠️ user before insert:", resolvedUser);
 
       // Proceed with insert
       console.log("🚨 Starting insert for profile");
       const userProfile = {
-        id: user.id,
-        email: user.email,
+        id: resolvedUser.id,
+        email: resolvedUser.email,
         username: metadata.username,
         full_name: metadata.full_name,
         role: metadata.role,
