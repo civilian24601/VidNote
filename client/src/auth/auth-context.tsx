@@ -257,30 +257,42 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   ) {
     setLoading(true);
     
-    // ⛳️ TEST INSERT (forces Supabase write to users table regardless of auth)
-    const testInsert = {
-      id: crypto.randomUUID(),
-      email: "debug@example.com",
-      username: "debug-user",
-      full_name: "Debug User",
-      role: "student",
-      instruments: [],
-      experience_level: "Beginner",
-      bio: "Debug insert attempt",
-      avatar_url: null,
-    };
+    // ⛳️ TEST INSERT (force a known-write to Supabase)
+    console.log("🚀 [TEST] Trying basic insert into users...");
 
-    console.log("🚀 Attempting TEST insert with payload:", testInsert);
+    try {
+      const { error: testInsertError } = await supabase.from("users").insert([
+        {
+          id: crypto.randomUUID(),
+          email: "debug@example.com",
+          username: "debug-user",
+          full_name: "Debug User",
+          role: "student",
+          instruments: [],
+          experience_level: "Beginner",
+          bio: "Testing simplified insert",
+          avatar_url: null,
+        }
+      ]);
 
-    const { data: testData, error: testError } = await supabase
-      .from("users")
-      .insert([testInsert]);
-
-    if (testError) {
-      console.error("❌ TEST insert failed:", testError);
-    } else {
-      console.log("✅ TEST insert succeeded:", testData);
+      if (testInsertError) {
+        console.error("❌ [TEST] Insert failed:", {
+          message: testInsertError.message,
+          code: testInsertError.code,
+          hint: testInsertError.hint,
+          details: testInsertError.details,
+        });
+      } else {
+        console.log("✅ [TEST] Insert succeeded!");
+      }
+    } catch (err: any) {
+      console.error("🔥 [TEST] Insert threw exception:", {
+        message: err.message,
+        name: err.name,
+        stack: err.stack,
+      });
     }
+
     
     console.log("📝 Starting registration for:", email);
 
