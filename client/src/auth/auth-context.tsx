@@ -256,6 +256,32 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     metadata: UserMetadata
   ) {
     setLoading(true);
+    
+    // ⛳️ TEST INSERT (forces Supabase write to users table regardless of auth)
+    const testInsert = {
+      id: crypto.randomUUID(),
+      email: "debug@example.com",
+      username: "debug-user",
+      full_name: "Debug User",
+      role: "student",
+      instruments: [],
+      experience_level: "Beginner",
+      bio: "Debug insert attempt",
+      avatar_url: null,
+    };
+
+    console.log("🚀 Attempting TEST insert with payload:", testInsert);
+
+    const { data: testData, error: testError } = await supabase
+      .from("users")
+      .insert([testInsert]);
+
+    if (testError) {
+      console.error("❌ TEST insert failed:", testError);
+    } else {
+      console.log("✅ TEST insert succeeded:", testData);
+    }
+    
     console.log("📝 Starting registration for:", email);
 
     try {
