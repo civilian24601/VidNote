@@ -316,22 +316,43 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       console.log("📦 Preparing profile insert:", userProfile);
 
-      const { data: profileInsertData, error: profileInsertError } = await supabase
+      // 🛠️ Separate insert and select operations for better error isolation
+      // First, attempt insert without select
+      const { error: insertError } = await supabase
         .from("users")
-        .insert([userProfile])
-        .select()
-        .single();
+        .insert([userProfile]);
 
-      if (profileInsertError) {
+      if (insertError) {
         console.error("❌ Profile insert failed:", {
-          message: profileInsertError.message,
-          code: profileInsertError.code,
-          details: profileInsertError.details,
-          hint: profileInsertError.hint,
+          message: insertError.message,
+          code: insertError.code,
+          details: insertError.details,
+          hint: insertError.hint,
         });
-        throw new Error("Insert failed: " + profileInsertError.message);
+        throw new Error("Insert failed: " + insertError.message);
+      }
+
+      console.log("✅ Profile insert appears successful, verifying...");
+      
+      // Then separately verify the profile was created
+      let profileInsertData;
+      const { data: verificationData, error: selectError } = await supabase
+        .from("users")
+        .select("*")
+        .eq("id", userProfile.id)
+        .single();
+      
+      if (selectError || !verificationData) {
+        console.error("⚠️ Insert succeeded but verification failed:", {
+          error: selectError,
+          userId: userProfile.id
+        });
+        // Continue anyway since insert didn't report an error
+        console.log("🔍 Using provided profile data as fallback");
+        profileInsertData = userProfile;
       } else {
-        console.log("✅ Profile insert success:", profileInsertData);
+        console.log("✅ Profile insert verified:", verificationData);
+        profileInsertData = verificationData;
       }
 
       // Update local state with the new profile
