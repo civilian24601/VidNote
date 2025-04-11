@@ -16,6 +16,7 @@ import WebSocketDemo from "./pages/websocket-demo";
 import DiagnosticsPage from "./pages/admin/diagnostics";
 import { useEffect } from "react";
 import { TestPathAlias } from '@/components/TestPathAlias'
+import TestAuth from "./pages/tests/test-auth";
 
 // 👇 Dev tool import
 import { AuthDebugPanel } from "@/components/dev/auth-debug-panel";
@@ -65,7 +66,7 @@ function Router() {
       <Route path="/test-supabase-api" component={TestSupabaseAPI} />
       <Route path="/websocket-demo" component={WebSocketDemo} />
       <Route path="/admin/diagnostics" component={(props) => <TeacherRoute component={DiagnosticsPage} {...props} />} />
-
+      <Route path="/tests/test-auth" component={TestAuth} />
       <Route component={NotFound} />
     </Switch>
   );
