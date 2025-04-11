@@ -15,6 +15,7 @@ import TestSupabaseAPI from "./pages/test-supabase-api";
 import WebSocketDemo from "./pages/websocket-demo";
 import DiagnosticsPage from "./pages/admin/diagnostics";
 import { useEffect } from "react";
+import { TestPathAlias } from '@/components/TestPathAlias'
 
 // 👇 Dev tool import
 import { AuthDebugPanel } from "@/components/dev/auth-debug-panel";
@@ -72,12 +73,15 @@ function Router() {
 
 function App() {
   return (
-    <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <Router />
-        <Toaster />
-      </AuthProvider>
-    </QueryClientProvider>
+    <div className="min-h-screen bg-background">
+      <TestPathAlias />
+      <QueryClientProvider client={queryClient}>
+        <AuthProvider>
+          <Router />
+          <Toaster />
+        </AuthProvider>
+      </QueryClientProvider>
+    </div>
   );
 }
 

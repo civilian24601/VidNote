@@ -12,16 +12,13 @@
  * npx tsx scripts/migrate-to-supabase.ts
  */
 
-import { createClient } from '@supabase/supabase-js';
-import * as dotenv from 'dotenv';
+import 'dotenv/config'
+import { supabase } from '../supabase/node-client'
 import { MemStorage } from '../server/storage';
 import {
   User, Video, Comment, VideoSharing, 
   StudentTeacherRelationship, Notification, GuestInvitation
 } from '../shared/schema';
-
-// Load environment variables
-dotenv.config();
 
 // Colors for console output
 const colors = {
@@ -40,29 +37,6 @@ const colors = {
   bgYellow: '\x1b[43m',
   bgBlue: '\x1b[44m'
 };
-
-// Initialize Supabase client
-const supabaseUrl = process.env.SUPABASE_URL;
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-
-if (!supabaseUrl || !supabaseServiceKey) {
-  console.error(`${colors.red}Error: Missing Supabase credentials in environment variables${colors.reset}`);
-  console.error(`Make sure you have the following in your .env file:`);
-  console.error(`- SUPABASE_URL`);
-  console.error(`- SUPABASE_SERVICE_ROLE_KEY`);
-  process.exit(1);
-}
-
-const supabase = createClient(
-  supabaseUrl,
-  supabaseServiceKey,
-  {
-    auth: {
-      autoRefreshToken: false,
-      persistSession: false
-    }
-  }
-);
 
 console.log(`${colors.cyan}${colors.bright}
 ===============================================================

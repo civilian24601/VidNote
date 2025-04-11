@@ -9,7 +9,8 @@
  * Usage: node scripts/create-tables-with-supabase.js
  */
 
-import { createClient } from '@supabase/supabase-js';
+import 'dotenv/config'
+import { supabase } from '../supabase/node-client'
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';

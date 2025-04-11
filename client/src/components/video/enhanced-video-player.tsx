@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import Plyr from "plyr";
 import "plyr/dist/plyr.css";
 import { formatTimestamp } from "./categorized-comments";
-import { Comment } from "@/shared/schema";
+import { Comment } from "@schema";
 import { calculateMarkerPosition } from "@/lib/utils";
 
 interface VideoMarker {

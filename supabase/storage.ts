@@ -1,6 +1,7 @@
-import { supabase } from './client'
+import { getSupabaseClient } from './node-client'
 
 export async function setupStorageBuckets() {
+  const supabase = getSupabaseClient()
   const buckets = ['videos', 'profile-images']
 
   for (const bucket of buckets) {

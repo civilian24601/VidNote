@@ -13,7 +13,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { getInitials, getAvatarColor, formatDateTime } from "@/lib/utils";
 import { useAuth } from "@/auth/auth-context";
 import { useToast } from "@/hooks/use-toast";
-import { Comment, User } from "@/shared/schema";
+import { Comment, User } from "@schema";
 
 // Define comment categories with colors
 export const COMMENT_CATEGORIES = {

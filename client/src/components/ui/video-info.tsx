@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { VideoSharing, User } from "@shared/schema";
+import { VideoSharing, User } from "@schema";
 import { getInitials, getAvatarColor } from "@/lib/utils";
 
 interface VideoInfoProps {

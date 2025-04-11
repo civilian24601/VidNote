@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { User, Comment } from "@shared/schema";
+import { User, Comment } from "@schema";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";

@@ -14,7 +14,7 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { getInitials, getAvatarColor, formatDateTime } from "@/lib/utils";
 import { formatTimestamp, COMMENT_CATEGORIES } from "./categorized-comments";
-import { Comment, User, Video } from "@/shared/schema";
+import { Comment, User, Video } from "@schema";
 
 interface FeedbackExportProps {
   video: Video;

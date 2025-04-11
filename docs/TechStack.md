@@ -80,7 +80,7 @@ _Last updated: 2025-04-01 14:50 EST — v1.0_
 - **Media Storage**: Supabase Storage
 
 ### CI/CD
-- **Build Process**: Automated through Replit
+- **Build Process**: Cursor
 - **Deployment Strategy**: Continuous deployment on main branch
 
 ### Monitoring & Logging

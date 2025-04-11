@@ -259,7 +259,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     
     // ⛳️ TEST INSERT (force a known-write to Supabase)
     console.log("🚀 [TEST] Trying basic insert into users...");
-
+    console.log("🔍 [TEST] Supabase URL:", import.meta.env.VITE_SUPABASE_URL);
+    
     try {
       const { error: testInsertError } = await supabase.from("users").insert([
         {
@@ -273,7 +274,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           bio: "Testing simplified insert",
           avatar_url: null,
         }
-      ]);
+      ]).select();  // Add .select() to force immediate feedback
 
       if (testInsertError) {
         console.error("❌ [TEST] Insert failed:", {
@@ -282,6 +283,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           hint: testInsertError.hint,
           details: testInsertError.details,
         });
+        throw testInsertError;  // Throw the error to stop the process
       } else {
         console.log("✅ [TEST] Insert succeeded!");
       }
@@ -291,6 +293,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         name: err.name,
         stack: err.stack,
       });
+      throw new Error(`Test insert failed: ${err.message}`);
     }
 
     
@@ -473,26 +476,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (signOutError) throw signOutError;
       console.log("✅ Supabase signOut completed");
 
-      // 2. Verify session is cleared
-      const { data: { session: postLogoutSession } } = await supabase.auth.getSession();
-      console.log("🧹 Post-signOut session check:", { hasSession: !!postLogoutSession });
-
-      if (postLogoutSession) {
-        console.warn("⚠️ Found lingering session after signOut");
-        await supabase.auth.setSession({ access_token: '', refresh_token: '' });
-        console.log("🧹 Forced session clear");
-      }
-
-      // 3. Clear local state only after network operations
+      // 2. Clear local state
       setUser(null);
       setSession(null);
       console.log("✅ Auth state cleared");
+
+      // 3. Navigate to home page
+      window.location.href = '/';
+      
     } catch (err) {
       console.error("❌ Error during signOut:", err);
       // Still clear state on error for safety
       setUser(null);
       setSession(null);
-      throw new Error("Failed to sign out cleanly");
+      toast({
+        title: "Error",
+        description: "Failed to sign out properly. Please refresh the page.",
+        variant: "destructive"
+      });
     } finally {
       setLoading(false);
     }

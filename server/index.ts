@@ -1,8 +1,11 @@
+// Load environment variables first
+import 'dotenv/config'
+
 import express, { type Request, Response, NextFunction } from "express";
 import { setupVite, serveStatic, log } from "./vite";
 import { createCustomLogger } from "./lib/logger";
 import { createServer } from "http";
-import { supabase } from "../supabase/client";
+import { supabase } from "../supabase/node-client";
 
 const app = express();
 app.use(express.json({ limit: '50mb' }));

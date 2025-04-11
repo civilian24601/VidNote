@@ -7,12 +7,7 @@
  */
 
 import 'dotenv/config';
-import { createClient } from '@supabase/supabase-js';
-
-// Create Supabase client
-const supabaseUrl = process.env.SUPABASE_URL;
-const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-const supabase = createClient(supabaseUrl, supabaseKey);
+import { supabase } from '../supabase/node-client';
 
 // Main function
 async function checkConnection() {
@@ -20,6 +15,9 @@ async function checkConnection() {
   
   // 1. Check environment variables
   console.log('\n1. Checking environment variables:');
+  const supabaseUrl = process.env.SUPABASE_URL;
+  const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  
   if (!supabaseUrl) {
     console.error('❌ SUPABASE_URL is not set in .env file');
     return;

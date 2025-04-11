@@ -4,7 +4,7 @@
  * - Sets up proper RLS policies
  */
 import 'dotenv/config';
-import { createClient } from '@supabase/supabase-js';
+import { supabase } from '../supabase/node-client';
 
 // If VITE_SUPABASE_* variables exist but SUPABASE_* don't, use the VITE_ ones
 if (!process.env.SUPABASE_URL && process.env.VITE_SUPABASE_URL) {
@@ -31,18 +31,6 @@ You can find them in your Supabase project dashboard under Settings > API.
 `);
   process.exit(1);
 }
-
-// Initialize Supabase admin client
-const supabaseAdmin = createClient(
-  process.env.SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_ROLE_KEY,
-  {
-    auth: {
-      autoRefreshToken: false,
-      persistSession: false
-    }
-  }
-);
 
 async function fixSupabaseStorage() {
   console.log(`
@@ -101,14 +89,14 @@ async function createBucket(name, isPublic = false) {
     console.log(`   Checking if '${name}' bucket exists...`);
     
     // Try to get the bucket
-    const { data: bucket, error: getBucketError } = await supabaseAdmin.storage.getBucket(name);
+    const { data: bucket, error: getBucketError } = await supabase.storage.getBucket(name);
     
     if (getBucketError) {
       // If the bucket doesn't exist, create it
       if (getBucketError.message.includes('not found')) {
         console.log(`   Creating '${name}' bucket with public: ${isPublic}...`);
         
-        const { data, error } = await supabaseAdmin.storage.createBucket(name, {
+        const { data, error } = await supabase.storage.createBucket(name, {
           public: isPublic
         });
         
@@ -132,7 +120,7 @@ async function createBucket(name, isPublic = false) {
         console.log(`   ⚠️ Bucket '${name}' has public=${bucket.public}, trying to update to public=${isPublic}...`);
         
         try {
-          const { error: updateError } = await supabaseAdmin.storage.updateBucket(name, {
+          const { error: updateError } = await supabase.storage.updateBucket(name, {
             public: isPublic
           });
           
@@ -161,7 +149,7 @@ async function testBucketAccess(bucketName) {
   
   try {
     // Try to list files in the bucket
-    const { data, error } = await supabaseAdmin.storage.from(bucketName).list('', { limit: 1 });
+    const { data, error } = await supabase.storage.from(bucketName).list('', { limit: 1 });
     
     if (error) {
       console.error(`   ❌ Error accessing '${bucketName}' bucket: ${error.message}`);

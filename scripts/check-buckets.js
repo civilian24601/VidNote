@@ -17,40 +17,35 @@ if (!process.env.SUPABASE_ANON_KEY && process.env.VITE_SUPABASE_ANON_KEY) {
   console.log('Using VITE_SUPABASE_ANON_KEY instead of SUPABASE_ANON_KEY');
 }
 
-// Initialize Supabase clients - we need both regular and admin clients
+// Initialize clients
 let supabaseAnon;
 let supabaseAdmin;
 
-try {
-  if (process.env.SUPABASE_URL && process.env.SUPABASE_ANON_KEY) {
-    console.log('Initializing regular Supabase client...');
-    supabaseAnon = createClient(
-      process.env.SUPABASE_URL,
-      process.env.SUPABASE_ANON_KEY
-    );
-  } else {
-    console.error('Missing SUPABASE_URL or SUPABASE_ANON_KEY');
-    process.exit(1);
-  }
-  
-  if (process.env.SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY) {
-    console.log('Initializing admin Supabase client...');
-    supabaseAdmin = createClient(
-      process.env.SUPABASE_URL,
-      process.env.SUPABASE_SERVICE_ROLE_KEY,
-      {
-        auth: {
-          autoRefreshToken: false,
-          persistSession: false
-        }
-      }
-    );
-  } else {
-    console.log('No SUPABASE_SERVICE_ROLE_KEY found, some admin operations will be unavailable');
-  }
-} catch (error) {
-  console.error('Failed to initialize Supabase clients:', error);
+if (process.env.SUPABASE_URL && process.env.SUPABASE_ANON_KEY) {
+  console.log('Initializing regular Supabase client...');
+  supabaseAnon = createClient(
+    process.env.SUPABASE_URL,
+    process.env.SUPABASE_ANON_KEY
+  );
+} else {
+  console.error('Missing SUPABASE_URL or SUPABASE_ANON_KEY');
   process.exit(1);
+}
+
+if (process.env.SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY) {
+  console.log('Initializing admin Supabase client...');
+  supabaseAdmin = createClient(
+    process.env.SUPABASE_URL,
+    process.env.SUPABASE_SERVICE_ROLE_KEY,
+    {
+      auth: {
+        autoRefreshToken: false,
+        persistSession: false
+      }
+    }
+  );
+} else {
+  console.log('No SUPABASE_SERVICE_ROLE_KEY found, some admin operations will be unavailable');
 }
 
 async function checkBuckets() {

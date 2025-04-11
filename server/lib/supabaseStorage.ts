@@ -10,6 +10,7 @@ import {
   guestInvitations, GuestInvitation, InsertGuestInvitation
 } from "@shared/schema";
 import { IStorage } from '../storage';
+import { supabase } from '../../supabase/node-client';
 
 // Create custom logger
 import { createCustomLogger } from './logger';

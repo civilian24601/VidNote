@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import Plyr from "plyr";
 import "plyr/dist/plyr.css";
 import { Button } from "@/components/ui/button";
-import { Comment } from "@shared/schema";
+import { Comment } from "@schema";
 import { formatTime, calculateMarkerPosition } from "@/lib/utils";
 
 interface VideoPlayerProps {

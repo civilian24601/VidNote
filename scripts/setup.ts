@@ -1,3 +1,5 @@
+import 'dotenv/config'
+import { supabase } from '../supabase/node-client'
 import { setupStorageBuckets } from '../supabase/storage'
 
 async function main() {

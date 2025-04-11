@@ -1,5 +1,5 @@
 import { QueryClient, QueryFunction } from "@tanstack/react-query";
-import { Video, Comment, VideoSharing } from "@shared/schema";
+import { Video, Comment, VideoSharing } from "@schema";
 
 // Real API implementation with Supabase backend
 

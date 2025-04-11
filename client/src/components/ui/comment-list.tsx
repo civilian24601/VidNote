@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Comment, User } from "@shared/schema";
+import { Comment, User } from "@schema";
 import { formatDateTime, getInitials, getAvatarColor } from "@/lib/utils";
 
 // Ensure createdAt is properly typed as it might be null in some cases

@@ -1,12 +1,11 @@
-# MuseCollab - Collaborative Music Education Platform
+# VidNote - Collaborative Music Education Platform
 
-MuseCollab is a cutting-edge web platform revolutionizing music education through innovative video performance review and multi-teacher feedback mechanisms.
+ VidNote is a cutting-edge web platform revolutionizing music education through innovative video performance review and multi-teacher feedback mechanisms.
 
-![MuseCollab Platform](https://i.imgur.com/placeholder.png)
+! VidNote Platform](https://i.imgur.com/placeholder.png)
 
 ## Vision
-
-MuseCollab bridges the gap between traditional music instruction and digital learning by providing a collaborative space where:
+ VidNote bridges the gap between traditional music instruction and digital learning by providing a collaborative space where:
 
 - Students can upload performance videos and receive timestamped feedback
 - Multiple teachers can collaborate on student performances
@@ -63,8 +62,8 @@ The project is currently under active development with the following components 
 
 1. Clone the repository
 ```bash
-git clone https://github.com/your-username/musecollab.git
-cd musecollab
+git clone https://github.com/your-username VidNote.git
+cd VidNote
 ```
 
 2. Install dependencies

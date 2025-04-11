@@ -1,12 +1,12 @@
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { getInitials, getAvatarColor, formatDateTime } from "@/lib/utils";
+import { Button } from "@client/src/components/ui/button";
+import { Badge } from "@client/src/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@client/src/components/ui/tabs";
+import { getInitials, getAvatarColor, formatDateTime } from "@client/src/lib/utils";
 import { formatTimestamp, COMMENT_CATEGORIES } from "./categorized-comments";
-import { Comment, User } from "@/shared/schema";
+import { Comment, User } from "@schema";
 
 interface TeacherWithComments {
   teacher: User;

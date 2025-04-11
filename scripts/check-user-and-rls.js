@@ -1,7 +1,6 @@
-
+import 'dotenv/config'
+import { supabase } from '../supabase/node-client'
 import { createClient } from '@supabase/supabase-js';
-import dotenv from 'dotenv';
-dotenv.config();
 
 const userId = '21f1184b-7c39-4e6e-a6f7-45ad891fa9a7';
 

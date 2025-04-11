@@ -6,14 +6,12 @@ import {
   InsertVideo,
   Comment,
   InsertComment,
-  VideoSharing,
-  InsertVideoSharing,
-  StudentTeacherRelationship,
-  InsertStudentTeacherRelationship,
+  VideoShare,
+  InsertVideoShare,
+  Relationship,
+  InsertRelationship,
   Notification,
-  InsertNotification,
-  GuestInvitation,
-  InsertGuestInvitation
+  InsertNotification
 } from '../schema';
 
 // Re-export types
@@ -24,14 +22,12 @@ export {
   InsertVideo,
   Comment,
   InsertComment,
-  VideoSharing,
-  InsertVideoSharing,
-  StudentTeacherRelationship,
-  InsertStudentTeacherRelationship,
+  VideoShare,
+  InsertVideoShare,
+  Relationship,
+  InsertRelationship,
   Notification,
-  InsertNotification,
-  GuestInvitation,
-  InsertGuestInvitation
+  InsertNotification
 };
 
 // Define extended types that might be used in the application
@@ -47,7 +43,7 @@ export interface VideoWithOwner extends Video {
   owner?: Omit<User, 'password'>;
 }
 
-export interface VideoSharingWithUser extends VideoSharing {
+export interface VideoShareWithUser extends VideoShare {
   user?: Omit<User, 'password'>;
 }
 
