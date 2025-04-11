@@ -7,7 +7,7 @@ import {
 } from "react";
 import { supabase } from "../../../supabase/client";
 import { Session, User as SupabaseUser } from "@supabase/supabase-js";
-import { toast } from "@/hooks/use-toast";
+import { toast, useToast } from "@/hooks/use-toast";
 
 export interface User {
   id: string;
@@ -46,22 +46,20 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 function mapSupabaseUser(supabaseUser: SupabaseUser, userProfile?: any): User {
+  console.log('Mapping user data:', { 
+    hasUserProfile: !!userProfile, 
+    supabaseMetadata: supabaseUser.user_metadata 
+  });
+  
   return {
     id: supabaseUser.id,
-    email: supabaseUser.email || "",
-    username:
-      userProfile?.username || supabaseUser.user_metadata?.username || "",
-    fullName:
-      userProfile?.full_name || supabaseUser.user_metadata?.full_name || "",
-    role: userProfile?.role || supabaseUser.user_metadata?.role || "student",
-    avatarUrl:
-      userProfile?.avatar_url || supabaseUser.user_metadata?.avatar_url || null,
-    instruments:
-      userProfile?.instruments || supabaseUser.user_metadata?.instruments || [],
-    experienceLevel:
-      userProfile?.experience_level ||
-      supabaseUser.user_metadata?.experience_level ||
-      null,
+    email: supabaseUser.email || '',
+    username: userProfile?.username || supabaseUser.user_metadata?.username || '',
+    fullName: userProfile?.full_name || supabaseUser.user_metadata?.full_name || '',
+    role: userProfile?.role || supabaseUser.user_metadata?.role || 'student',
+    avatarUrl: userProfile?.avatar_url || supabaseUser.user_metadata?.avatar_url || null,
+    instruments: userProfile?.instruments || supabaseUser.user_metadata?.instruments || [],
+    experienceLevel: userProfile?.experience_level || supabaseUser.user_metadata?.experience_level || null,
     bio: userProfile?.bio || supabaseUser.user_metadata?.bio || null,
     isComplete: !!(
       (userProfile?.username || supabaseUser.user_metadata?.username) &&
@@ -74,40 +72,36 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
+  const { toast } = useToast();
 
   async function fetchUserProfile(userId: string) {
-    console.log("🔍 fetchUserProfile called with userId:", userId);
+    console.log('🔍 Fetching user profile for ID:', userId);
+    
     try {
-      console.log("🔍 Executing Supabase query for user:", userId);
       const { data, error } = await supabase
-        .from("users")
-        .select("*")
-        .eq("id", userId)
+        .from('users')
+        .select('*')
+        .eq('id', userId)
         .single();
-
-      // Detailed query result logging
-      console.log("🔍 Raw Supabase Response:", {
-        hasData: !!data,
-        dataFields: data ? Object.keys(data) : null,
-        error: error ? {
+      
+      if (error) {
+        console.error('❌ Error fetching user profile:', {
           message: error.message,
           code: error.code,
           details: error.details,
-          hint: error.hint
-        } : null
-      });
-
-      if (error || !data) {
-        console.error("❌ fetchUserProfile failed:", {
-          error,
-          userId,
-          timestamp: new Date().toISOString()
         });
         return null;
       }
+      
+      if (!data) {
+        console.warn('⚠️ No profile found for user:', userId);
+        return null;
+      }
+      
+      console.log('✅ User profile fetched successfully');
       return data;
     } catch (err) {
-      console.error("🔥 fetchUserProfile unexpected error:", err);
+      console.error('🔥 Unexpected error in fetchUserProfile:', err);
       return null;
     }
   }
@@ -120,228 +114,116 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   useEffect(() => {
-    let isMounted = true;
-    let staleSessionTimeout: NodeJS.Timeout;
-    let loadingTimeout: NodeJS.Timeout;
-
-    async function validateAndCleanSession(session: Session | null) {
-      if (!session) return false;
-
-      console.log("🔍 Validating session state for user:", session.user.id);
-
+    console.log('🔄 Initializing auth state');
+    let mounted = true;
+    
+    // Get initial session
+    const getInitialSession = async () => {
       try {
-        // Clear any stale localStorage data
-        const localStorageSession = localStorage.getItem('supabase.auth.token');
-        if (localStorageSession && !session) {
-          console.warn("🧹 Clearing stale localStorage session");
-          localStorage.removeItem('supabase.auth.token');
-          return false;
+        const { data, error } = await supabase.auth.getSession();
+        
+        if (error) {
+          throw error;
         }
-
-        const profile = await fetchUserProfile(session.user.id);
-        console.log("🔍 Profile fetch result:", { hasProfile: !!profile });
-
-        if (!profile) {
-          console.warn("⚠️ Session exists but no user profile found - clearing stale state");
-          await supabase.auth.signOut();
-          localStorage.removeItem('supabase.auth.token');
-          if (isMounted) {
-            setSession(null);
-            setUser(null);
-          }
-          return false;
-        }
-
-        return true;
-      } catch (error) {
-        console.error("❌ Session validation failed:", error);
-        await supabase.auth.signOut();
-        localStorage.removeItem('supabase.auth.token');
-        return false;
-      }
-    }
-
-    async function getInitialSession() {
-      console.log("🔄 Getting initial session");
-
-      // Force loading to resolve within 5 seconds
-      loadingTimeout = setTimeout(() => {
-        if (isMounted && loading) {
-          console.warn("⚠️ Force resolving loading state after timeout");
-          setLoading(false);
-          setUser(null);
-          setSession(null);
-        }
-      }, 5000);
-      try {
-        const { data: { session }, error } = await supabase.auth.getSession();
-
-        if (error) throw error;
-        if (!isMounted) {
-          console.log("⚠️ Component unmounted, skipping state updates");
+        
+        if (!mounted) {
           return;
         }
-
-        console.log("🔍 Initial session:", { hasSession: !!session });
-
-        // Set initial states
+        
+        const session = data.session;
         setSession(session);
-
+        
         if (session?.user) {
-          const isValid = await validateAndCleanSession(session);
-          if (isValid && isMounted) {
-            const profile = await fetchUserProfile(session.user.id);
+          console.log('✅ Found existing session for user:', session.user.id);
+          const profile = await fetchUserProfile(session.user.id);
+          
+          if (profile) {
             setUser(mapSupabaseUser(session.user, profile));
+          } else {
+            console.warn('⚠️ Session exists but no profile found - using auth metadata fallback');
+            setUser(mapSupabaseUser(session.user));
           }
         }
-
-        // Set timeout to detect stale states where loading never completes
-        staleSessionTimeout = setTimeout(() => {
-          if (loading && session && !user) {
-            console.warn("⚠️ Detected stale auth state - forcing cleanup");
-            supabase.auth.signOut();
-            if (isMounted) {
-              setSession(null);
-              setUser(null);
-              setLoading(false);
-            }
-          }
-        }, 5000); // 5 second timeout for loading to complete
+        
+        setLoading(false);
       } catch (error) {
-        console.error("❌ Error getting initial session:", error);
-        if (isMounted) {
+        console.error('❌ Error getting initial session:', error);
+        if (mounted) {
           setUser(null);
           setSession(null);
+          setLoading(false);
         }
       }
-    }
-
+    };
+    
     getInitialSession();
-
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (_event, session) => {
-      console.log("🔍 Auth State Change fired:", { event: _event, session });
-      setSession(session);
-      if (session?.user) {
-        console.log("🔍 Fetching profile for user:", session.user.id);
-        const profile = await fetchUserProfile(session.user.id);
-        console.log("🔍 Profile fetch result:", { profile });
-        const mappedUser = mapSupabaseUser(session.user, profile);
-        console.log("🔍 Setting user state to:", mappedUser);
-        setUser(mappedUser);
-      } else {
-        console.log("🔍 No session user, setting user state to null");
-        setUser(null);
+    
+    // Set up auth state change subscription
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        console.log('🔄 Auth state change:', event, session?.user?.id);
+        
+        if (mounted) {
+          setSession(session);
+          
+          if (session?.user) {
+            const profile = await fetchUserProfile(session.user.id);
+            setUser(mapSupabaseUser(session.user, profile));
+          } else {
+            setUser(null);
+          }
+          
+          setLoading(false);
+        }
       }
-      setLoading(false);
-    });
-
+    );
+    
+    // Cleanup
     return () => {
+      mounted = false;
       subscription.unsubscribe();
-      isMounted = false;
-      if (staleSessionTimeout) clearTimeout(staleSessionTimeout);
-      if (loadingTimeout) clearTimeout(loadingTimeout);
-      console.log("🧹 Auth context cleanup: unsubscribed, cleared timeouts and marked unmounted");
     };
   }, []);
 
-  async function signUp(
-    email: string,
-    password: string,
-    metadata: UserMetadata
-  ) {
+  async function signUp(email: string, password: string, metadata: UserMetadata) {
+    console.log('🔄 Starting registration process');
     setLoading(true);
     
-    // ⛳️ TEST INSERT (force a known-write to Supabase)
-    console.log("🚀 [TEST] Trying basic insert into users...");
-    console.log("🔍 [TEST] Supabase URL:", import.meta.env.VITE_SUPABASE_URL);
-    
     try {
-      const { error: testInsertError } = await supabase.from("users").insert([
-        {
-          id: crypto.randomUUID(),
-          email: "debug@example.com",
-          username: "debug-user",
-          full_name: "Debug User",
-          role: "student",
-          instruments: [],
-          experience_level: "Beginner",
-          bio: "Testing simplified insert",
-          avatar_url: null,
-        }
-      ]).select();  // Add .select() to force immediate feedback
-
-      if (testInsertError) {
-        console.error("❌ [TEST] Insert failed:", {
-          message: testInsertError.message,
-          code: testInsertError.code,
-          hint: testInsertError.hint,
-          details: testInsertError.details,
-        });
-        throw testInsertError;  // Throw the error to stop the process
-      } else {
-        console.log("✅ [TEST] Insert succeeded!");
-      }
-    } catch (err: any) {
-      console.error("🔥 [TEST] Insert threw exception:", {
-        message: err.message,
-        name: err.name,
-        stack: err.stack,
+      // Create auth user
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: metadata,
+          emailRedirectTo: window.location.origin,
+        },
       });
-      throw new Error(`Test insert failed: ${err.message}`);
-    }
-
-    
-    console.log("📝 Starting registration for:", email);
-
-    try {
-      // Step 1: Create auth user and wait for session
-      const { data: signUpData, error: signUpError } =
-        await supabase.auth.signUp({
-          email,
-          password,
-          options: {
-            data: metadata,
-            emailRedirectTo: window.location.origin,
-          },
-        });
-
-      console.log("✅ Auth signup response:", {
-        hasUser: !!signUpData?.user,
-        hasSession: !!signUpData?.session,
-        error: signUpError
-      });
-
-      if (signUpError) throw new Error(signUpError.message || "Sign-up failed");
-
-      // 🧠 Attempt to resolve user from signUpData or fallback to getUser
-      let resolvedUser = signUpData?.user || null;
-      if (!resolvedUser) {
-        console.log("⚠️ No user in signUpData — attempting supabase.auth.getUser()");
-        const { data: userFallbackData, error: fallbackError } = await supabase.auth.getUser();
-        resolvedUser = userFallbackData.user;
-        console.log("✅ Fallback user:", resolvedUser);
+      
+      if (error) {
+        throw new Error(error.message || 'Registration failed');
       }
-      if (!resolvedUser) {
-        throw new Error("❌ Failed to resolve user ID after sign-up.");
+      
+      if (!data.user) {
+        throw new Error('No user returned from registration');
       }
-
-      // Wait for auth state to propagate
-      console.log("⏳ Waiting for auth state to propagate...");
+      
+      console.log('✅ Auth user created successfully');
+      
+      // Wait briefly for auth to propagate
       await new Promise(resolve => setTimeout(resolve, 1000));
-
+      
       // Verify session is active
-      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-      console.log("🔍 Session check:", { hasSession: !!session, error: sessionError });
-
-      if (!session) {
-        throw new Error("No active session after signup");
+      const { data: sessionData } = await supabase.auth.getSession();
+      
+      if (!sessionData.session) {
+        throw new Error('No active session after registration');
       }
-
+      
+      // Insert profile in users table
       const userProfile = {
-        id: resolvedUser.id,
-        email: resolvedUser.email,
+        id: data.user.id,
+        email: data.user.email,
         username: metadata.username,
         full_name: metadata.full_name,
         role: metadata.role,
@@ -350,70 +232,40 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         bio: metadata.bio || null,
         avatar_url: metadata.avatar_url || null,
       };
-
-      console.log("📦 Preparing profile insert:", userProfile);
-
-      // 🛠️ Separate insert and select operations for better error isolation
-      // First, attempt insert without select
+      
+      console.log('🔄 Creating user profile in database');
+      
       const { error: insertError } = await supabase
-        .from("users")
+        .from('users')
         .insert([userProfile]);
-
+      
       if (insertError) {
-        console.error("❌ Profile insert failed:", {
-          message: insertError.message,
-          code: insertError.code,
-          details: insertError.details,
-          hint: insertError.hint,
-        });
-        throw new Error("Insert failed: " + insertError.message);
+        console.error('❌ Error inserting user profile:', insertError);
+        throw new Error('Failed to create user profile: ' + insertError.message);
       }
-
-      console.log("✅ Profile insert appears successful, verifying...");
       
-      // Then separately verify the profile was created
-      let profileInsertData;
-      const { data: verificationData, error: selectError } = await supabase
-        .from("users")
-        .select("*")
-        .eq("id", userProfile.id)
-        .single();
+      // Fetch the created profile to ensure it exists
+      const profile = await fetchUserProfile(data.user.id);
       
-      if (selectError || !verificationData) {
-        console.error("⚠️ Insert succeeded but verification failed:", {
-          error: selectError,
-          userId: userProfile.id
-        });
-        // Continue anyway since insert didn't report an error
-        console.log("🔍 Using provided profile data as fallback");
-        profileInsertData = userProfile;
-      } else {
-        console.log("✅ Profile insert verified:", verificationData);
-        profileInsertData = verificationData;
-      }
-
-      // Update local state with the new profile
-      setSession(session);
-      setUser(mapSupabaseUser(resolvedUser, profileInsertData));
-
-      console.log("🎉 Registration and profile creation complete!");
+      // Update local state
+      setSession(sessionData.session);
+      setUser(mapSupabaseUser(data.user, profile || userProfile));
+      
+      console.log('✅ Registration completed successfully');
+      
       toast({
-        title: "Success",
-        description: "Registration successful!",
+        title: 'Registration successful',
+        description: 'Your account has been created successfully.',
       });
     } catch (err: any) {
-      console.error("🔥 Registration failed:", {
-        error: err,
-        message: err.message,
-        code: err.code,
-        details: err?.details
-      });
-
+      console.error('❌ Registration error:', err);
+      
       toast({
-        title: "Registration Error",
-        description: err.message || "An unexpected error occurred",
-        variant: "destructive",
+        title: 'Registration failed',
+        description: err.message || 'An unexpected error occurred',
+        variant: 'destructive',
       });
+      
       throw err;
     } finally {
       setLoading(false);
