@@ -14,7 +14,7 @@ export interface User {
   email: string;
   username: string;
   fullName: string;
-  role: "student" | "teacher";
+  role: 'student' | 'teacher';
   avatarUrl: string | null;
   instruments: string[] | null;
   experienceLevel: string | null;
@@ -22,12 +22,12 @@ export interface User {
   isComplete: boolean;
 }
 
-interface UserMetadata {
+export interface UserMetadata {
   username: string;
   full_name: string;
-  role: "student" | "teacher";
+  role: 'student' | 'teacher';
   instruments?: string[] | null;
-  experience_level?: string[] | null;
+  experience_level?: string | null;
   bio?: string | null;
   avatar_url?: string | null;
 }
@@ -36,11 +36,7 @@ interface AuthContextType {
   user: User | null;
   session: Session | null;
   loading: boolean;
-  signUp: (
-    email: string,
-    password: string,
-    metadata: UserMetadata
-  ) => Promise<void>;
+  signUp: (email: string, password: string, metadata: UserMetadata) => Promise<void>;
   signIn: (email: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
   updateProfile: (data: Partial<User>) => Promise<void>;
